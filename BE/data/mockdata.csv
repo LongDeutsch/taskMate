@@ -1,0 +1,114 @@
+entity_type,id,username,password,full_name,role,disabled,project_id,project_name,project_description,task_title,task_description,status,priority,deadline,assignee_id,created_at,updated_at
+user,u-pm,pm,admin123,Project Manager (PM),ADMIN,0,,,,,,,,,
+user,u-1,nguyenvana,123456,Nguyễn Văn A,USER,0,,,,,,,,,
+user,u-2,tranthib,123456,Trần Thị B,USER,0,,,,,,,,,
+user,u-3,lethic,123456,Lê Thị C,USER,0,,,,,,,,,
+user,u-4,phamvand,123456,Phạm Văn D,USER,0,,,,,,,,,
+user,u-5,hoangthie,123456,Hoàng Thị E,USER,0,,,,,,,,,
+user,u-6,phanvanf,123456,Phan Văn F,USER,0,,,,,,,,,
+user,u-7,vuthig,123456,Vũ Thị G,USER,0,,,,,,,,,
+user,u-8,dangvanh,123456,Đặng Văn H,USER,0,,,,,,,,,
+user,u-9,buitihi,123456,Bùi Thị I,USER,0,,,,,,,,,
+project,proj-1,,,,,,,TaskMate App,Ứng dụng quản lý công việc TaskMate,,,,,,,
+project,proj-2,,,,,,,Website Công ty,Website giới thiệu và quảng bá công ty,,,,,,,
+project,proj-3,,,,,,,Mobile App,Ứng dụng di động đa nền tảng,,,,,,,
+task,t-1,,,,,,proj-1,,,Setup repository,Git repo và CI/CD pipeline,Todo,High,2025-03-15,u-1,2025-02-01T09:00:00.000Z,2025-02-01T09:00:00.000Z
+task,t-2,,,,,,proj-1,,,Thiết kế database,ERD và migrations,Todo,High,2025-03-20,u-2,2025-02-02T10:00:00.000Z,2025-02-02T10:00:00.000Z
+task,t-3,,,,,,proj-1,,,API Auth,Login logout JWT,InProgress,High,2025-03-25,u-1,2025-02-05T08:00:00.000Z,2025-02-18T14:00:00.000Z
+task,t-4,,,,,,proj-1,,,Frontend Dashboard,Giao diện dashboard và charts,InProgress,Medium,2025-04-01,u-3,2025-02-10T09:00:00.000Z,2025-02-20T11:00:00.000Z
+task,t-5,,,,,,proj-1,,,Unit tests,Jest cho API và components,Done,Medium,2025-02-28,u-4,2025-02-12T10:00:00.000Z,2025-02-25T16:00:00.000Z
+task,t-6,,,,,,proj-1,,,Tích hợp automation,Rule nhắc deadline,Todo,Low,2025-04-10,u-2,2025-02-15T11:00:00.000Z,2025-02-15T11:00:00.000Z
+task,t-7,,,,,,proj-1,,,Deploy staging,Docker và staging env,InProgress,High,2025-03-28,u-5,2025-02-18T08:00:00.000Z,2025-02-22T09:00:00.000Z
+task,t-8,,,,,,proj-1,,,Tài liệu API,OpenAPI Swagger,Todo,Low,2025-04-15,u-3,2025-02-20T14:00:00.000Z,2025-02-20T14:00:00.000Z
+task,t-9,,,,,,proj-1,,,UAT với stakeholder,User acceptance testing,Done,Medium,2025-03-01,u-1,2025-02-22T09:00:00.000Z,2025-02-28T17:00:00.000Z
+task,t-10,,,,,,proj-1,,,Refactor components,Tách component tái sử dụng,InProgress,Low,2025-04-05,u-4,2025-02-25T10:00:00.000Z,2025-03-02T12:00:00.000Z
+task,t-11,,,,,,proj-1,,,Error boundary,Xử lý lỗi toàn cục,Todo,Medium,2025-04-12,u-5,2025-02-28T09:00:00.000Z,2025-02-28T09:00:00.000Z
+task,t-12,,,,,,proj-1,,,Logging middleware,Structured logging,Todo,Low,2025-04-18,u-2,2025-03-02T10:00:00.000Z,2025-03-02T10:00:00.000Z
+task,t-13,,,,,,proj-1,,,Rate limiting,Giới hạn request theo IP,InProgress,Medium,2025-04-22,u-1,2025-03-05T08:00:00.000Z,2025-03-15T14:00:00.000Z
+task,t-14,,,,,,proj-1,,,Cache Redis,Tích hợp Redis cache,Todo,High,2025-04-28,u-3,2025-03-08T11:00:00.000Z,2025-03-08T11:00:00.000Z
+task,t-15,,,,,,proj-1,,,Health check endpoint,/health cho load balancer,Done,Low,2025-03-10,u-4,2025-03-10T09:00:00.000Z,2025-03-12T16:00:00.000Z
+task,t-16,,,,,,proj-1,,,Env config,Biến môi trường theo stage,Done,Medium,2025-03-15,u-5,2025-03-12T10:00:00.000Z,2025-03-18T11:00:00.000Z
+task,t-17,,,,,,proj-1,,,Seed data script,Script seed cho dev,Todo,Low,2025-05-01,u-2,2025-03-15T14:00:00.000Z,2025-03-15T14:00:00.000Z
+task,t-18,,,,,,proj-1,,,Migration rollback,Cơ chế rollback migration,InProgress,Medium,2025-04-30,u-1,2025-03-18T08:00:00.000Z,2025-03-25T12:00:00.000Z
+task,t-19,,,,,,proj-1,,,Soft delete,Xóa mềm cho task và project,Todo,Low,2025-05-05,u-3,2025-03-20T09:00:00.000Z,2025-03-20T09:00:00.000Z
+task,t-20,,,,,,proj-1,,,Audit log,Ghi log thay đổi dữ liệu,Todo,Medium,2025-05-08,u-4,2025-03-22T10:00:00.000Z,2025-03-22T10:00:00.000Z
+task,t-21,,,,,,proj-2,,,Thiết kế giao diện,Wireframe và UI kit,Todo,High,2025-04-08,u-6,2025-03-01T09:00:00.000Z,2025-03-01T09:00:00.000Z
+task,t-22,,,,,,proj-2,,,Backend CMS,API quản lý nội dung,InProgress,High,2025-04-18,u-7,2025-03-05T08:00:00.000Z,2025-03-15T14:00:00.000Z
+task,t-23,,,,,,proj-2,,,Trang giới thiệu,Landing page công ty,Todo,Medium,2025-04-22,u-6,2025-03-08T10:00:00.000Z,2025-03-08T10:00:00.000Z
+task,t-24,,,,,,proj-2,,,SEO và meta,Optimize SEO và meta tags,Done,Low,2025-03-25,u-8,2025-03-10T11:00:00.000Z,2025-03-20T16:00:00.000Z
+task,t-25,,,,,,proj-2,,,Form liên hệ,Form và gửi email,Todo,Medium,2025-04-25,u-7,2025-03-12T09:00:00.000Z,2025-03-12T09:00:00.000Z
+task,t-26,,,,,,proj-2,,,Analytics,Google Analytics tích hợp,InProgress,Low,2025-04-28,u-9,2025-03-15T14:00:00.000Z,2025-03-22T10:00:00.000Z
+task,t-27,,,,,,proj-2,,,Bảo mật và SSL,Cấu hình HTTPS,Todo,High,2025-05-01,u-8,2025-03-18T08:00:00.000Z,2025-03-18T08:00:00.000Z
+task,t-28,,,,,,proj-2,,,Review code,Code review và refactor,Done,Medium,2025-04-02,u-6,2025-03-20T09:00:00.000Z,2025-03-28T14:00:00.000Z
+task,t-29,,,,,,proj-2,,,Trang tin tức,Listing và chi tiết bài viết,Todo,Medium,2025-04-30,u-7,2025-03-22T10:00:00.000Z,2025-03-22T10:00:00.000Z
+task,t-30,,,,,,proj-2,,,Upload ảnh,Upload và resize ảnh,InProgress,High,2025-04-20,u-8,2025-03-25T11:00:00.000Z,2025-04-05T12:00:00.000Z
+task,t-31,,,,,,proj-2,,,Sitemap XML,Tạo sitemap động,Todo,Low,2025-05-05,u-9,2025-03-28T09:00:00.000Z,2025-03-28T09:00:00.000Z
+task,t-32,,,,,,proj-2,,,RSS feed,RSS cho tin tức,Todo,Low,2025-05-10,u-6,2025-04-01T08:00:00.000Z,2025-04-01T08:00:00.000Z
+task,t-33,,,,,,proj-2,,,Multi language,i18n cơ bản,InProgress,Medium,2025-05-15,u-7,2025-04-05T10:00:00.000Z,2025-04-12T14:00:00.000Z
+task,t-34,,,,,,proj-2,,,Dark mode,Chế độ tối cho giao diện,Todo,Low,2025-05-20,u-8,2025-04-08T11:00:00.000Z,2025-04-08T11:00:00.000Z
+task,t-35,,,,,,proj-2,,,Cookie consent,Banner đồng ý cookie,Done,Low,2025-04-15,u-9,2025-04-10T09:00:00.000Z,2025-04-14T16:00:00.000Z
+task,t-36,,,,,,proj-2,,,Trang 404,Trang lỗi tùy chỉnh,Done,Low,2025-04-12,u-6,2025-04-12T10:00:00.000Z,2025-04-16T11:00:00.000Z
+task,t-37,,,,,,proj-2,,,Performance audit,Đo và tối ưu LCP FID,Todo,Medium,2025-05-25,u-7,2025-04-15T14:00:00.000Z,2025-04-15T14:00:00.000Z
+task,t-38,,,,,,proj-2,,,CDN config,Cấu hình CDN cho static,Todo,Medium,2025-05-28,u-8,2025-04-18T08:00:00.000Z,2025-04-18T08:00:00.000Z
+task,t-39,,,,,,proj-2,,,Backup script,Script backup DB định kỳ,InProgress,High,2025-05-01,u-9,2025-04-20T09:00:00.000Z,2025-04-25T12:00:00.000Z
+task,t-40,,,,,,proj-2,,,Monitoring,Setup Sentry hoặc tương đương,Todo,Medium,2025-05-30,u-6,2025-04-22T10:00:00.000Z,2025-04-22T10:00:00.000Z
+task,t-41,,,,,,proj-3,,,Spec API mobile,REST API cho mobile app,Todo,High,2025-04-12,u-1,2025-03-20T09:00:00.000Z,2025-03-20T09:00:00.000Z
+task,t-42,,,,,,proj-3,,,Màn hình đăng nhập,Mobile login và OAuth,InProgress,High,2025-04-20,u-2,2025-03-22T10:00:00.000Z,2025-03-28T15:00:00.000Z
+task,t-43,,,,,,proj-3,,,Offline sync,Đồng bộ dữ liệu offline,Todo,Medium,2025-05-05,u-3,2025-03-25T11:00:00.000Z,2025-03-25T11:00:00.000Z
+task,t-44,,,,,,proj-3,,,Push notification,Cấu hình FCM/APNs,InProgress,Medium,2025-05-10,u-4,2025-03-28T08:00:00.000Z,2025-04-02T12:00:00.000Z
+task,t-45,,,,,,proj-3,,,Test thiết bị thật,QA trên iOS và Android,Todo,High,2025-05-15,u-5,2025-04-01T09:00:00.000Z,2025-04-01T09:00:00.000Z
+task,t-46,,,,,,proj-3,,,Performance tuning,Tối ưu tốc độ và bộ nhớ,Done,Medium,2025-04-18,u-1,2025-04-05T10:00:00.000Z,2025-04-15T17:00:00.000Z
+task,t-47,,,,,,proj-3,,,Store listing,Metadata và screenshot store,Todo,Low,2025-05-20,u-6,2025-04-08T14:00:00.000Z,2025-04-08T14:00:00.000Z
+task,t-48,,,,,,proj-3,,,Documentation,Hướng dẫn triển khai,Todo,Low,2025-05-25,u-7,2025-04-10T09:00:00.000Z,2025-04-10T09:00:00.000Z
+task,t-49,,,,,,proj-3,,,Deep linking,Xử lý deep link và universal link,InProgress,Medium,2025-05-08,u-2,2025-04-12T10:00:00.000Z,2025-04-20T11:00:00.000Z
+task,t-50,,,,,,proj-3,,,Biometric auth,Face ID / Touch ID,Todo,Medium,2025-05-12,u-3,2025-04-15T11:00:00.000Z,2025-04-15T11:00:00.000Z
+task,t-51,,,,,,proj-3,,,In-app purchase,Tích hợp IAP và Google Play Billing,Todo,High,2025-05-22,u-4,2025-04-18T08:00:00.000Z,2025-04-18T08:00:00.000Z
+task,t-52,,,,,,proj-3,,,Crash reporting,Firebase Crashlytics,InProgress,High,2025-05-18,u-5,2025-04-20T09:00:00.000Z,2025-04-28T14:00:00.000Z
+task,t-53,,,,,,proj-3,,,A/B testing,Cấu hình thử nghiệm A/B,Todo,Low,2025-05-28,u-1,2025-04-22T10:00:00.000Z,2025-04-22T10:00:00.000Z
+task,t-54,,,,,,proj-3,,,Accessibility,Hỗ trợ screen reader và contrast,Todo,Medium,2025-05-30,u-6,2025-04-25T14:00:00.000Z,2025-04-25T14:00:00.000Z
+task,t-55,,,,,,proj-3,,,Tablet layout,Layout tối ưu cho tablet,InProgress,Medium,2025-05-05,u-7,2025-04-28T08:00:00.000Z,2025-05-02T12:00:00.000Z
+task,t-56,,,,,,proj-3,,,Localization,Đa ngôn ngữ trong app,Todo,Low,2025-06-01,u-8,2025-05-01T09:00:00.000Z,2025-05-01T09:00:00.000Z
+task,t-57,,,,,,proj-1,,,Webhook handler,Xử lý webhook từ bên thứ 3,Todo,Medium,2025-05-12,u-5,2025-04-01T10:00:00.000Z,2025-04-01T10:00:00.000Z
+task,t-58,,,,,,proj-1,,,Export CSV,Export task list ra CSV,Done,Low,2025-04-20,u-2,2025-04-05T11:00:00.000Z,2025-04-18T16:00:00.000Z
+task,t-59,,,,,,proj-1,,,Pagination API,Cursor-based pagination,InProgress,Medium,2025-05-15,u-1,2025-04-08T08:00:00.000Z,2025-04-22T14:00:00.000Z
+task,t-60,,,,,,proj-1,,,Full-text search,Tìm kiếm task theo nội dung,Todo,High,2025-05-20,u-3,2025-04-12T09:00:00.000Z,2025-04-12T09:00:00.000Z
+task,t-61,,,,,,proj-2,,,Newsletter,Đăng ký và gửi newsletter,Todo,Low,2025-06-05,u-9,2025-04-25T10:00:00.000Z,2025-04-25T10:00:00.000Z
+task,t-62,,,,,,proj-2,,,Comment system,Bình luận cho bài viết,InProgress,Medium,2025-06-10,u-6,2025-04-28T11:00:00.000Z,2025-05-05T12:00:00.000Z
+task,t-63,,,,,,proj-3,,,Widget iOS,Home screen widget,Todo,Low,2025-06-15,u-4,2025-05-02T08:00:00.000Z,2025-05-02T08:00:00.000Z
+task,t-64,,,,,,proj-3,,,Widget Android,Home screen widget,Todo,Low,2025-06-18,u-5,2025-05-05T09:00:00.000Z,2025-05-05T09:00:00.000Z
+task,t-65,,,,,,proj-1,,,Notification service,Gửi email và in-app notification,Todo,High,2025-05-25,u-4,2025-04-15T10:00:00.000Z,2025-04-15T10:00:00.000Z
+task,t-66,,,,,,proj-1,,,Role permission,Phân quyền theo role chi tiết,InProgress,High,2025-05-28,u-5,2025-04-18T11:00:00.000Z,2025-04-25T14:00:00.000Z
+task,t-67,,,,,,proj-1,,,Session timeout,Tự động logout khi hết hạn,Todo,Low,2025-06-01,u-2,2025-04-22T08:00:00.000Z,2025-04-22T08:00:00.000Z
+task,t-68,,,,,,proj-1,,,2FA,Xác thực hai yếu tố,Todo,Medium,2025-06-05,u-1,2025-04-25T09:00:00.000Z,2025-04-25T09:00:00.000Z
+task,t-69,,,,,,proj-1,,,Password policy,Quy định mật khẩu mạnh,Done,Medium,2025-04-28,u-3,2025-04-26T10:00:00.000Z,2025-04-27T16:00:00.000Z
+task,t-70,,,,,,proj-2,,,GDPR compliance,Kiểm tra và chỉnh sửa theo GDPR,Todo,High,2025-06-20,u-8,2025-05-01T11:00:00.000Z,2025-05-01T11:00:00.000Z
+task,t-71,,,,,,proj-2,,,Data export,Cho phép user tải dữ liệu,Todo,Medium,2025-06-25,u-7,2025-05-05T08:00:00.000Z,2025-05-05T08:00:00.000Z
+task,t-72,,,,,,proj-2,,,Captcha,reCAPTCHA cho form,InProgress,Low,2025-06-08,u-9,2025-05-08T09:00:00.000Z,2025-05-12T12:00:00.000Z
+task,t-73,,,,,,proj-2,,,Rate limit API,Giới hạn request theo user,Todo,Medium,2025-06-12,u-6,2025-05-10T10:00:00.000Z,2025-05-10T10:00:00.000Z
+task,t-74,,,,,,proj-2,,,API versioning,Version trong URL hoặc header,Todo,Low,2025-06-28,u-8,2025-05-12T11:00:00.000Z,2025-05-12T11:00:00.000Z
+task,t-75,,,,,,proj-3,,,Splash screen,Màn hình chào và branding,Done,Low,2025-05-18,u-2,2025-05-15T08:00:00.000Z,2025-05-17T15:00:00.000Z
+task,t-76,,,,,,proj-3,,,Onboarding flow,Hướng dẫn lần đầu mở app,InProgress,Medium,2025-06-01,u-3,2025-05-18T09:00:00.000Z,2025-05-22T11:00:00.000Z
+task,t-77,,,,,,proj-3,,,Share extension,Share từ app khác vào app,Todo,Low,2025-06-08,u-4,2025-05-20T10:00:00.000Z,2025-05-20T10:00:00.000Z
+task,t-78,,,,,,proj-3,,,App shortcut,Shortcut trên màn hình chính,Todo,Low,2025-06-12,u-5,2025-05-22T11:00:00.000Z,2025-05-22T11:00:00.000Z
+task,t-79,,,,,,proj-3,,,Haptic feedback,Rung phản hồi thao tác,Todo,Low,2025-06-15,u-1,2025-05-25T08:00:00.000Z,2025-05-25T08:00:00.000Z
+task,t-80,,,,,,proj-1,,,Bulk assign,Gán nhiều task cùng lúc,Todo,Medium,2025-06-10,u-4,2025-05-28T09:00:00.000Z,2025-05-28T09:00:00.000Z
+task,t-81,,,,,,proj-1,,,Task template,Tạo task từ template,Todo,Low,2025-06-18,u-5,2025-05-30T10:00:00.000Z,2025-05-30T10:00:00.000Z
+task,t-82,,,,,,proj-1,,,Calendar view,Xem task theo lịch,InProgress,High,2025-06-22,u-1,2025-06-01T11:00:00.000Z,2025-06-08T14:00:00.000Z
+task,t-83,,,,,,proj-1,,,Gantt chart,Biểu đồ Gantt cho project,Todo,Medium,2025-06-25,u-2,2025-06-05T08:00:00.000Z,2025-06-05T08:00:00.000Z
+task,t-84,,,,,,proj-1,,,Time tracking,Ghi nhận thời gian làm task,Todo,Medium,2025-06-28,u-3,2025-06-08T09:00:00.000Z,2025-06-08T09:00:00.000Z
+task,t-85,,,,,,proj-2,,,Search highlight,Highlight từ khóa tìm kiếm,Todo,Low,2025-07-01,u-7,2025-06-10T10:00:00.000Z,2025-06-10T10:00:00.000Z
+task,t-86,,,,,,proj-2,,,Related posts,Bài viết liên quan,Todo,Low,2025-07-05,u-8,2025-06-12T11:00:00.000Z,2025-06-12T11:00:00.000Z
+task,t-87,,,,,,proj-2,,,Reading time,Ước lượng thời gian đọc,Done,Low,2025-06-15,u-9,2025-06-14T08:00:00.000Z,2025-06-16T16:00:00.000Z
+task,t-88,,,,,,proj-2,,,Print styles,CSS in ấn trang,Todo,Low,2025-07-10,u-6,2025-06-18T09:00:00.000Z,2025-06-18T09:00:00.000Z
+task,t-89,,,,,,proj-2,,,Social share,Nút chia sẻ mạng xã hội,InProgress,Medium,2025-07-12,u-7,2025-06-20T10:00:00.000Z,2025-06-25T12:00:00.000Z
+task,t-90,,,,,,proj-3,,,Watch app,Ứng dụng đồng hồ đơn giản,Todo,Low,2025-07-15,u-6,2025-06-22T11:00:00.000Z,2025-06-22T11:00:00.000Z
+task,t-91,,,,,,proj-3,,,CarPlay support,Hỗ trợ CarPlay,Todo,Low,2025-07-20,u-7,2025-06-25T08:00:00.000Z,2025-06-25T08:00:00.000Z
+task,t-92,,,,,,proj-3,,,Android Auto,Hỗ trợ Android Auto,Todo,Low,2025-07-22,u-8,2025-06-28T09:00:00.000Z,2025-06-28T09:00:00.000Z
+task,t-93,,,,,,proj-3,,,Watch face,Mặt đồng hồ tùy chỉnh,Todo,Low,2025-07-25,u-9,2025-07-01T10:00:00.000Z,2025-07-01T10:00:00.000Z
+task,t-94,,,,,,proj-1,,,Slack integration,Thông báo qua Slack,Todo,Medium,2025-07-08,u-5,2025-07-02T11:00:00.000Z,2025-07-02T11:00:00.000Z
+task,t-95,,,,,,proj-1,,,Webhook out,Gửi webhook khi task thay đổi,Todo,Low,2025-07-15,u-1,2025-07-05T08:00:00.000Z,2025-07-05T08:00:00.000Z
+task,t-96,,,,,,proj-1,,,Zapier app,Kết nối Zapier,Todo,Low,2025-07-20,u-2,2025-07-08T09:00:00.000Z,2025-07-08T09:00:00.000Z
+task,t-97,,,,,,proj-2,,,AMP pages,Trang AMP cho tin tức,Todo,Medium,2025-07-25,u-8,2025-07-10T10:00:00.000Z,2025-07-10T10:00:00.000Z
+task,t-98,,,,,,proj-2,,,PWA manifest,PWA và install prompt,InProgress,Medium,2025-07-28,u-9,2025-07-12T11:00:00.000Z,2025-07-18T14:00:00.000Z
+task,t-99,,,,,,proj-3,,,App clip,App Clip cho iOS,Todo,Low,2025-07-30,u-3,2025-07-15T08:00:00.000Z,2025-07-15T08:00:00.000Z
+task,t-100,,,,,,proj-3,,,Instant app,Instant App cho Android,Todo,Low,2025-08-01,u-4,2025-07-18T09:00:00.000Z,2025-07-18T09:00:00.000Z

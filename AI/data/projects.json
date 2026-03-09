@@ -1,0 +1,5 @@
+[
+  { "id": "proj-1", "name": "TaskMate App", "description": "Ứng dụng quản lý công việc TaskMate", "createdAt": "2025-02-01T00:00:00.000Z", "updatedAt": "2025-04-22T00:00:00.000Z" },
+  { "id": "proj-2", "name": "Website Công ty", "description": "Website giới thiệu và quảng bá công ty", "createdAt": "2025-02-10T00:00:00.000Z", "updatedAt": "2025-04-20T00:00:00.000Z" },
+  { "id": "proj-3", "name": "Mobile App", "description": "Ứng dụng di động đa nền tảng", "createdAt": "2025-03-01T00:00:00.000Z", "updatedAt": "2025-04-25T00:00:00.000Z" }
+]

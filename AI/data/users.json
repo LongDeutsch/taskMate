@@ -1,0 +1,12 @@
+[
+  { "id": "u-pm", "username": "pm", "password": "admin123", "fullName": "Project Manager (PM)", "role": "ADMIN", "disabled": false },
+  { "id": "u-1", "username": "nguyenvana", "password": "123456", "fullName": "Nguyễn Văn A", "role": "USER", "disabled": false },
+  { "id": "u-2", "username": "tranthib", "password": "123456", "fullName": "Trần Thị B", "role": "USER", "disabled": false },
+  { "id": "u-3", "username": "lethic", "password": "123456", "fullName": "Lê Thị C", "role": "USER", "disabled": false },
+  { "id": "u-4", "username": "phamvand", "password": "123456", "fullName": "Phạm Văn D", "role": "USER", "disabled": false },
+  { "id": "u-5", "username": "hoangthie", "password": "123456", "fullName": "Hoàng Thị E", "role": "USER", "disabled": false },
+  { "id": "u-6", "username": "phanvanf", "password": "123456", "fullName": "Phan Văn F", "role": "USER", "disabled": false },
+  { "id": "u-7", "username": "vuthig", "password": "123456", "fullName": "Vũ Thị G", "role": "USER", "disabled": false },
+  { "id": "u-8", "username": "dangvanh", "password": "123456", "fullName": "Đặng Văn H", "role": "USER", "disabled": false },
+  { "id": "u-9", "username": "buitihi", "password": "123456", "fullName": "Bùi Thị I", "role": "USER", "disabled": false }
+]
