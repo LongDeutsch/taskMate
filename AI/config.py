@@ -14,7 +14,7 @@ from typing import Any, List, Dict
 from pymongo import MongoClient
 
 # Model mặc định cho Gemini (có thể override bằng biến môi trường GEMINI_MODEL)
-GEMINI_DEFAULT_MODEL = "gemini-2.5-flash"
+GEMINI_DEFAULT_MODEL = "gemini-3.1-flash-lite-preview"
 
 # Tình trạng task hợp lệ mà LLM có thể trả về
 TASK_STATUSES = ("to do", "pending", "done")
