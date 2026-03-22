@@ -37,7 +37,7 @@ TaskMate là một ứng dụng quản lý công việc/dự án với kiến tr
     - Khởi tạo app `TaskMate AI Agent`.
     - `@app.on_event("startup")` gọi `config.load_data_from_mongo()` để load dữ liệu ban đầu.
     - Endpoint `POST /chat` nhận `message`, build state cho agent graph, trả về `reply` + `meta`.
-  - `requirements.txt` – danh sách dependencies (FastAPI, uvicorn, langgraph, langchain-google-genai, rapidfuzz, pymongo, ...).
+  - `requirements.txt` – danh sách dependencies (FastAPI, uvicorn, langgraph, langchain-openai, rapidfuzz, pymongo, ...).
   - Các module khác (ví dụ `config.py`, `agent.py`, ...) định nghĩa kết nối MongoDB và graph của AI agent.
 
 ---
@@ -154,6 +154,6 @@ FE sẽ chạy bằng Vite (mặc định `http://localhost:5173`), giao tiếp 
 - **BE**:
   - Node.js, Express, MongoDB + Mongoose, JWT auth, Multer (upload avatar), Express Validator.
 - **AI**:
-  - Python, FastAPI, Uvicorn, LangGraph, LangChain Google GenAI, RapidFuzz, PyMongo.
+  - Python, FastAPI, Uvicorn, LangGraph, LangChain OpenAI, RapidFuzz, PyMongo.
 
 README này được viết để mô tả tổng quan kiến trúc và cách chạy 3 services `FE`, `BE`, `AI` của project **TaskMate**.

@@ -9,14 +9,29 @@ sau đó match với dữ liệu trong MongoDB (được load qua module config)
 import json
 import os
 import re
-from typing import Literal, TypedDict
+from typing import Literal, Optional, TypedDict
 
 from langgraph.graph import StateGraph, END
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 from rapidfuzz import fuzz, process
 
 import config
+
+
+def _msg_text(msg) -> str:
+    """OpenAI trả AIMessage (.content); Gemini cũ dùng .text."""
+    if msg is None:
+        return ""
+    return (getattr(msg, "content", None) or getattr(msg, "text", None) or "").strip()
+
+
+def _get_chat_llm() -> Optional[ChatOpenAI]:
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        return None
+    model = os.environ.get("OPENAI_MODEL", config.OPENAI_DEFAULT_MODEL)
+    return ChatOpenAI(model=model, temperature=0, api_key=api_key)
 
 
 # --- State ---
@@ -60,19 +75,16 @@ def _classify_input(state: AgentState) -> AgentState:
         return {**state, "classification": "out_of_scope", "response": ""}
 
     classification = None
-    model = os.environ.get("GEMINI_MODEL", config.GEMINI_DEFAULT_MODEL)
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if api_key:
+    llm = _get_chat_llm()
+    if llm:
         try:
-            llm = ChatGoogleGenerativeAI(
-                model=model,
-                google_api_key=api_key,
-                temperature=0,
-            )
             msg = llm.invoke(
-                [SystemMessage(content=CLASSIFIER_SYSTEM_PROMPT), HumanMessage(content=user_input)]
+                [
+                    SystemMessage(content=config.CLASSIFIER_SYSTEM_PROMPT),
+                    HumanMessage(content=user_input),
+                ]
             )
-            raw = (msg.text or "").strip().lower()
+            raw = _msg_text(msg).lower()
             if "greeting" in raw:
                 classification = "greeting"
             elif "out_of_scope" in raw or "out of scope" in raw:
@@ -129,7 +141,85 @@ def _parse_extract(raw: str) -> tuple[str, str, str]:
         if s in config.TASK_STATUSES:
             task_status = s
     except (json.JSONDecodeError, TypeError):
-        pass
+        # Thử tìm object JSON lẫn trong text
+        m = re.search(r"\{[^{}]*\"project_name\"[^{}]*\}", raw, re.DOTALL)
+        if m:
+            try:
+                data = json.loads(m.group(0))
+                project_name = (data.get("project_name") or "").strip()
+                task_assignee = (data.get("task_assignee") or "").strip()
+                s = (data.get("task_status") or "").strip().lower()
+                if s in config.TASK_STATUSES:
+                    task_status = s
+            except (json.JSONDecodeError, TypeError):
+                pass
+    return project_name, task_status, task_assignee
+
+
+def _heuristic_extract(user_input: str) -> tuple[str, str, str]:
+    """
+    Fallback khi LLM trả rỗng: bắt project/status/assignee theo mẫu tiếng Việt thường gặp.
+    """
+    t = (user_input or "").strip()
+    if not t:
+        return "", "", ""
+
+    project_name = ""
+    task_status = ""
+    task_assignee = ""
+
+    # --- project: "của project X", "dự án X", "project X" ---
+    patterns_project = [
+        r"của\s+(?:project|dự\s*án)\s+([^\s,?.!]+(?:\s+[^\s,?.!]+)?)",
+        r"(?:project|dự\s*án)\s+([^\s,?.!]+(?:\s+[^\s,?.!]+)?)(?:\s+là|\s+của|\s+thì|$|\?)",
+        r"ở\s+(?:project|dự\s*án)\s+([^\s,?.!]+)",
+    ]
+    for pat in patterns_project:
+        m = re.search(pat, t, re.IGNORECASE)
+        if m:
+            project_name = m.group(1).strip()
+            break
+
+    # --- status tiếng Việt / Anh (tránh gán nhầm: "việc cần làm" = hỏi chung, không phải cột Todo) ---
+    tl = t.lower()
+    if any(
+        w in tl
+        for w in (
+            "chưa làm",
+            "todo",
+            "to-do",
+            "chưa xong",
+            "task todo",
+            "trạng thái todo",
+        )
+    ):
+        task_status = "to do"
+    elif any(
+        w in tl
+        for w in (
+            "đang làm",
+            "in progress",
+            "pending",
+            "đang thực hiện",
+            "đang làm",
+        )
+    ):
+        task_status = "pending"
+    elif any(w in tl for w in ("hoàn thành", "xong", "done", "đã xong")):
+        task_status = "done"
+
+    # Chỉ giữ status hợp lệ với schema
+    if task_status and task_status not in config.TASK_STATUSES:
+        task_status = ""
+
+    # --- assignee: "của Minh", "anh Minh", "chị Lan" (đơn giản) ---
+    m = re.search(
+        r"(?:của|cho|giao\s+cho)\s+(?:anh|chị|bạn\s+)?([A-ZÀÁẠẢÃÂẦẤẬẨẪĂẰẮẶẲẴÈÉẸẺẼÊỀẾỆỂỄÌÍỊỈĨÒÓỌỎÕÔỒỐỘỔỖƠỜỚỢỞỠÙÚỤỦŨƯỪỨỰỬỮỲÝỴỶỸ][a-zàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ\s]+?)(?:\s+ở|\s+là|\s*$|\?)",
+        t,
+    )
+    if m:
+        task_assignee = m.group(1).strip()
+
     return project_name, task_status, task_assignee
 
 
@@ -181,6 +271,26 @@ def _match_with_rapidfuzz(
     return matched_projects, matched_tasks, matched_users
 
 
+def _user_asks_remaining_work(user_input: str) -> bool:
+    """User hỏi việc còn phải làm / chưa xong (ưu tiên lọc Todo + InProgress)."""
+    tl = (user_input or "").lower()
+    return any(
+        phrase in tl
+        for phrase in (
+            "cần làm",
+            "đang cần",
+            "phải làm",
+            "việc cần",
+            "chưa xong",
+            "còn lại",
+            "todo",
+            "pending",
+            "in progress",
+            "đang làm",
+        )
+    )
+
+
 def extract_task_intent(state: AgentState) -> AgentState:
     """User input đi qua LLM để trả lời: tên project?, tình trạng tasks?, người làm task? (không có thì để trống)."""
     user_input = (state.get("input") or "").strip()
@@ -188,24 +298,27 @@ def extract_task_intent(state: AgentState) -> AgentState:
     task_status = ""
     task_assignee = ""
 
-    model = os.environ.get("GEMINI_MODEL", GEMINI_DEFAULT_MODEL)
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if api_key:
+    llm = _get_chat_llm()
+    if llm:
         try:
-            llm = ChatGoogleGenerativeAI(
-                model=model,
-                google_api_key=api_key,
-                temperature=0,
-            )
             msg = llm.invoke(
                 [
-                    SystemMessage(content=EXTRACT_SYSTEM_PROMPT),
+                    SystemMessage(content=config.EXTRACT_SYSTEM_PROMPT),
                     HumanMessage(content=user_input),
                 ]
             )
-            project_name, task_status, task_assignee = _parse_extract(msg.text or "")
+            project_name, task_status, task_assignee = _parse_extract(_msg_text(msg))
         except Exception:
             pass
+
+    # Bổ sung rule-based khi LLM trả thiếu (đặc biệt: "của project X", tiếng Việt)
+    hp, hs, ha = _heuristic_extract(user_input)
+    if not project_name and hp:
+        project_name = hp
+    if not task_status and hs:
+        task_status = hs
+    if not task_assignee and ha:
+        task_assignee = ha
 
     # Nếu đã trích được thông tin (không trống) thì match với data bằng rapidfuzz
     matched_projects: list[dict] = []
@@ -227,7 +340,15 @@ def extract_task_intent(state: AgentState) -> AgentState:
         else:
             assignee_ids = set()
 
-        tasks = matched_tasks
+        # Khi user KHÔNG chỉ định status, matched_tasks rỗng — phải lọc từ toàn bộ task,
+        # không dùng list rỗng (bug cũ: chỉ match project nhưng không trả task nào).
+        if matched_tasks:
+            tasks = list(matched_tasks)
+        else:
+            if not config.TASKS:
+                config.load_data_from_mongo()
+            tasks = list(config.TASKS)
+
         if assignee_ids and proj_ids:
             filtered_tasks = [
                 t
@@ -241,6 +362,12 @@ def extract_task_intent(state: AgentState) -> AgentState:
         elif proj_ids and not assignee_ids:
             filtered_tasks = [
                 t for t in tasks if t.get("projectId") in proj_ids
+            ]
+
+        # Ngữ nghĩa tiếng Việt: "cần làm", "đang cần", "việc phải làm" → thường chỉ task chưa Done
+        if filtered_tasks and _user_asks_remaining_work(user_input):
+            filtered_tasks = [
+                t for t in filtered_tasks if t.get("status") in ("Todo", "InProgress")
             ]
 
     # Cập nhật response để gộp thông tin đã trích
@@ -278,22 +405,16 @@ def extract_task_intent(state: AgentState) -> AgentState:
 def welcome_user(state: AgentState) -> AgentState:
     """Chào mừng user."""
     user_input = (state.get("input") or "").strip()
-    model = os.environ.get("GEMINI_MODEL", config.GEMINI_DEFAULT_MODEL)
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if api_key:
+    llm = _get_chat_llm()
+    if llm:
         try:
-            llm = ChatGoogleGenerativeAI(
-                model=model,
-                google_api_key=api_key,
-                temperature=0,
-            )
             msg = llm.invoke(
                 [
-                    SystemMessage(content=WELCOME_SYSTEM_PROMPT),
+                    SystemMessage(content=config.WELCOME_SYSTEM_PROMPT),
                     HumanMessage(content=user_input),
                 ]
             )
-            return {**state, "response": msg.text}
+            return {**state, "response": _msg_text(msg)}
         except Exception:
             return {**state, "response": "Xin chào! Tôi có thể giúp gì cho bạn hôm nay?"}
 
@@ -318,28 +439,22 @@ def generate_final_answer(state: AgentState) -> AgentState:
     if not tasks_hint:
         return state
 
-    model = os.environ.get("GEMINI_MODEL", GEMINI_DEFAULT_MODEL)
-    api_key = os.environ.get("GEMINI_API_KEY")
+    llm = _get_chat_llm()
     final_response = None
 
-    if api_key:
+    if llm:
         try:
-            llm = ChatGoogleGenerativeAI(
-                model=model,
-                google_api_key=api_key,
-                temperature=0,
-            )
             human_content = (
                 f"Câu hỏi của user: {user_input}\n\n"
                 f"Dữ liệu task gợi ý (mỗi block là một task):\n{tasks_hint}"
             )
             msg = llm.invoke(
                 [
-                    SystemMessage(content=FINAL_ANSWER_SYSTEM_PROMPT),
+                    SystemMessage(content=config.FINAL_ANSWER_SYSTEM_PROMPT),
                     HumanMessage(content=human_content),
                 ]
             )
-            final_response = (msg.text or "").strip()
+            final_response = _msg_text(msg)
         except Exception:
             final_response = None
 
@@ -348,7 +463,9 @@ def generate_final_answer(state: AgentState) -> AgentState:
         # Ghi đè bằng câu trả lời cuối cùng để FE dùng trực tiếp
         new_response = final_response
     else:
-        # Fallback: giữ base + list ngắn gọn các task
+        # Fallback: không hiển thị chuỗi debug "| Đã trích | Match" cho user
+        if "| Đã trích:" in base:
+            base = base.split("| Đã trích:")[0].strip()
         summary_lines = []
         summary_lines.append(base)
         summary_lines.append("Các task liên quan mà tôi tìm được:")
@@ -418,8 +535,7 @@ def _initial_state(user_input: str) -> dict:
 
 
 if __name__ == "__main__":
-    os.environ.setdefault("GEMINI_API_KEY", "AIzaSyCyy9_rnQyU1tXr2nGIatNnMWlKPqBBQLk")
-
+    # Cần OPENAI_API_KEY trong env (hoặc export trước khi chạy).
     graph = build_agent_graph()
 
     for user_input in [

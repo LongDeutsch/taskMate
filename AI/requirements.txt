@@ -1,12 +1,7 @@
 fastapi
 uvicorn
-langgraph
-langchain-google-genai
-langchain-core
-rapidfuzz
-pymongo
-
 langgraph>=0.2.0
-langchain-google-genai>=2.0.0
+langchain-openai>=0.2.0
 langchain-core>=0.3.0
 rapidfuzz>=3.9.0
+pymongo

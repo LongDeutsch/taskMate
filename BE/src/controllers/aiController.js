@@ -1,6 +1,14 @@
 import { createForbiddenError } from "../utils/errors.js";
 
-const AGENT_URL = process.env.AGENT_URL || "http://127.0.0.1:8000/chat";
+/** FastAPI AI chỉ có POST /chat — nhiều người set env chỉ domain (thiếu /chat) → 404. */
+function resolveAgentUrl(raw) {
+  const fallback = "http://127.0.0.1:8000/chat";
+  const s = (raw || fallback).trim().replace(/\/+$/, "");
+  if (s.endsWith("/chat")) return s;
+  return `${s}/chat`;
+}
+
+const AGENT_URL = resolveAgentUrl(process.env.AGENT_URL);
 const AI_FETCH_RETRIES = Number(process.env.AI_FETCH_RETRIES || "1"); // retry once by default
 const AI_FETCH_RETRY_DELAY_MS = Number(process.env.AI_FETCH_RETRY_DELAY_MS || "45000");
 

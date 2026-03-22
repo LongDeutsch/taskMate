@@ -1,28 +1,23 @@
-print("Hello, World!")
+"""
+Script thử nhanh OpenAI (tùy chọn).
+Đặt OPENAI_API_KEY trong môi trường rồi chạy: python test.py
+"""
 import os
-import asyncio
-from google import genai
 
-os.environ["GEMINI_API_KEY"] = "AIzaSyCyy9_rnQyU1tXr2nGIatNnMWlKPqBBQLk"
-
-
-# client = genai.Client()
-
-# async def main():
-#     async for chunk in await client.aio.models.generate_content_stream(
-#         model="gemini-3-flash-preview",
-#         contents="Trả lời tiếng Việt: AI hoạt động như thế nào? ngắn gọn"
-#     ):
-#         if chunk.text:
-#             print(chunk.text, end="", flush=True)
-#     print()
-
-# asyncio.run(main())
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage
 
 
-from google import genai
+def main() -> None:
+    key = os.environ.get("OPENAI_API_KEY")
+    if not key:
+        print("Thiếu OPENAI_API_KEY trong environment.")
+        return
+    model = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+    llm = ChatOpenAI(model=model, temperature=0, api_key=key)
+    msg = llm.invoke([HumanMessage(content="Trả lời một câu: 1+1=?")])
+    print(getattr(msg, "content", msg))
 
-client = genai.Client()  # lấy GEMINI_API_KEY từ env
 
-for m in client.models.list():
-    print(m.name)  # thường dạng: models/gemini-2.0-flash, ...
+if __name__ == "__main__":
+    main()
