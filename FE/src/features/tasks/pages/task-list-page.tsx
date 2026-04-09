@@ -1,8 +1,9 @@
 // File: src/features/tasks/pages/task-list-page.tsx
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useTasks } from "../hooks/use-tasks";
-import type { TaskStatus } from "@/shared/types";
+import type { Task, TaskPriority, TaskStatus } from "@/shared/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useAuth } from "@/features/auth/hooks/use-auth";
-import { getStoredUsers, getStoredProjects, getStoredTasks } from "@/shared/api/mock-data";
+import { getUsers } from "@/shared/api";
 import { Search, Calendar } from "lucide-react";
 
 const statusOptions: { value: TaskStatus | ""; label: string }[] = [
@@ -23,31 +24,42 @@ const statusOptions: { value: TaskStatus | ""; label: string }[] = [
   { value: "Done", label: "Done" },
 ];
 
+const priorityOptions: { value: TaskPriority | ""; label: string }[] = [
+  { value: "", label: "All priorities" },
+  { value: "High", label: "High" },
+  { value: "Medium", label: "Medium" },
+  { value: "Low", label: "Low" },
+];
+
 export function TaskListPage() {
   const { isAdmin, user } = useAuth();
   const [status, setStatus] = useState<TaskStatus | "">("");
+  const [priority, setPriority] = useState<TaskPriority | "">("");
   const [search, setSearch] = useState("");
   const [projectId, setProjectId] = useState<string>("");
-  const [sortBy, setSortBy] = useState<"deadline" | "createdAt">("deadline");
+  const [sortBy, setSortBy] = useState<"deadline" | "createdAt" | "priority">("deadline");
 
   const { data: tasks = [], isLoading, isError } = useTasks({
     status: status || undefined,
+    priority: priority || undefined,
     search: search || undefined,
     projectId: projectId || undefined,
     sortBy,
   });
 
-  const users = getStoredUsers();
-  const projects = getStoredProjects();
-  const allTasks = getStoredTasks();
-  const projectOptions = isAdmin
-    ? projects
-    : projects.filter((p) =>
-        allTasks.some((t) => t.assigneeId === user?.id && t.projectId === p.id)
-      );
-  const getAssigneeName = (assigneeId: string | null) => {
-    if (!assigneeId) return "—";
-    return users.find((u) => u.id === assigneeId)?.fullName ?? assigneeId;
+  const { data: users = [] } = useQuery({
+    queryKey: ["users", "task-list-assignee"],
+    queryFn: getUsers,
+    enabled: isAdmin,
+  });
+  const projectOptions = Array.from(
+    new Map(tasks.map((t) => [t.projectId, t.projectName ?? t.projectId])).entries()
+  ).map(([id, name]) => ({ id, name }));
+  const getAssigneeName = (task: Task) => {
+    if (!task.assigneeId) return "—";
+    if (task.assigneeName != null && task.assigneeName !== "") return task.assigneeName;
+    if (task.assigneeId === user?.id) return user.fullName;
+    return users.find((u) => u.id === task.assigneeId)?.fullName ?? task.assigneeId;
   };
 
   if (isLoading) {
@@ -122,11 +134,23 @@ export function TaskListPage() {
           </select>
           <select
             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+            value={priority}
+            onChange={(e) => setPriority((e.target.value || "") as TaskPriority | "")}
+          >
+            {priorityOptions.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          <select
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as "deadline" | "createdAt")}
+            onChange={(e) => setSortBy(e.target.value as "deadline" | "createdAt" | "priority")}
           >
             <option value="deadline">Sort by deadline</option>
             <option value="createdAt">Sort by created</option>
+            <option value="priority">Sort by priority</option>
           </select>
         </CardContent>
       </Card>
@@ -151,9 +175,6 @@ export function TaskListPage() {
                   >
                     {task.title}
                   </Link>
-                  <p className="truncate text-sm text-muted-foreground">
-                    {task.description}
-                  </p>
                   <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
                     <span>{task.status}</span>
                     <span>·</span>
@@ -161,9 +182,17 @@ export function TaskListPage() {
                     <span>·</span>
                     <span>Due {task.deadline}</span>
                     <span>·</span>
-                    <span>{getAssigneeName(task.assigneeId)}</span>
+                    <span>{getAssigneeName(task)}</span>
                     <span>·</span>
-                    <span>{projects.find((p) => p.id === task.projectId)?.name ?? task.projectId}</span>
+                    <span>{task.projectName ?? task.projectId}</span>
+                    {task.collaborators && task.collaborators.length > 0 && (
+                      <>
+                        <span>·</span>
+                        <span>
+                          Collaborators: {task.collaborators.map((c) => c.fullName).join(", ")}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
                 <Button variant="outline" size="sm" asChild>

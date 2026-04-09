@@ -13,6 +13,9 @@ export async function login(req, res, next) {
     if (!user) {
       return next(createUnauthorizedError("Invalid username or password"));
     }
+    if (user.deletedAt) {
+      return next(createUnauthorizedError("Account has been deleted"));
+    }
     if (user.disabled) {
       return next(createUnauthorizedError("Account is disabled"));
     }

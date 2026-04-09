@@ -60,15 +60,17 @@ export async function login(username: string, password: string): Promise<User | 
 
 export async function getTasks(filters?: {
   status?: TaskStatus;
+  priority?: TaskPriority;
   search?: string;
   assigneeId?: string;
   projectId?: string;
-  sortBy?: "deadline" | "createdAt";
+  sortBy?: "deadline" | "createdAt" | "priority";
 }): Promise<Task[]> {
   const params = new URLSearchParams();
   if (filters?.projectId) params.set("projectId", filters.projectId);
   if (filters?.assigneeId) params.set("assigneeId", filters.assigneeId);
   if (filters?.status) params.set("status", filters.status);
+  if (filters?.priority) params.set("priority", filters.priority);
   const q = params.toString();
   const json = await request<Task[]>(`/api/tasks${q ? `?${q}` : ""}`);
   let list = json.data ?? [];
@@ -76,8 +78,17 @@ export async function getTasks(filters?: {
     const s = filters.search.toLowerCase();
     list = list.filter((t) => t.title.toLowerCase().includes(s));
   }
-  const key = filters?.sortBy === "createdAt" ? "createdAt" : "deadline";
-  list = [...list].sort((a, b) => (a[key] < b[key] ? -1 : 1));
+  if (filters?.sortBy === "priority") {
+    const rank: Record<TaskPriority, number> = { High: 3, Medium: 2, Low: 1 };
+    list = [...list].sort((a, b) => rank[b.priority] - rank[a.priority]);
+  } else {
+    const key = filters?.sortBy === "createdAt" ? "createdAt" : "deadline";
+    list = [...list].sort((a, b) => {
+      if (a[key] === b[key]) return 0;
+      if (key === "createdAt") return a[key] > b[key] ? -1 : 1; // newest first
+      return a[key] < b[key] ? -1 : 1; // nearest deadline first
+    });
+  }
   return list;
 }
 
@@ -90,10 +101,12 @@ export async function createTask(data: {
   projectId: string;
   title: string;
   description: string;
+  feedback?: string;
   status: TaskStatus;
   priority: TaskPriority;
   deadline: string;
   assigneeId: string | null;
+  collaboratorIds?: string[];
 }): Promise<Task> {
   const json = await request<Task>("/api/tasks", {
     method: "POST",
@@ -181,6 +194,25 @@ export async function toggleUserDisabled(id: string): Promise<User | null> {
   return json.data ?? null;
 }
 
+export async function getDeletedUsers(): Promise<User[]> {
+  const json = await request<User[]>("/api/users/trash");
+  return json.data ?? [];
+}
+
+export async function deleteUser(id: string): Promise<User | null> {
+  const json = await request<User>(`/api/users/${id}`, {
+    method: "DELETE",
+  });
+  return json.data ?? null;
+}
+
+export async function restoreUser(id: string): Promise<User | null> {
+  const json = await request<User>(`/api/users/${id}/restore`, {
+    method: "PATCH",
+  });
+  return json.data ?? null;
+}
+
 export async function getProjects(): Promise<Project[]> {
   const json = await request<Project[]>("/api/projects");
   return json.data ?? [];
@@ -214,6 +246,16 @@ export async function deleteProject(id: string): Promise<boolean> {
   return true;
 }
 
+export async function getDeletedProjects(): Promise<Project[]> {
+  const json = await request<Project[]>("/api/projects/trash");
+  return json.data ?? [];
+}
+
+export async function restoreProject(id: string): Promise<Project | null> {
+  const json = await request<Project>(`/api/projects/${id}/restore`, { method: "PATCH" });
+  return json.data ?? null;
+}
+
 // Automation: no BE API yet, keep mock
 export async function getAutomationRules(): Promise<AutomationRule[]> {
   const { mockGetAutomationRules } = await import("./mock-client");
@@ -237,4 +279,34 @@ export async function aiChat(message: string): Promise<string> {
   });
   if (!json.data) throw new Error("AI assistant error");
   return json.data.reply;
+}
+
+export async function getDeletedTasks(): Promise<Task[]> {
+  const json = await request<Task[]>("/api/tasks/trash");
+  return json.data ?? [];
+}
+
+export async function restoreTask(id: string): Promise<Task | null> {
+  const json = await request<Task>(`/api/tasks/${id}/restore`, { method: "PATCH" });
+  return json.data ?? null;
+}
+
+export async function syncTasksToSheets(): Promise<{
+  total: number;
+  synced: number;
+  skipped: number;
+  failed: number;
+  errors: unknown[];
+}> {
+  const json = await request<{
+    total: number;
+    synced: number;
+    skipped: number;
+    failed: number;
+    errors: unknown[];
+  }>(`/api/tasks/sync-sheets`, {
+    method: "POST",
+  });
+  if (!json.data) throw new Error("Sync to Google Sheets failed");
+  return json.data;
 }

@@ -8,6 +8,8 @@ const userSchema = new mongoose.Schema(
     fullName: { type: String, required: true },
     role: { type: String, enum: ["ADMIN", "USER"], required: true },
     disabled: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null },
+    restoreUntil: { type: Date, default: null },
     // Profile
     age: { type: Number, default: null },
     gender: { type: String, default: null },

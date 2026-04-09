@@ -100,10 +100,12 @@ export async function mockCreateTask(data: {
   projectId: string;
   title: string;
   description: string;
+  feedback?: string;
   status: TaskStatus;
   priority: TaskPriority;
   deadline: string;
   assigneeId: string | null;
+  collaboratorIds?: string[];
 }): Promise<Task> {
   await delay(300);
   const tasks = getStoredTasks();

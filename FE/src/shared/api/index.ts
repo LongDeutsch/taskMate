@@ -20,10 +20,20 @@ export const createUser = useRealApi ? client.createUser : mock.mockCreateUser;
 export const toggleUserDisabled = useRealApi
   ? client.toggleUserDisabled
   : mock.mockToggleUserDisabled;
+export const getDeletedUsers = useRealApi ? client.getDeletedUsers : async () => [];
+export const deleteUser = useRealApi ? client.deleteUser : async () => null;
+export const restoreUser = useRealApi ? client.restoreUser : async () => null;
 export const getProjects = useRealApi ? client.getProjects : mock.mockGetProjects;
 export const createProject = useRealApi ? client.createProject : mock.mockCreateProject;
 export const updateProject = useRealApi ? client.updateProject : mock.mockUpdateProject;
 export const deleteProject = useRealApi ? client.deleteProject : mock.mockDeleteProject;
+export const getDeletedProjects = useRealApi ? client.getDeletedProjects : async () => [];
+export const restoreProject = useRealApi ? client.restoreProject : async () => null;
+export const getDeletedTasks = useRealApi ? client.getDeletedTasks : async () => [];
+export const restoreTask = useRealApi ? client.restoreTask : async () => null;
+export const syncTasksToSheets = useRealApi
+  ? client.syncTasksToSheets
+  : async () => ({ total: 0, synced: 0, skipped: 0, failed: 0, errors: [] });
 export const getAutomationRules = useRealApi
   ? client.getAutomationRules
   : mock.mockGetAutomationRules;

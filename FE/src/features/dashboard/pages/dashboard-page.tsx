@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import type { TaskStatus } from "@/shared/types";
+import type { Task, TaskStatus } from "@/shared/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/hooks/use-auth";
@@ -43,8 +43,12 @@ export function DashboardPage() {
     return doneTasks;
   };
 
-  const assigneeName = (assigneeId: string | null) =>
-    assigneeId ? users.find((u) => u.id === assigneeId)?.fullName ?? assigneeId : "—";
+  const assigneeNameForTask = (task: Task) =>
+    task.assigneeId
+      ? task.assigneeName ??
+        users.find((u) => u.id === task.assigneeId)?.fullName ??
+        task.assigneeId
+      : "—";
   const projectName = (projectId: string) =>
     projects.find((p) => p.id === projectId)?.name ?? projectId;
 
@@ -158,13 +162,10 @@ export function DashboardPage() {
                           <Link to={`/tasks/${task.id}`}>Xem chi tiết</Link>
                         </Button>
                       </div>
-                      {task.description && (
-                        <p className="mt-2 text-sm text-muted-foreground">{task.description}</p>
-                      )}
                       <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <User className="size-4 shrink-0" />
-                          {assigneeName(task.assigneeId)}
+                          {assigneeNameForTask(task)}
                         </span>
                         <span className="flex items-center gap-1">
                           <FolderKanban className="size-4 shrink-0" />

@@ -177,13 +177,7 @@ export function AdminProjectsPage() {
                   </Link>
                   <p className="text-sm text-muted-foreground">{project.description || "—"}</p>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to={`/admin/projects/${project.id}`}>
-                      <Users className="size-4" />
-                      Thành viên
-                    </Link>
-                  </Button>
+                <div className="flex flex-wrap gap-2 justify-end">
                   <Button variant="outline" size="sm" onClick={() => openEdit(project)}>
                     <Pencil className="size-4" />
                     Edit
@@ -191,13 +185,20 @@ export function AdminProjectsPage() {
                   <Button
                     variant="destructive"
                     size="sm"
+                    className="bg-red-600 text-white hover:bg-red-700"
                     onClick={() => {
                       if (confirm("Delete this project? All its tasks will be removed."))
                         deleteMutation.mutate(project.id);
                     }}
                   >
                     <Trash2 className="size-4" />
-                    Delete
+                    Xóa
+                  </Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to={`/admin/projects/${project.id}`}>
+                      <Users className="size-4" />
+                      Thành viên
+                    </Link>
                   </Button>
                 </div>
               </CardContent>

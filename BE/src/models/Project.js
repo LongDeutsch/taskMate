@@ -5,6 +5,8 @@ const projectSchema = new mongoose.Schema(
     _id: { type: String, required: true },
     name: { type: String, required: true },
     description: { type: String, default: "" },
+    deletedAt: { type: Date, default: null },
+    restoreUntil: { type: Date, default: null },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
   },

@@ -9,6 +9,7 @@ const router = Router();
 router.use(authMiddleware);
 router.use(requireRole("ADMIN"));
 
+router.get("/trash", projectController.listTrash);
 router.get("/", projectController.list);
 router.get("/:id", projectController.getById);
 router.post(
@@ -20,5 +21,6 @@ router.post(
 );
 router.put("/:id", projectController.update);
 router.delete("/:id", projectController.remove);
+router.patch("/:id/restore", projectController.restoreFromTrash);
 
 export default router;

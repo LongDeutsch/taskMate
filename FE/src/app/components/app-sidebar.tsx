@@ -9,6 +9,7 @@ import {
   ClipboardList,
   FolderKanban,
   UserCircle,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useAuth } from "@/features/auth/hooks/use-auth";
@@ -25,6 +26,7 @@ const adminItems = [
   { to: "/admin/projects", label: "Projects", icon: FolderKanban },
   { to: "/admin/tasks", label: "Tasks (CRUD)", icon: ClipboardList },
   { to: "/admin/users", label: "Users", icon: Users },
+  { to: "/admin/trash", label: "Thùng rác", icon: Trash2 },
 ];
 
 export function AppSidebar() {

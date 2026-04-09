@@ -1,21 +1,32 @@
 // File: src/features/tasks/pages/task-detail-page.tsx
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useTask } from "../hooks/use-task";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getStoredUsers, getStoredProjects } from "@/shared/api/mock-data";
+import { getUsers } from "@/shared/api";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 import { ArrowLeft } from "lucide-react";
 
 export function TaskDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: task, isLoading, isError } = useTask(id);
-  const users = getStoredUsers();
-  const projects = getStoredProjects();
+  const { user, isAdmin } = useAuth();
+  const { data: users = [] } = useQuery({
+    queryKey: ["users", "task-detail-assignee"],
+    queryFn: getUsers,
+    enabled: isAdmin,
+  });
 
-  const assigneeName = task?.assigneeId
-    ? users.find((u) => u.id === task.assigneeId)?.fullName ?? task.assigneeId
-    : "Unassigned";
+  const assigneeDisplay =
+    task?.assigneeId == null
+      ? "Unassigned"
+      : task.assigneeName != null && task.assigneeName !== ""
+        ? task.assigneeName
+        : task.assigneeId === user?.id
+          ? user?.fullName ?? task.assigneeId
+          : users.find((u) => u.id === task.assigneeId)?.fullName ?? task.assigneeId;
 
   if (isLoading) {
     return (
@@ -64,7 +75,9 @@ export function TaskDetailPage() {
         <CardContent className="space-y-4">
           <div>
             <p className="text-sm font-medium text-muted-foreground">Description</p>
-            <p className="mt-1">{task.description}</p>
+            <p className="mt-1 whitespace-pre-wrap break-words">
+              {task.description || "—"}
+            </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -81,11 +94,19 @@ export function TaskDetailPage() {
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Assignee</p>
-              <p className="mt-1">{assigneeName}</p>
+              <p className="mt-1">{assigneeDisplay}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Collaborators</p>
+              <p className="mt-1">
+                {task.collaborators && task.collaborators.length > 0
+                  ? task.collaborators.map((c) => c.fullName).join(", ")
+                  : "—"}
+              </p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Project</p>
-              <p className="mt-1">{projects.find((p) => p.id === task.projectId)?.name ?? task.projectId}</p>
+              <p className="mt-1">{task.projectName ?? task.projectId}</p>
             </div>
           </div>
         </CardContent>

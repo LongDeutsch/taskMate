@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getUsers, createUser, toggleUserDisabled } from "@/shared/api";
+import { getUsers, createUser, deleteUser } from "@/shared/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { z } from "zod";
-import { Plus, UserX, UserCheck } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 const createUserSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -45,9 +45,12 @@ export function AdminUsersPage() {
     },
   });
 
-  const toggleMutation = useMutation({
-    mutationFn: toggleUserDisabled,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["users"] }),
+  const deleteMutation = useMutation({
+    mutationFn: deleteUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["users", "trash"] });
+    },
   });
 
   function handleCreate(e: React.FormEvent) {
@@ -127,7 +130,7 @@ export function AdminUsersPage() {
       <Card>
         <CardHeader>
           <CardTitle>User list</CardTitle>
-          <CardDescription>Enable or disable user accounts</CardDescription>
+          <CardDescription>Xóa user sẽ đưa vào thùng rác 5 ngày</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -154,23 +157,19 @@ export function AdminUsersPage() {
                       <Link to={`/admin/users/${user.id}`}>Xem dự án</Link>
                     </Button>
                     <Button
-                    variant={user.disabled ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => toggleMutation.mutate(user.id)}
-                    disabled={toggleMutation.isPending}
-                  >
-                    {user.disabled ? (
-                      <>
-                        <UserCheck className="size-4" />
-                        Enable
-                      </>
-                    ) : (
-                      <>
-                        <UserX className="size-4" />
-                        Disable
-                      </>
-                    )}
-                  </Button>
+                      variant="destructive"
+                      size="sm"
+                      className="bg-red-600 text-white hover:bg-red-700"
+                      onClick={() => {
+                        if (confirm("Xóa user này? User sẽ nằm trong thùng rác 5 ngày.")) {
+                          deleteMutation.mutate(user.id);
+                        }
+                      }}
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="size-4" />
+                      Xóa
+                    </Button>
                   </div>
                 )}
               </div>

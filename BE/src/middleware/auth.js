@@ -16,6 +16,9 @@ export async function authMiddleware(req, res, next) {
     if (!user) {
       return next(createUnauthorizedError("User not found"));
     }
+    if (user.deletedAt) {
+      return next(createUnauthorizedError("Account has been deleted"));
+    }
     if (user.disabled) {
       return next(createUnauthorizedError("Account is disabled"));
     }

@@ -14,6 +14,7 @@ import { AdminProjectsPage } from "@/features/projects/pages/admin-projects-page
 import { AdminProjectDetailPage } from "@/features/projects/pages/admin-project-detail-page";
 import { AutomationPage } from "@/features/automation/pages/automation-page";
 import { ProfilePage } from "@/features/profile/pages/profile-page";
+import { AdminTrashPage } from "@/features/trash/pages/admin-trash-page";
 
 const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -60,6 +61,14 @@ const router = createBrowserRouter([
         element: (
           <AdminRoute>
             <AdminUsersPage />
+          </AdminRoute>
+        ),
+      },
+      {
+        path: "admin/trash",
+        element: (
+          <AdminRoute>
+            <AdminTrashPage />
           </AdminRoute>
         ),
       },
