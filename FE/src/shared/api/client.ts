@@ -141,6 +141,13 @@ export async function deleteTask(id: string): Promise<boolean> {
   return true;
 }
 
+export async function deleteAllTasks(): Promise<number> {
+  const json = await request<{ deletedCount: number }>("/api/tasks/all", {
+    method: "DELETE",
+  });
+  return json.data?.deletedCount ?? 0;
+}
+
 export async function getProfile(): Promise<User> {
   const json = await request<User>("/api/profile");
   if (!json.data) throw new Error("Get profile failed");
@@ -219,6 +226,13 @@ export async function deleteUser(id: string): Promise<User | null> {
   return json.data ?? null;
 }
 
+export async function deleteAllUsers(): Promise<number> {
+  const json = await request<{ deletedCount: number }>("/api/users/all", {
+    method: "DELETE",
+  });
+  return json.data?.deletedCount ?? 0;
+}
+
 export async function restoreUser(id: string): Promise<User | null> {
   const json = await request<User>(`/api/users/${id}/restore`, {
     method: "PATCH",
@@ -257,6 +271,13 @@ export async function updateProject(
 export async function deleteProject(id: string): Promise<boolean> {
   await request(`/api/projects/${id}`, { method: "DELETE" });
   return true;
+}
+
+export async function deleteAllProjects(): Promise<number> {
+  const json = await request<{ deletedCount: number }>("/api/projects/all", {
+    method: "DELETE",
+  });
+  return json.data?.deletedCount ?? 0;
 }
 
 export async function getDeletedProjects(): Promise<Project[]> {

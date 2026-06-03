@@ -105,6 +105,32 @@ export async function update(req, res, next) {
   }
 }
 
+export async function deleteAll(req, res, next) {
+  try {
+    await purgeExpiredDeletedProjects();
+    const now = new Date();
+    const restoreUntil = restoreDeadlineFrom(now);
+    const projectResult = await Project.updateMany(
+      { deletedAt: null },
+      { $set: { deletedAt: now, restoreUntil, updatedAt: now } }
+    );
+    const taskResult = await Task.updateMany(
+      { deletedAt: null },
+      { $set: { deletedAt: now, restoreUntil, deletedByProject: true, updatedAt: now } }
+    );
+    res.json({
+      success: true,
+      data: {
+        deletedCount: projectResult.modifiedCount,
+        tasksTrashed: taskResult.modifiedCount,
+      },
+      message: "All projects moved to trash",
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function remove(req, res, next) {
   try {
     const project = await Project.findOne({ _id: req.params.id, deletedAt: null });

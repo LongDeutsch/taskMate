@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getUsers, createUser, deleteUser } from "@/shared/api";
+import { getUsers, createUser, deleteUser, deleteAllUsers } from "@/shared/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -89,6 +89,19 @@ export function AdminUsersPage() {
     },
   });
 
+  const deletableUsers = users.filter(
+    (u) => u.role !== "ADMIN" && u.username !== "pm"
+  );
+
+  const deleteAllMutation = useMutation({
+    mutationFn: deleteAllUsers,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["users", "trash"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
+
   function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -115,10 +128,30 @@ export function AdminUsersPage() {
           <h1 className="text-2xl font-bold">Users</h1>
           <p className="text-muted-foreground">Manage users (Admin only)</p>
         </div>
-        <Button onClick={() => setOpen(true)}>
-          <Plus className="size-4" />
-          Add user
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            className="border-red-200 text-red-700 hover:bg-red-50"
+            disabled={deletableUsers.length === 0 || deleteAllMutation.isPending}
+            onClick={() => {
+              if (
+                !confirm(
+                  `Xóa tất cả ${deletableUsers.length} user? Tài khoản PM (admin) được giữ lại. User sẽ vào thùng rác 5 ngày.`
+                )
+              ) {
+                return;
+              }
+              deleteAllMutation.mutate();
+            }}
+          >
+            <Trash2 className="size-4" />
+            Xóa tất cả
+          </Button>
+          <Button onClick={() => setOpen(true)}>
+            <Plus className="size-4" />
+            Add user
+          </Button>
+        </div>
       </div>
 
       {open && (

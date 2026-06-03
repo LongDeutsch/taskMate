@@ -15,6 +15,7 @@ export const getTaskById = useRealApi ? client.getTaskById : mock.mockGetTaskByI
 export const createTask = useRealApi ? client.createTask : mock.mockCreateTask;
 export const updateTask = useRealApi ? client.updateTask : mock.mockUpdateTask;
 export const deleteTask = useRealApi ? client.deleteTask : mock.mockDeleteTask;
+export const deleteAllTasks = useRealApi ? client.deleteAllTasks : async () => 0;
 export const getUsers = useRealApi ? client.getUsers : mock.mockGetUsers;
 export const createUser = useRealApi ? client.createUser : mock.mockCreateUser;
 export const toggleUserDisabled = useRealApi
@@ -22,11 +23,13 @@ export const toggleUserDisabled = useRealApi
   : mock.mockToggleUserDisabled;
 export const getDeletedUsers = useRealApi ? client.getDeletedUsers : async () => [];
 export const deleteUser = useRealApi ? client.deleteUser : async () => null;
+export const deleteAllUsers = useRealApi ? client.deleteAllUsers : async () => 0;
 export const restoreUser = useRealApi ? client.restoreUser : async () => null;
 export const getProjects = useRealApi ? client.getProjects : mock.mockGetProjects;
 export const createProject = useRealApi ? client.createProject : mock.mockCreateProject;
 export const updateProject = useRealApi ? client.updateProject : mock.mockUpdateProject;
 export const deleteProject = useRealApi ? client.deleteProject : mock.mockDeleteProject;
+export const deleteAllProjects = useRealApi ? client.deleteAllProjects : async () => 0;
 export const getDeletedProjects = useRealApi ? client.getDeletedProjects : async () => [];
 export const restoreProject = useRealApi ? client.restoreProject : async () => null;
 export const getDeletedTasks = useRealApi ? client.getDeletedTasks : async () => [];

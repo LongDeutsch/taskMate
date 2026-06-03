@@ -10,6 +10,7 @@ router.use(authMiddleware);
 router.use(requireRole("ADMIN"));
 
 router.get("/trash", projectController.listTrash);
+router.delete("/all", projectController.deleteAll);
 router.get("/", projectController.list);
 router.get("/:id", projectController.getById);
 router.post(

@@ -492,6 +492,25 @@ export async function update(req, res, next) {
   }
 }
 
+export async function deleteAll(req, res, next) {
+  try {
+    await purgeExpiredDeletedTasks();
+    const now = new Date();
+    const restoreUntil = restoreDeadlineFrom(now);
+    const result = await Task.updateMany(
+      { deletedAt: null },
+      { $set: { deletedAt: now, restoreUntil, deletedByProject: false, updatedAt: now } }
+    );
+    res.json({
+      success: true,
+      data: { deletedCount: result.modifiedCount },
+      message: "All tasks moved to trash",
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function remove(req, res, next) {
   try {
     const task = await Task.findOne({ _id: req.params.id, deletedAt: null });

@@ -8,6 +8,7 @@ import {
   createTask,
   updateTask,
   deleteTask,
+  deleteAllTasks,
   getUsers,
   getProjects,
 } from "@/shared/api";
@@ -125,6 +126,14 @@ export function AdminTasksPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteTask,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+  });
+
+  const deleteAllMutation = useMutation({
+    mutationFn: deleteAllTasks,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", "trash"] });
+    },
   });
 
   const drawerOpen = createOpen || !!editing;
@@ -275,6 +284,24 @@ export function AdminTasksPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            className="border-red-200 text-red-700 hover:bg-red-50"
+            disabled={deleteAllMutation.isPending}
+            onClick={() => {
+              if (
+                !confirm(
+                  "Xóa toàn bộ task trong hệ thống? (không chỉ danh sách đang lọc). Task sẽ vào thùng rác 5 ngày."
+                )
+              ) {
+                return;
+              }
+              deleteAllMutation.mutate();
+            }}
+          >
+            <Trash2 className="size-4 mr-2" />
+            Xóa tất cả
+          </Button>
           <Button
             variant="outline"
             onClick={openSelfNote}

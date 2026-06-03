@@ -104,14 +104,42 @@ export async function listTrash(req, res, next) {
   }
 }
 
+/** Không xóa user ADMIN (PM) — username `pm` hoặc role ADMIN. */
+function isProtectedAdminUser(user) {
+  return user.role === "ADMIN" || user.username === "pm";
+}
+
+export async function deleteAll(req, res, next) {
+  try {
+    await purgeExpiredDeletedUsers();
+    const now = new Date();
+    const restoreUntil = restoreDeadlineFrom(now);
+    const result = await User.updateMany(
+      {
+        deletedAt: null,
+        role: { $ne: "ADMIN" },
+        username: { $ne: "pm" },
+      },
+      { $set: { deletedAt: now, restoreUntil, disabled: true } }
+    );
+    res.json({
+      success: true,
+      data: { deletedCount: result.modifiedCount },
+      message: "Users moved to trash (PM/Admin kept)",
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function moveToTrash(req, res, next) {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
       return next(createNotFoundError("User not found"));
     }
-    if (user.role === "ADMIN") {
-      return next(createBadRequestError("Cannot delete ADMIN user"));
+    if (isProtectedAdminUser(user)) {
+      return next(createBadRequestError("Cannot delete ADMIN/PM user"));
     }
     if (user.deletedAt) {
       return next(createBadRequestError("User is already in trash"));

@@ -8,6 +8,7 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  deleteAllProjects,
 } from "@/shared/api";
 import { Button } from "@/components/ui/button";
 import { ProjectFormDrawer } from "../components/project-form-drawer";
@@ -75,6 +76,16 @@ export function AdminProjectsPage() {
     },
   });
 
+  const deleteAllMutation = useMutation({
+    mutationFn: deleteAllProjects,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["projects", "trash"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks", "trash"] });
+    },
+  });
+
   const drawerOpen = createOpen || !!editing;
   const formPending = createMutation.isPending || updateMutation.isPending;
 
@@ -138,10 +149,30 @@ export function AdminProjectsPage() {
             )}
           </p>
         </div>
-        <Button className={cn(pj.primaryBtn, "shrink-0")} onClick={openCreate}>
-          <Plus className="size-4 mr-2" />
-          New project
-        </Button>
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <Button
+            variant="outline"
+            className="border-red-200 text-red-700 hover:bg-red-50"
+            disabled={projects.length === 0 || deleteAllMutation.isPending}
+            onClick={() => {
+              if (
+                !confirm(
+                  `Xóa tất cả ${projects.length} project? Mọi task đang active cũng vào thùng rác 5 ngày.`
+                )
+              ) {
+                return;
+              }
+              deleteAllMutation.mutate();
+            }}
+          >
+            <Trash2 className="size-4 mr-2" />
+            Xóa tất cả
+          </Button>
+          <Button className={cn(pj.primaryBtn)} onClick={openCreate}>
+            <Plus className="size-4 mr-2" />
+            New project
+          </Button>
+        </div>
       </header>
 
       {showList && (
