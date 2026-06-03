@@ -1,20 +1,19 @@
 // File: src/features/auth/components/login-form.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { useAuth } from "../hooks/use-auth";
 import { loginSchema, type LoginFormValues } from "../schemas/login-schema";
 import { isUsingRealApi, apiBaseUrl } from "@/shared/api";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { cn } from "@/shared/lib/utils";
+
+const inputClass = cn(
+  "h-12 w-full rounded-[11px] border-[#d1d5db] bg-white px-4 text-[15px] text-[#111827] shadow-none",
+  "placeholder:text-[#9ca3af]",
+  "focus-visible:border-[#111827] focus-visible:ring-2 focus-visible:ring-[#111827]/10"
+);
 
 export function LoginForm() {
   const navigate = useNavigate();
@@ -23,6 +22,8 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof LoginFormValues, string>>>({});
+
+  const isDev = import.meta.env.DEV;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -59,86 +60,109 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-sm border-2 shadow-md">
-      <CardHeader>
-        <CardTitle className="text-2xl">TaskMate</CardTitle>
-        <CardDescription>Sign in to your account</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          {error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {error}
-            </div>
-          )}
-          <div className="grid gap-2">
-            <Label htmlFor="username">Username</Label>
+    <div
+      className="w-full max-w-[420px] rounded-[18px] border border-[#e5e7eb] bg-white p-8"
+      style={{ boxShadow: "0 16px 40px rgba(15, 23, 42, 0.08)" }}
+    >
+      <header className="mb-7">
+        <h1 className="text-[26px] font-extrabold tracking-tight text-[#111827]">TaskMate</h1>
+        <p className="mt-1.5 text-sm text-[#6b7280]">Sign in to your account</p>
+        <p className="mt-2 text-xs text-[#9ca3af]">Một cú sign in, ngàn task đang chờ.</p>
+      </header>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {error && (
+          <div
+            className="rounded-[10px] bg-red-50 px-3 py-2.5 text-sm text-red-700"
+            role="alert"
+          >
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <Label htmlFor="username" className="text-sm font-medium text-[#374151]">
+            Username
+          </Label>
+          <Input
+            id="username"
+            name="username"
+            type="text"
+            placeholder="pm"
+            autoComplete="username"
+            disabled={loading}
+            aria-invalid={!!errors.username}
+            className={inputClass}
+          />
+          {errors.username && <p className="text-sm text-red-600">{errors.username}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password" className="text-sm font-medium text-[#374151]">
+            Password
+          </Label>
+          <div className="relative">
             <Input
-              id="username"
-              name="username"
-              type="text"
-              placeholder="admin"
-              autoComplete="username"
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              autoComplete="current-password"
               disabled={loading}
-              aria-invalid={!!errors.username}
+              aria-invalid={!!errors.password}
+              className={cn(inputClass, "pr-11")}
             />
-            {errors.username && (
-              <p className="text-sm text-destructive">{errors.username}</p>
-            )}
+            <button
+              type="button"
+              tabIndex={-1}
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#9ca3af] transition-colors hover:text-[#374151]"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
+            </button>
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                autoComplete="current-password"
-                disabled={loading}
-                aria-invalid={!!errors.password}
-                className="pr-9"
-              />
-              <button
-                type="button"
-                tabIndex={-1}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring rounded p-1"
-                onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? (
-                  <EyeOff className="size-4" />
-                ) : (
-                  <Eye className="size-4" />
-                )}
-              </button>
-            </div>
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password}</p>
-            )}
-          </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? (
+          {errors.password && <p className="text-sm text-red-600">{errors.password}</p>}
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className={cn(
+            "flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-[11px]",
+            "bg-[#111827] text-sm font-semibold text-white",
+            "transition-colors duration-200",
+            "hover:bg-[#1f2937] active:bg-[#030712]",
+            "disabled:cursor-not-allowed disabled:opacity-60"
+          )}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Signing in...
+            </>
+          ) : (
+            "Sign in"
+          )}
+        </button>
+
+        {isDev && (
+          <p className="pt-1 text-center text-xs leading-relaxed text-[#9ca3af]">
+            {isUsingRealApi ? (
               <>
-                <Loader2 className="size-4 animate-spin" />
-                Signing in...
+                Dev API:{" "}
+                <span className="break-all text-[#6b7280]">{apiBaseUrl || "—"}</span>
               </>
             ) : (
-              "Sign in"
-            )}
-          </Button>
-          <p className="text-center text-xs text-muted-foreground mt-2">
-            {isUsingRealApi ? (
-              <>Kết nối BE: {apiBaseUrl}</>
-            ) : (
               <>
-                Chế độ Mock. Để dùng user trong MongoDB: tạo <code className="text-[10px] bg-muted px-1 rounded">FE/.env</code> với{" "}
-                <code className="text-[10px] bg-muted px-1 rounded">VITE_API_URL=http://localhost:6969</code> rồi restart FE.
+                Dev mode: Mock API — set{" "}
+                <code className="rounded bg-gray-100 px-1 text-[11px]">VITE_API_URL</code> in{" "}
+                <code className="rounded bg-gray-100 px-1 text-[11px]">FE/.env</code>
               </>
             )}
           </p>
-        </form>
-      </CardContent>
-    </Card>
+        )}
+      </form>
+    </div>
   );
 }
