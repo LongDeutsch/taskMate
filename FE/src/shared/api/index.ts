@@ -65,10 +65,6 @@ export const getAutomationRules = useRealApi
 export const createAutomationRule = useRealApi
   ? client.createAutomationRule
   : mock.mockCreateAutomationRule;
-export const aiChat = useRealApi ? client.aiChat : async (message: string) => {
-  // Khi dùng mock (không có BE), trả lời đơn giản.
-  return `Hiện đang chạy ở chế độ mock. Bạn đã hỏi: \"${message}\".`;
-};
 export const getNotifications = useRealApi
   ? client.getNotifications
   : async () => ({ items: [], unreadCount: 0 });

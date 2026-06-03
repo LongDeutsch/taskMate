@@ -284,16 +284,6 @@ export async function createAutomationRule(data: {
   return mockCreateAutomationRule(data);
 }
 
-// --- AI assistant ---
-export async function aiChat(message: string): Promise<string> {
-  const json = await request<{ reply: string; meta?: unknown }>("/api/ai/chat", {
-    method: "POST",
-    body: JSON.stringify({ message }),
-  });
-  if (!json.data) throw new Error("AI assistant error");
-  return json.data.reply;
-}
-
 export async function getDeletedTasks(): Promise<Task[]> {
   const json = await request<Task[]>("/api/tasks/trash");
   return json.data ?? [];
