@@ -36,6 +36,14 @@ import {
   Trash2,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { PageHeader } from "@/app/components/page-header";
+import {
+  DesktopFilterRow,
+  FilterSheet,
+  FilterSheetTrigger,
+} from "@/app/components/filter-sheet";
+import { FloatingActionButton } from "@/app/components/floating-action-button";
+import { OverflowActionsMenu } from "@/app/components/overflow-actions-menu";
 
 const statusOptions: TaskStatus[] = ["Todo", "InProgress", "Done"];
 const priorityOptions: TaskPriority[] = ["Low", "Medium", "High"];
@@ -64,6 +72,24 @@ export function AdminTasksPage() {
     feedback: "",
   });
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof TaskFormValues, string>>>({});
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  const activeFilterCount = [
+    status,
+    priorityFilter,
+    projectIdFilter,
+    assigneeFilter,
+    onlyMyNotes,
+  ].filter(Boolean).length;
+
+  function resetFilters() {
+    setStatus("");
+    setPriorityFilter("");
+    setProjectIdFilter("");
+    setAssigneeFilter("");
+    setOnlyMyNotes(false);
+    setSortBy("createdAt");
+  }
 
   const { data: projects = [] } = useQuery({
     queryKey: ["projects"],
@@ -105,6 +131,94 @@ export function AdminTasksPage() {
     queryKey: ["users"],
     queryFn: getUsers,
   });
+
+  const filterFields = (
+    <>
+      <div className="space-y-2">
+        <label className={at.label}>Project</label>
+        <select
+          className={at.select}
+          value={projectIdFilter}
+          onChange={(e) => setProjectIdFilter(e.target.value)}
+        >
+          <option value="">Tất cả project</option>
+          {projects.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="space-y-2">
+        <label className={at.label}>Assignee</label>
+        <select
+          className={at.select}
+          value={assigneeFilter}
+          onChange={(e) => setAssigneeFilter(e.target.value)}
+          disabled={onlyMyNotes}
+        >
+          <option value="">Tất cả assignee</option>
+          {users
+            .filter((u) => u.role === "USER" && u.roleLabel !== "HR")
+            .map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.fullName}
+              </option>
+            ))}
+        </select>
+      </div>
+      <div className="space-y-2">
+        <label className={at.label}>Status</label>
+        <select
+          className={at.select}
+          value={status}
+          onChange={(e) => setStatus((e.target.value || "") as TaskStatus | "")}
+        >
+          <option value="">Tất cả status</option>
+          {statusOptions.map((s) => (
+            <option key={s} value={s}>
+              {s === "InProgress" ? "In Progress" : s}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="space-y-2">
+        <label className={at.label}>Priority</label>
+        <select
+          className={at.select}
+          value={priorityFilter}
+          onChange={(e) => setPriorityFilter((e.target.value || "") as TaskPriority | "")}
+        >
+          <option value="">Tất cả priority</option>
+          {priorityOptions.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="space-y-2">
+        <label className={at.label}>Sắp xếp</label>
+        <select
+          className={at.select}
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as "deadline" | "createdAt" | "priority")}
+        >
+          <option value="createdAt">Mới nhất</option>
+          <option value="deadline">Deadline</option>
+          <option value="priority">Priority</option>
+        </select>
+      </div>
+      <FilterChip
+        active={onlyMyNotes}
+        onClick={() => setOnlyMyNotes((v) => !v)}
+        className="w-full justify-center"
+      >
+        <StickyNote className="size-4" />
+        {onlyMyNotes ? "Note của tôi" : "Chỉ note"}
+      </FilterChip>
+    </>
+  );
 
   const createMutation = useMutation({
     mutationFn: createTask,
@@ -274,52 +388,83 @@ export function AdminTasksPage() {
     );
   }
 
+  const desktopActions = (
+    <>
+      <Button
+        variant="outline"
+        className="h-11 border-red-200 text-red-700 hover:bg-red-50"
+        disabled={deleteAllMutation.isPending}
+        onClick={() => {
+          if (
+            !confirm(
+              "Xóa toàn bộ task trong hệ thống? Task sẽ vào thùng rác 5 ngày."
+            )
+          ) {
+            return;
+          }
+          deleteAllMutation.mutate();
+        }}
+      >
+        <Trash2 className="size-4 mr-2" />
+        Xóa tất cả
+      </Button>
+      <Button
+        variant="outline"
+        className="h-11 border-amber-200 text-amber-800 hover:bg-amber-50"
+        onClick={openSelfNote}
+      >
+        <StickyNote className="size-4 mr-2" />
+        Note cho tôi
+      </Button>
+      <Button className={cn(at.primaryBtn, "h-11")} onClick={openCreate}>
+        <Plus className="size-4 mr-2" />
+        Task mới
+      </Button>
+    </>
+  );
+
   return (
     <div className={at.page}>
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className={at.pageTitle}>Tasks</h1>
-          <p className={at.pageSubtitle}>
-            Tạo, chỉnh sửa và quản lý task — {visibleTasks.length} hiển thị
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            className="border-red-200 text-red-700 hover:bg-red-50"
-            disabled={deleteAllMutation.isPending}
-            onClick={() => {
-              if (
-                !confirm(
-                  "Xóa toàn bộ task trong hệ thống? (không chỉ danh sách đang lọc). Task sẽ vào thùng rác 5 ngày."
-                )
-              ) {
-                return;
-              }
-              deleteAllMutation.mutate();
-            }}
-          >
-            <Trash2 className="size-4 mr-2" />
-            Xóa tất cả
-          </Button>
-          <Button
-            variant="outline"
-            onClick={openSelfNote}
-            className="border-amber-200 bg-white text-amber-800 hover:bg-amber-50"
-          >
-            <StickyNote className="size-4 mr-2" />
-            Note cho tôi
-          </Button>
-          <Button className={at.primaryBtn} onClick={openCreate}>
-            <Plus className="size-4 mr-2" />
-            Task mới
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        title="Tasks"
+        subtitle={`Tạo, chỉnh sửa và quản lý task — ${visibleTasks.length} hiển thị`}
+        actions={desktopActions}
+        mobileActions={
+          <OverflowActionsMenu
+            actions={[
+              {
+                label: "Note cho tôi",
+                onClick: openSelfNote,
+              },
+              {
+                label: "Xóa tất cả",
+                destructive: true,
+                disabled: deleteAllMutation.isPending,
+                onClick: () => {
+                  if (
+                    !confirm(
+                      "Xóa toàn bộ task trong hệ thống? Task sẽ vào thùng rác 5 ngày."
+                    )
+                  ) {
+                    return;
+                  }
+                  deleteAllMutation.mutate();
+                },
+              },
+            ]}
+          />
+        }
+      />
+
+      <FloatingActionButton
+        label="Task mới"
+        icon={<Plus className="size-6" />}
+        onClick={openCreate}
+      />
 
       <div className={at.surface}>
         <div className={at.toolbar}>
-          <div className="relative w-full sm:max-w-xs">
+          <div className="relative w-full min-w-0 md:max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
             <input
               type="search"
@@ -330,7 +475,11 @@ export function AdminTasksPage() {
               aria-label="Tìm task"
             />
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <FilterSheetTrigger
+            onClick={() => setFilterOpen(true)}
+            activeCount={activeFilterCount}
+          />
+          <DesktopFilterRow>
             <select
               className={at.select}
               value={projectIdFilter}
@@ -404,9 +553,17 @@ export function AdminTasksPage() {
               <StickyNote className="size-4" />
               {onlyMyNotes ? "Note của tôi" : "Chỉ note"}
             </FilterChip>
-          </div>
+          </DesktopFilterRow>
         </div>
       </div>
+
+      <FilterSheet
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        onReset={resetFilters}
+      >
+        {filterFields}
+      </FilterSheet>
 
       {visibleTasks.length === 0 ? (
         <div className={`${at.surface} px-6 py-16 text-center`}>

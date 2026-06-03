@@ -68,9 +68,9 @@ export function AdminTrashPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Thùng rác</h1>
+    <div className="w-full min-w-0 space-y-6 pb-28 md:pb-0">
+      <div className="min-w-0">
+        <h1 className="text-xl font-bold sm:text-2xl">Thùng rác</h1>
         <p className="text-muted-foreground">
           Dữ liệu đã xóa của Projects, Tasks, Users. Có thể khôi phục trong vòng 5 ngày.
         </p>

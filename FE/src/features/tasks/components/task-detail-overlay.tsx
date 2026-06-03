@@ -54,7 +54,10 @@ export function TaskDetailDrawer({
   if (!open) return null;
 
   return createPortal(
-    <div data-taskmate-overlay className="fixed inset-0 z-50 flex justify-end">
+    <div
+      data-taskmate-overlay
+      className="fixed inset-0 z-50 flex items-end justify-end md:items-stretch"
+    >
       <button
         type="button"
         className="absolute inset-0 bg-black/40"
@@ -63,7 +66,8 @@ export function TaskDetailDrawer({
       />
       <div
         className={cn(
-          "relative flex h-full w-full flex-col bg-white shadow-xl",
+          "relative flex w-full flex-col bg-white shadow-xl",
+          "max-h-[min(92vh,100dvh)] rounded-t-2xl md:h-full md:max-h-none md:rounded-none",
           panelClassName
         )}
         role="dialog"
@@ -136,7 +140,10 @@ export function TaskDetailModal({
   if (!open) return null;
 
   return createPortal(
-    <div data-taskmate-overlay className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div
+      data-taskmate-overlay
+      className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
+    >
       <button
         type="button"
         className="absolute inset-0 bg-black/40"
@@ -144,7 +151,7 @@ export function TaskDetailModal({
         onClick={onClose}
       />
       <div
-        className="relative flex max-h-[min(85vh,720px)] w-full max-w-3xl flex-col rounded-2xl border border-gray-200 bg-white shadow-xl"
+        className="relative flex max-h-[min(92vh,100dvh)] w-full max-w-3xl flex-col rounded-t-2xl border border-gray-200 bg-white shadow-xl sm:max-h-[min(85vh,720px)] sm:rounded-2xl"
         role="dialog"
         aria-modal="true"
       >

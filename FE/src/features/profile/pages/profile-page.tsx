@@ -98,7 +98,7 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 space-y-6 pb-28 md:pb-0">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

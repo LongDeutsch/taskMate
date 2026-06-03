@@ -71,14 +71,14 @@ export function DashboardPage() {
   const filteredTasks = getTasksByStatus(selectedStatus);
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 space-y-6 pb-28 md:pb-0">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-xl font-bold sm:text-2xl">Dashboard</h1>
+        <p className="text-sm text-muted-foreground">
           {isAdmin ? "Overview of all tasks" : "Your assigned tasks at a glance"}
         </p>
       </div>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card
           role="button"
           tabIndex={0}

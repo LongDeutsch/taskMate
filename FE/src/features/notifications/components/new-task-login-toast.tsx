@@ -93,7 +93,7 @@ export function NewTaskLoginToast() {
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-4 right-4 z-[60] w-96 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border-2 border-indigo-500 bg-white text-foreground shadow-[0_20px_60px_-15px_rgba(79,70,229,0.5)] ring-4 ring-indigo-500/20 animate-in fade-in slide-in-from-right-4 duration-300"
+      className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-3 right-3 z-[60] mx-auto max-w-md overflow-hidden rounded-xl border-2 border-indigo-500 bg-white text-foreground shadow-[0_20px_60px_-15px_rgba(79,70,229,0.5)] ring-4 ring-indigo-500/20 animate-in fade-in slide-in-from-bottom-4 duration-300 md:bottom-4 md:left-auto md:right-4 md:max-w-sm md:slide-in-from-right-4"
     >
       <div className="flex items-start gap-3 bg-gradient-to-r from-indigo-600 via-blue-600 to-sky-500 px-4 py-3 text-white">
         <span className="relative mt-0.5 inline-flex shrink-0">

@@ -329,10 +329,10 @@ export function TimeOffPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 space-y-6 pb-28 md:pb-0">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold">
+        <div className="min-w-0">
+          <h1 className="flex flex-wrap items-center gap-2 text-xl font-bold sm:text-2xl">
             <CalendarOff className="size-6 text-primary" /> Xin off
           </h1>
           <p className="text-muted-foreground">

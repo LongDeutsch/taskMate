@@ -5,7 +5,8 @@ import { cn } from "@/shared/lib/utils";
 /** Shared Task Detail page styling tokens */
 export const td = {
   page: "mx-auto max-w-6xl space-y-6 pb-24",
-  twoCol: "grid gap-6 lg:grid-cols-[minmax(0,13fr)_minmax(280px,7fr)] lg:items-start",
+  twoCol:
+    "grid grid-cols-1 gap-6 min-w-0 lg:grid-cols-[minmax(0,13fr)_minmax(280px,7fr)] lg:items-start",
   stack: "space-y-6",
   surfaceCard: "gap-0 rounded-2xl border border-gray-200 bg-white py-0 shadow-sm",
   cardHeader: "flex flex-row items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 sm:px-6",

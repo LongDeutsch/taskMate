@@ -1,5 +1,11 @@
 // File: src/features/tasks/pages/task-list-page.tsx
 import { useState } from "react";
+import {
+  DesktopFilterRow,
+  FilterSheet,
+  FilterSheetTrigger,
+} from "@/app/components/filter-sheet";
+import { PageHeader } from "@/app/components/page-header";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTasks } from "../hooks/use-tasks";
@@ -17,7 +23,6 @@ import {
 } from "../components/admin-tasks-ui";
 import { UserResponseEditor } from "../components/user-response-editor";
 import { Calendar, Eye, Loader2, Search, Users } from "lucide-react";
-import { cn } from "@/shared/lib/utils";
 
 const statusOptions: { value: TaskStatus | ""; label: string }[] = [
   { value: "", label: "Tất cả status" },
@@ -40,6 +45,15 @@ export function TaskListPage() {
   const [search, setSearch] = useState("");
   const [projectId, setProjectId] = useState<string>("");
   const [sortBy, setSortBy] = useState<"deadline" | "createdAt" | "priority">("deadline");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const activeFilterCount = [status, priority, projectId].filter(Boolean).length;
+
+  function resetFilters() {
+    setStatus("");
+    setPriority("");
+    setProjectId("");
+    setSortBy("deadline");
+  }
 
   const { data: tasks = [], isLoading, isError } = useTasks({
     status: status || undefined,
@@ -88,23 +102,28 @@ export function TaskListPage() {
 
   return (
     <div className={at.page}>
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className={at.pageTitle}>My Tasks</h1>
-          <p className={at.pageSubtitle}>
-            Task được giao cho bạn · {tasks.length} task
-          </p>
-        </div>
-        {isAdmin && (
-          <Button asChild variant="outline" className="border-gray-200 shrink-0">
-            <Link to="/admin/tasks">Quản lý task (Admin)</Link>
-          </Button>
-        )}
-      </header>
+      <PageHeader
+        title="My Tasks"
+        subtitle={`Task được giao cho bạn · ${tasks.length} task`}
+        actions={
+          isAdmin ? (
+            <Button asChild variant="outline" className="h-11 border-gray-200">
+              <Link to="/admin/tasks">Quản lý task (Admin)</Link>
+            </Button>
+          ) : undefined
+        }
+        mobileActions={
+          isAdmin ? (
+            <Button asChild variant="outline" className="h-11 w-full border-gray-200">
+              <Link to="/admin/tasks">Quản lý task (Admin)</Link>
+            </Button>
+          ) : undefined
+        }
+      />
 
       <div className={at.surface}>
         <div className={at.toolbar}>
-          <div className="relative w-full sm:max-w-xs">
+          <div className="relative w-full min-w-0 md:max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
             <input
               type="search"
@@ -115,7 +134,11 @@ export function TaskListPage() {
               aria-label="Tìm task"
             />
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <FilterSheetTrigger
+            onClick={() => setFilterOpen(true)}
+            activeCount={activeFilterCount}
+          />
+          <DesktopFilterRow>
             <select
               className={at.select}
               value={projectId}
@@ -165,9 +188,55 @@ export function TaskListPage() {
               <option value="createdAt">Mới nhất</option>
               <option value="priority">Priority</option>
             </select>
-          </div>
+          </DesktopFilterRow>
         </div>
       </div>
+
+      <FilterSheet open={filterOpen} onClose={() => setFilterOpen(false)} onReset={resetFilters}>
+        <div className="space-y-4 md:hidden">
+          <select className={at.select} value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+            <option value="">Tất cả project</option>
+            {projectOptions.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+          <select
+            className={at.select}
+            value={status}
+            onChange={(e) => setStatus((e.target.value || "") as TaskStatus | "")}
+          >
+            {statusOptions.map((o) => (
+              <option key={o.value || "all"} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          <select
+            className={at.select}
+            value={priority}
+            onChange={(e) => setPriority((e.target.value || "") as TaskPriority | "")}
+          >
+            {priorityOptions.map((o) => (
+              <option key={o.value || "all"} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          <select
+            className={at.select}
+            value={sortBy}
+            onChange={(e) =>
+              setSortBy(e.target.value as "deadline" | "createdAt" | "priority")
+            }
+          >
+            <option value="deadline">Deadline</option>
+            <option value="createdAt">Mới nhất</option>
+            <option value="priority">Priority</option>
+          </select>
+        </div>
+      </FilterSheet>
 
       {tasks.length === 0 ? (
         <div className={`${at.surface} flex flex-col items-center justify-center px-6 py-16 text-center`}>
@@ -260,7 +329,7 @@ function UserTaskCard({ task, currentUser, assigneeLabel }: UserTaskCardProps) {
             {canEdit ? (
               <select
                 aria-label="Status"
-                className={cn(at.select, "min-w-[130px]")}
+                className={at.select}
                 value={task.status}
                 disabled={statusMut.isPending}
                 onChange={(e) => {

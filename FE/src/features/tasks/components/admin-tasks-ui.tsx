@@ -5,22 +5,22 @@ import { StickyNote } from "lucide-react";
 import { StatusBadge, PriorityBadge } from "./task-detail-ui";
 
 export const at = {
-  page: "mx-auto max-w-6xl space-y-8 pb-24",
-  pageTitle: "text-2xl font-semibold tracking-tight text-gray-900 sm:text-[28px]",
-  pageSubtitle: "text-sm text-gray-500",
+  page: "w-full min-w-0 space-y-6 pb-28 md:space-y-8 md:pb-10",
+  pageTitle: "text-xl font-bold tracking-tight text-gray-900 sm:text-2xl lg:text-[28px] lg:font-semibold",
+  pageSubtitle: "text-sm text-gray-500 [overflow-wrap:anywhere]",
   surface:
-    "rounded-2xl border border-gray-200 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)]",
-  toolbar: "flex flex-col gap-3 p-4 sm:p-5",
+    "min-w-0 rounded-2xl border border-gray-200 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)]",
+  toolbar: "flex min-w-0 flex-col gap-3 p-4 sm:p-5",
   select:
-    "h-9 min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:min-w-[130px] sm:flex-none",
+    "h-11 min-w-0 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 md:h-9 md:min-w-[130px] md:w-auto",
   search:
-    "h-9 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-sm shadow-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20",
+    "h-11 w-full min-w-0 rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-sm shadow-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 md:h-9",
   label: "text-sm font-medium text-gray-700",
   sectionTitle: "text-xs font-semibold uppercase tracking-wide text-gray-500",
   primaryBtn:
     "bg-blue-600 text-white shadow-sm hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60",
   taskCard:
-    "group rounded-xl border border-gray-200 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]",
+    "group min-w-0 rounded-xl border border-gray-200 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]",
   taskCardActive: "ring-2 ring-blue-500/30 border-blue-200",
   taskCardNote: "border-amber-200/80 bg-amber-50/30",
   iconBtn:

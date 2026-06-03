@@ -279,13 +279,31 @@
 
 @layer base {
     * {
-        @apply border-border;
-    @apply border-border outline-ring/50;
+        box-sizing: border-box;
+        @apply border-border outline-ring/50;
+    }
+
+    html,
+    body,
+    #root {
+        width: 100%;
+        min-height: 100%;
+    }
+
+    html {
+        overflow-x: hidden;
     }
 
     body {
+        overflow-x: hidden;
         @apply font-sans antialiased bg-background text-foreground;
-    @apply bg-background text-foreground;
+    }
+
+    img,
+    video,
+    svg {
+        max-width: 100%;
+        height: auto;
     }
 }
 

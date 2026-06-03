@@ -26,6 +26,9 @@ import {
   Trash2,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { PageHeader } from "@/app/components/page-header";
+import { FloatingActionButton } from "@/app/components/floating-action-button";
+import { OverflowActionsMenu } from "@/app/components/overflow-actions-menu";
 
 export function AdminProjectsPage() {
   const queryClient = useQueryClient();
@@ -135,45 +138,67 @@ export function AdminProjectsPage() {
 
   return (
     <div className={pj.page}>
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className={pj.pageTitle}>Projects</h1>
-          <p className={pj.pageSubtitle}>
-            Quản lý dự án
-            {showList && (
-              <>
-                {" "}
-                · {filteredProjects.length}
-                {search.trim() ? ` / ${projects.length}` : ""} hiển thị
-              </>
-            )}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2 shrink-0">
-          <Button
-            variant="outline"
-            className="border-red-200 text-red-700 hover:bg-red-50"
-            disabled={projects.length === 0 || deleteAllMutation.isPending}
-            onClick={() => {
-              if (
-                !confirm(
-                  `Xóa tất cả ${projects.length} project? Mọi task đang active cũng vào thùng rác 5 ngày.`
-                )
-              ) {
-                return;
-              }
-              deleteAllMutation.mutate();
-            }}
-          >
-            <Trash2 className="size-4 mr-2" />
-            Xóa tất cả
-          </Button>
-          <Button className={cn(pj.primaryBtn)} onClick={openCreate}>
-            <Plus className="size-4 mr-2" />
-            New project
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        title="Projects"
+        subtitle={`Quản lý dự án${
+          showList
+            ? ` · ${filteredProjects.length}${search.trim() ? ` / ${projects.length}` : ""} hiển thị`
+            : ""
+        }`}
+        actions={
+          <>
+            <Button
+              variant="outline"
+              className="h-11 border-red-200 text-red-700 hover:bg-red-50"
+              disabled={projects.length === 0 || deleteAllMutation.isPending}
+              onClick={() => {
+                if (
+                  !confirm(
+                    `Xóa tất cả ${projects.length} project? Mọi task đang active cũng vào thùng rác 5 ngày.`
+                  )
+                ) {
+                  return;
+                }
+                deleteAllMutation.mutate();
+              }}
+            >
+              <Trash2 className="size-4 mr-2" />
+              Xóa tất cả
+            </Button>
+            <Button className={cn(pj.primaryBtn, "h-11")} onClick={openCreate}>
+              <Plus className="size-4 mr-2" />
+              New project
+            </Button>
+          </>
+        }
+        mobileActions={
+          <OverflowActionsMenu
+            actions={[
+              {
+                label: "Xóa tất cả",
+                destructive: true,
+                disabled: projects.length === 0 || deleteAllMutation.isPending,
+                onClick: () => {
+                  if (
+                    !confirm(
+                      `Xóa tất cả ${projects.length} project? Mọi task đang active cũng vào thùng rác 5 ngày.`
+                    )
+                  ) {
+                    return;
+                  }
+                  deleteAllMutation.mutate();
+                },
+              },
+            ]}
+          />
+        }
+      />
+
+      <FloatingActionButton
+        label="New project"
+        icon={<Plus className="size-6" />}
+        onClick={openCreate}
+      />
 
       {showList && (
         <div className={pj.surface}>

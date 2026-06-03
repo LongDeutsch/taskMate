@@ -122,10 +122,10 @@ export function AdminUsersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 space-y-6 pb-28 md:pb-0">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Users</h1>
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold sm:text-2xl">Users</h1>
           <p className="text-muted-foreground">Manage users (Admin only)</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -245,7 +245,7 @@ export function AdminUsersPage() {
               return (
               <div
                 key={user.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3"
+                className="flex min-w-0 flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex items-start gap-3">
                   <span
