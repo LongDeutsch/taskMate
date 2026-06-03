@@ -1,4 +1,4 @@
-## TaskMate - Hệ thống quản lý công việc (AI + BE + FE)
+## TaskMate - Hệ thống quản lý công việc (AI + BE + FE) by LongPIP
 
 TaskMate là một ứng dụng quản lý công việc/dự án với kiến trúc tách ba phần:
 
