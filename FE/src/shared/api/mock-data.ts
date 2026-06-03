@@ -161,14 +161,6 @@ export const MOCK_AUTOMATION_RULES: AutomationRule[] = [
     enabled: true,
     createdAt: d(-20).toISOString(),
   },
-  {
-    id: "r-3",
-    name: "Weekly digest",
-    description: "Summary of tasks due this week",
-    trigger: "Every Monday 9:00",
-    enabled: false,
-    createdAt: d(-10).toISOString(),
-  },
 ];
 
 const STORAGE_KEYS = {
@@ -249,7 +241,12 @@ export function getStoredTasks(): Task[] {
 }
 
 export function getStoredRules(): AutomationRule[] {
-  return seedIfEmpty(STORAGE_KEYS.RULES, MOCK_AUTOMATION_RULES);
+  const rules = seedIfEmpty(STORAGE_KEYS.RULES, MOCK_AUTOMATION_RULES).filter((r) => {
+    const haystack = `${r.name} ${r.description} ${r.trigger}`.toLowerCase();
+    return !haystack.includes("weekly") && !haystack.includes("digest");
+  });
+  localStorage.setItem(STORAGE_KEYS.RULES, JSON.stringify(rules));
+  return rules;
 }
 
 export function setStoredUsers(users: User[]): void {
@@ -261,5 +258,9 @@ export function setStoredTasks(tasks: Task[]): void {
 }
 
 export function setStoredRules(rules: AutomationRule[]): void {
-  localStorage.setItem(STORAGE_KEYS.RULES, JSON.stringify(rules));
+  const filtered = rules.filter((r) => {
+    const haystack = `${r.name} ${r.description} ${r.trigger}`.toLowerCase();
+    return !haystack.includes("weekly") && !haystack.includes("digest");
+  });
+  localStorage.setItem(STORAGE_KEYS.RULES, JSON.stringify(filtered));
 }

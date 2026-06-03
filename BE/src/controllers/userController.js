@@ -20,6 +20,17 @@ async function purgeExpiredDeletedUsers() {
   });
 }
 
+/** Suy ra roleLabel cho user lean (cũ) chưa có trường roleLabel. */
+function withRoleLabel(u) {
+  return {
+    ...u,
+    id: u._id,
+    roleLabel: u.roleLabel ?? (u.role === "ADMIN" ? "ADMIN" : "STAFF"),
+  };
+}
+
+const ALLOWED_ROLE_LABELS = ["ADMIN", "STAFF", "HR", "BODS"];
+
 export async function list(req, res, next) {
   try {
     await purgeExpiredDeletedUsers();
@@ -27,7 +38,7 @@ export async function list(req, res, next) {
       .select("-password")
       .sort({ username: 1 })
       .lean();
-    const result = users.map((u) => ({ ...u, id: u._id }));
+    const result = users.map(withRoleLabel);
     res.json({ success: true, data: result });
   } catch (err) {
     next(err);
@@ -40,7 +51,7 @@ export async function getById(req, res, next) {
     if (!user) {
       return next(createNotFoundError("User not found"));
     }
-    res.json({ success: true, data: { ...user, id: user._id } });
+    res.json({ success: true, data: withRoleLabel(user) });
   } catch (err) {
     next(err);
   }
@@ -48,18 +59,27 @@ export async function getById(req, res, next) {
 
 export async function create(req, res, next) {
   try {
-    const { username, fullName, role = "USER", password } = req.body;
+    const { username, fullName, role, password } = req.body;
     const existing = await User.findOne({ username });
     if (existing) {
       return next(createBadRequestError("Username already exists"));
     }
+
+    // Form FE gửi field `role` chứa label (ADMIN/STAFF/HR/BODS).
+    let roleLabel = (req.body.roleLabel ?? role ?? "STAFF").toString().toUpperCase();
+    if (!ALLOWED_ROLE_LABELS.includes(roleLabel)) {
+      roleLabel = "STAFF";
+    }
+    const rbacRole = roleLabel === "ADMIN" ? "ADMIN" : "USER";
+
     const hashed = await bcrypt.hash(password || "123456", 12);
     const id = newId();
     const user = await User.create({
       _id: id,
       username,
       fullName: fullName || username,
-      role: role === "ADMIN" ? "ADMIN" : "USER",
+      role: rbacRole,
+      roleLabel,
       password: hashed,
       disabled: false,
     });

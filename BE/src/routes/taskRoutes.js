@@ -8,7 +8,6 @@ import { validate } from "../middleware/validate.js";
 const router = Router();
 
 router.get("/trash", authMiddleware, requireRole("ADMIN"), taskController.listTrash);
-router.post("/sync-sheets", authMiddleware, requireRole("ADMIN"), taskController.syncSheets);
 router.get("/", authMiddleware, taskController.list);
 router.get("/:id", authMiddleware, taskController.getById);
 
@@ -33,5 +32,9 @@ router.post(
 router.put("/:id", authMiddleware, requireRole("ADMIN"), taskController.update);
 router.delete("/:id", authMiddleware, requireRole("ADMIN"), taskController.remove);
 router.patch("/:id/restore", authMiddleware, requireRole("ADMIN"), taskController.restoreFromTrash);
+router.patch("/:id/user-update", authMiddleware, taskController.userUpdate);
+router.patch("/:id/response/draft", authMiddleware, taskController.saveResponseDraft);
+router.post("/:id/response/send", authMiddleware, taskController.sendResponse);
+router.post("/:id/response/undo", authMiddleware, taskController.undoResponse);
 
 export default router;

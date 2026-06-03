@@ -1,6 +1,7 @@
 import "dotenv/config";
 import app from "./app.js";
 import { connectDatabase, checkDatabase } from "./config/database.js";
+import { startAutomationScheduler } from "./services/automationService.js";
 
 const PORT = process.env.PORT || 6969;
 
@@ -17,6 +18,8 @@ async function start() {
   }
   app.listen(PORT, () => {
     console.log("Server running on port", PORT);
+    startAutomationScheduler();
+    console.log("Automation scheduler running (deadline/overdue alerts)");
   });
 }
 

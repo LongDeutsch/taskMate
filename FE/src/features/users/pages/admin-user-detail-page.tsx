@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, FolderKanban } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { formatRoleLabel, getRoleLabel } from "@/shared/types";
 
 const statusLabel: Record<TaskStatus, string> = {
   Todo: "Todo",
@@ -85,7 +86,7 @@ export function AdminUserDetailPage() {
         <div>
           <h1 className="text-2xl font-bold">{user.fullName}</h1>
           <p className="text-muted-foreground">
-            {user.username} · {user.role}
+            {user.username} · {formatRoleLabel(getRoleLabel(user))}
             {user.disabled && " · Disabled"}
           </p>
         </div>

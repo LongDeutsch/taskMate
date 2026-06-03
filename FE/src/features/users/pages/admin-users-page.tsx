@@ -14,11 +14,45 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { z } from "zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Check, Plus, Trash2 } from "lucide-react";
+import { formatRoleLabel, getRoleLabel, type RoleLabel } from "@/shared/types";
+
+const ROLE_LABEL_OPTIONS: {
+  value: RoleLabel;
+  label: string;
+  help: string;
+  active: string;
+}[] = [
+  {
+    value: "STAFF",
+    label: "Staff",
+    help: "Quyền user thông thường",
+    active: "border-slate-700 bg-slate-100 ring-2 ring-slate-700",
+  },
+  {
+    value: "HR",
+    label: "HR",
+    help: "Tạm thời quyền như Staff",
+    active: "border-emerald-600 bg-emerald-50 ring-2 ring-emerald-600",
+  },
+  {
+    value: "ADMIN",
+    label: "Admin",
+    help: "Đầy đủ quyền PM",
+    active: "border-violet-600 bg-violet-50 ring-2 ring-violet-600",
+  },
+  {
+    value: "BODS",
+    label: "BODs",
+    help: "Tạm thời quyền như Staff",
+    active: "border-amber-500 bg-amber-50 ring-2 ring-amber-500",
+  },
+];
 
 const createUserSchema = z.object({
   username: z.string().min(1, "Username is required"),
   fullName: z.string().min(1, "Full name is required"),
+  roleLabel: z.enum(["ADMIN", "STAFF", "HR", "BODS"]),
 });
 
 export function AdminUsersPage() {
@@ -26,6 +60,7 @@ export function AdminUsersPage() {
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
+  const [roleLabel, setRoleLabel] = useState<RoleLabel>("STAFF");
   const [error, setError] = useState<string | null>(null);
 
   const { data: users = [], isLoading } = useQuery({
@@ -34,13 +69,14 @@ export function AdminUsersPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: { username: string; fullName: string }) =>
-      createUser({ ...data, role: "USER" }),
+    mutationFn: (data: { username: string; fullName: string; roleLabel: RoleLabel }) =>
+      createUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       setOpen(false);
       setUsername("");
       setFullName("");
+      setRoleLabel("STAFF");
       setError(null);
     },
   });
@@ -56,7 +92,7 @@ export function AdminUsersPage() {
   function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const result = createUserSchema.safeParse({ username, fullName });
+    const result = createUserSchema.safeParse({ username, fullName, roleLabel });
     if (!result.success) {
       setError(result.error.issues.map((issue) => issue.message).join(". "));
       return;
@@ -116,8 +152,45 @@ export function AdminUsersPage() {
                   placeholder="Full Name"
                 />
               </div>
+              <div className="grid gap-2">
+                <Label>
+                  Role <span className="text-xs font-normal text-muted-foreground">(đang chọn: {formatRoleLabel(roleLabel)})</span>
+                </Label>
+                <div
+                  role="radiogroup"
+                  aria-label="Role"
+                  className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+                >
+                  {ROLE_LABEL_OPTIONS.map((opt) => {
+                    const active = roleLabel === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        onClick={() => setRoleLabel(opt.value)}
+                        className={`relative flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition ${
+                          active
+                            ? opt.active
+                            : "border-slate-200 bg-background hover:bg-accent"
+                        }`}
+                      >
+                        {active && (
+                          <span className="absolute right-2 top-2 inline-flex size-5 items-center justify-center rounded-full bg-foreground text-background">
+                            <Check className="size-3" />
+                          </span>
+                        )}
+                        <span className="text-sm font-semibold">{opt.label}</span>
+                        <span className="text-xs text-muted-foreground">{opt.help}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               <p className="text-xs text-muted-foreground">
-                New users get role USER and default password: 123456
+                Default password: 123456. Admin có quyền PM; HR/BODs hiện tạm
+                thời chia sẻ quyền với Staff.
               </p>
               <Button type="submit" disabled={createMutation.isPending}>
                 Create
@@ -134,22 +207,39 @@ export function AdminUsersPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {users.map((user) => (
+            {users.map((user) => {
+              const userRoleLabel = getRoleLabel(user);
+              return (
               <div
                 key={user.id}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3"
               >
-                <div>
-                  <Link
-                    to={user.role === "USER" ? `/admin/users/${user.id}` : "#"}
-                    className={user.role === "USER" ? "font-medium text-primary hover:underline" : "font-medium"}
+                <div className="flex items-start gap-3">
+                  <span
+                    className={`mt-0.5 inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      userRoleLabel === "ADMIN"
+                        ? "bg-violet-100 text-violet-800"
+                        : userRoleLabel === "HR"
+                          ? "bg-emerald-100 text-emerald-800"
+                          : userRoleLabel === "BODS"
+                            ? "bg-amber-100 text-amber-800"
+                            : "bg-slate-100 text-slate-700"
+                    }`}
                   >
-                    {user.fullName}
-                  </Link>
-                  <p className="text-sm text-muted-foreground">
-                    {user.username} · {user.role}
-                    {user.disabled && " · Disabled"}
-                  </p>
+                    {formatRoleLabel(userRoleLabel)}
+                  </span>
+                  <div>
+                    <Link
+                      to={user.role === "USER" ? `/admin/users/${user.id}` : "#"}
+                      className={user.role === "USER" ? "font-medium text-primary hover:underline" : "font-medium"}
+                    >
+                      {user.fullName}
+                    </Link>
+                    <p className="text-sm text-muted-foreground">
+                      {user.username}
+                      {user.disabled && " · Disabled"}
+                    </p>
+                  </div>
                 </div>
                 {user.role === "USER" && (
                   <div className="flex items-center gap-2">
@@ -173,7 +263,8 @@ export function AdminUsersPage() {
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>

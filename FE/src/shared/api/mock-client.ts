@@ -72,22 +72,29 @@ export async function mockUpdateProfile(
 
 export async function mockGetTasks(filters?: {
   status?: TaskStatus;
+  priority?: TaskPriority;
   search?: string;
   assigneeId?: string;
   projectId?: string;
-  sortBy?: "deadline" | "createdAt";
+  sortBy?: "deadline" | "createdAt" | "priority";
 }): Promise<Task[]> {
   await delay(300);
   let list = [...getStoredTasks()];
   if (filters?.assigneeId) list = list.filter((t) => t.assigneeId === filters.assigneeId);
   if (filters?.projectId) list = list.filter((t) => t.projectId === filters.projectId);
   if (filters?.status) list = list.filter((t) => t.status === filters.status);
+  if (filters?.priority) list = list.filter((t) => t.priority === filters.priority);
   if (filters?.search) {
     const q = filters.search.toLowerCase();
     list = list.filter((t) => t.title.toLowerCase().includes(q));
   }
-  const key = filters?.sortBy === "createdAt" ? "createdAt" : "deadline";
-  list.sort((a, b) => (a[key] < b[key] ? -1 : 1));
+  if (filters?.sortBy === "priority") {
+    const rank: Record<TaskPriority, number> = { High: 3, Medium: 2, Low: 1 };
+    list.sort((a, b) => rank[b.priority] - rank[a.priority]);
+  } else {
+    const key = filters?.sortBy === "createdAt" ? "createdAt" : "deadline";
+    list.sort((a, b) => (a[key] < b[key] ? -1 : 1));
+  }
   return list;
 }
 
@@ -97,7 +104,7 @@ export async function mockGetTaskById(id: string): Promise<Task | null> {
 }
 
 export async function mockCreateTask(data: {
-  projectId: string;
+  projectId: string | null;
   title: string;
   description: string;
   feedback?: string;
@@ -148,13 +155,18 @@ export async function mockGetUsers(): Promise<User[]> {
 export async function mockCreateUser(data: {
   username: string;
   fullName: string;
-  role: "USER";
+  roleLabel?: "ADMIN" | "STAFF" | "HR" | "BODS";
 }): Promise<User> {
   await delay(300);
   const users = getStoredUsers();
+  const roleLabel = data.roleLabel ?? "STAFF";
+  const role = roleLabel === "ADMIN" ? "ADMIN" : "USER";
   const user: User = {
     id: `u-${Date.now()}`,
-    ...data,
+    username: data.username,
+    fullName: data.fullName,
+    role,
+    roleLabel,
     disabled: false,
     password: "123456",
   };

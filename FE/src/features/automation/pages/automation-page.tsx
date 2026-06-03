@@ -66,8 +66,8 @@ export function AutomationPage() {
           <h1 className="text-2xl font-bold">Automation</h1>
           <p className="text-muted-foreground">
             {isAdmin
-              ? "Manage reminder and automation rules"
-              : "View reminder rules (read-only)"}
+              ? "Deadline and overdue alerts notify users and PMs"
+              : "View deadline and overdue alert rules (read-only)"}
           </p>
         </div>
         {isAdmin && (
@@ -112,7 +112,7 @@ export function AutomationPage() {
                   id="rule-trigger"
                   value={trigger}
                   onChange={(e) => setTrigger(e.target.value)}
-                  placeholder="e.g. 1 day before deadline"
+                  placeholder="e.g. 1 day before deadline (weekly digest removed)"
                 />
               </div>
               <Button type="submit" disabled={createMutation.isPending}>

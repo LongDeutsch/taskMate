@@ -5,6 +5,12 @@ import type {
   TaskStatus,
   TaskPriority,
   AutomationRule,
+  AppNotification,
+  TimeOffRequest,
+  TimeOffRecipient,
+  TimeOffSession,
+  TimeOffReason,
+  TimeOffStatus,
 } from "@/shared/types";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "";
@@ -36,6 +42,11 @@ async function request<T>(
   const res = await fetch(url, { ...options, headers });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
+    if (res.status === 401) {
+      clearToken();
+      localStorage.removeItem("taskmate_auth_user");
+      window.dispatchEvent(new Event("taskmate-auth-update"));
+    }
     throw new Error(json.message || res.statusText || "Request failed");
   }
   return json;
@@ -98,7 +109,8 @@ export async function getTaskById(id: string): Promise<Task | null> {
 }
 
 export async function createTask(data: {
-  projectId: string;
+  /** Có thể null cho self-note của admin. */
+  projectId: string | null;
   title: string;
   description: string;
   feedback?: string;
@@ -176,7 +188,8 @@ export async function getUsers(): Promise<User[]> {
 export async function createUser(data: {
   username: string;
   fullName: string;
-  role: "USER";
+  /** Label hiển thị: ADMIN / STAFF / HR / BODS. Mặc định STAFF. */
+  roleLabel?: "ADMIN" | "STAFF" | "HR" | "BODS";
   password?: string;
 }): Promise<User> {
   const json = await request<User>("/api/users", {
@@ -291,22 +304,156 @@ export async function restoreTask(id: string): Promise<Task | null> {
   return json.data ?? null;
 }
 
-export async function syncTasksToSheets(): Promise<{
-  total: number;
-  synced: number;
-  skipped: number;
-  failed: number;
-  errors: unknown[];
-}> {
-  const json = await request<{
-    total: number;
-    synced: number;
-    skipped: number;
-    failed: number;
-    errors: unknown[];
-  }>(`/api/tasks/sync-sheets`, {
-    method: "POST",
+export async function userUpdateTask(
+  id: string,
+  data: { status: TaskStatus }
+): Promise<Task> {
+  const json = await request<Task>(`/api/tasks/${id}/user-update`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
   });
-  if (!json.data) throw new Error("Sync to Google Sheets failed");
+  if (!json.data) throw new Error("Cập nhật task thất bại");
   return json.data;
 }
+
+export async function saveResponseDraft(id: string, draft: string): Promise<Task> {
+  const json = await request<Task>(`/api/tasks/${id}/response/draft`, {
+    method: "PATCH",
+    body: JSON.stringify({ userResponseDraft: draft }),
+  });
+  if (!json.data) throw new Error("Lưu nháp thất bại");
+  return json.data;
+}
+
+export interface SendResponseResult {
+  task: Task;
+  undoToken: string | null;
+  kind: "sent" | "edit" | "append";
+}
+
+export async function sendResponse(id: string, content: string): Promise<SendResponseResult> {
+  const url = `${BASE_URL}/api/tasks/${id}/response/send`;
+  const token = getToken();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ content }),
+  });
+  const json = (await res.json().catch(() => ({}))) as {
+    success?: boolean;
+    data?: Task;
+    undoToken?: string | null;
+    kind?: "sent" | "edit" | "append";
+    message?: string;
+  };
+  if (!res.ok) {
+    if (res.status === 401) {
+      clearToken();
+      localStorage.removeItem("taskmate_auth_user");
+      window.dispatchEvent(new Event("taskmate-auth-update"));
+    }
+    throw new Error(json.message || res.statusText || "Gửi phản hồi thất bại");
+  }
+  if (!json.data) throw new Error("Gửi phản hồi thất bại");
+  return {
+    task: json.data,
+    undoToken: json.undoToken ?? null,
+    kind: json.kind ?? "sent",
+  };
+}
+
+export async function undoResponse(id: string, undoToken: string): Promise<Task> {
+  const json = await request<Task>(`/api/tasks/${id}/response/undo`, {
+    method: "POST",
+    body: JSON.stringify({ undoToken }),
+  });
+  if (!json.data) throw new Error("Hoàn tác thất bại");
+  return json.data;
+}
+
+export async function getNotifications(opts?: { unread?: boolean; limit?: number }): Promise<{
+  items: AppNotification[];
+  unreadCount: number;
+}> {
+  const params = new URLSearchParams();
+  if (opts?.unread) params.set("unread", "true");
+  if (opts?.limit) params.set("limit", String(opts.limit));
+  const q = params.toString();
+  const json = await request<{ items: AppNotification[]; unreadCount: number }>(
+    `/api/notifications${q ? `?${q}` : ""}`
+  );
+  return json.data ?? { items: [], unreadCount: 0 };
+}
+
+export async function markNotificationRead(id: string): Promise<boolean> {
+  const json = await request<{ id: string; read: boolean }>(`/api/notifications/${id}/read`, {
+    method: "PATCH",
+  });
+  return !!json.data?.read;
+}
+
+export async function markAllNotificationsRead(): Promise<number> {
+  const json = await request<{ matched: number; modified: number }>(
+    `/api/notifications/read-all`,
+    { method: "POST" }
+  );
+  return json.data?.modified ?? 0;
+}
+
+// --- Time-off requests ---
+export interface CreateTimeOffPayload {
+  startDate: string; // YYYY-MM-DD
+  endDate: string;
+  session: TimeOffSession;
+  reason: TimeOffReason;
+  reasonOther?: string;
+  recipientIds?: string[];
+}
+
+export async function createTimeOff(payload: CreateTimeOffPayload): Promise<TimeOffRequest> {
+  const json = await request<TimeOffRequest>("/api/time-off", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!json.data) throw new Error("Tạo yêu cầu xin off thất bại");
+  return json.data;
+}
+
+export async function getTimeOffRecipients(): Promise<TimeOffRecipient[]> {
+  const json = await request<TimeOffRecipient[]>("/api/time-off/recipients");
+  return json.data ?? [];
+}
+
+export async function getMyTimeOffs(): Promise<TimeOffRequest[]> {
+  const json = await request<TimeOffRequest[]>("/api/time-off/mine");
+  return json.data ?? [];
+}
+
+export async function getAllTimeOffs(opts?: { status?: TimeOffStatus }): Promise<TimeOffRequest[]> {
+  const params = new URLSearchParams();
+  if (opts?.status) params.set("status", opts.status);
+  const q = params.toString();
+  const json = await request<TimeOffRequest[]>(`/api/time-off${q ? `?${q}` : ""}`);
+  return json.data ?? [];
+}
+
+export async function cancelTimeOff(id: string): Promise<boolean> {
+  const json = await request<{ id: string }>(`/api/time-off/${id}`, { method: "DELETE" });
+  return !!json.data;
+}
+
+export async function setTimeOffStatus(
+  id: string,
+  status: "approved" | "rejected",
+  decisionNote?: string
+): Promise<TimeOffRequest> {
+  const json = await request<TimeOffRequest>(`/api/time-off/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status, decisionNote }),
+  });
+  if (!json.data) throw new Error("Cập nhật trạng thái thất bại");
+  return json.data;
+}
+

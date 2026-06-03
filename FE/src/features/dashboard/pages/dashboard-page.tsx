@@ -49,8 +49,10 @@ export function DashboardPage() {
         users.find((u) => u.id === task.assigneeId)?.fullName ??
         task.assigneeId
       : "—";
-  const projectName = (projectId: string) =>
-    projects.find((p) => p.id === projectId)?.name ?? projectId;
+  const projectName = (projectId: string | null) =>
+    projectId
+      ? projects.find((p) => p.id === projectId)?.name ?? projectId
+      : "— (note cá nhân)";
 
   const statusLabel: Record<TaskStatus, string> = {
     Todo: "Todo",

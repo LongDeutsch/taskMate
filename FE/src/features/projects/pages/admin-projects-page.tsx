@@ -1,5 +1,5 @@
 // File: src/features/projects/pages/admin-projects-page.tsx
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Project } from "@/shared/types";
@@ -10,15 +10,21 @@ import {
   deleteProject,
 } from "@/shared/api";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { ProjectFormDrawer } from "../components/project-form-drawer";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Plus, Pencil, Trash2, FolderKanban, Users } from "lucide-react";
+  MembersLink,
+  ProjectDescription,
+  pj,
+} from "../components/projects-ui";
+import {
+  FolderKanban,
+  Loader2,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
+import { cn } from "@/shared/lib/utils";
 
 export function AdminProjectsPage() {
   const queryClient = useQueryClient();
@@ -26,20 +32,29 @@ export function AdminProjectsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [search, setSearch] = useState("");
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
     queryFn: getProjects,
   });
 
+  const filteredProjects = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return projects;
+    return projects.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.description ?? "").toLowerCase().includes(q)
+    );
+  }, [projects, search]);
+
   const createMutation = useMutation({
     mutationFn: createProject,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      setCreateOpen(false);
-      setName("");
-      setDescription("");
+      closeDrawer();
     },
   });
 
@@ -48,9 +63,7 @@ export function AdminProjectsPage() {
       updateProject(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
-      setEditing(null);
-      setName("");
-      setDescription("");
+      closeDrawer();
     },
   });
 
@@ -61,6 +74,16 @@ export function AdminProjectsPage() {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
   });
+
+  const drawerOpen = createOpen || !!editing;
+  const formPending = createMutation.isPending || updateMutation.isPending;
+
+  function closeDrawer() {
+    setCreateOpen(false);
+    setEditing(null);
+    setName("");
+    setDescription("");
+  }
 
   function openCreate() {
     setEditing(null);
@@ -79,133 +102,167 @@ export function AdminProjectsPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
+    const payload = { name: name.trim(), description: description.trim() };
     if (editing) {
-      updateMutation.mutate({ id: editing.id, data: { name: name.trim(), description: description.trim() } });
+      updateMutation.mutate({ id: editing.id, data: payload });
     } else {
-      createMutation.mutate({ name: name.trim(), description: description.trim() });
+      createMutation.mutate(payload);
     }
   }
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="size-8 animate-spin text-blue-600" />
       </div>
     );
   }
 
+  const showList = projects.length > 0;
+  const showEmpty = projects.length === 0;
+  const showNoResults = showList && filteredProjects.length === 0;
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className={pj.page}>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Projects</h1>
-          <p className="text-muted-foreground">Quản lý dự án – Admin là người quản lý dự án</p>
+          <h1 className={pj.pageTitle}>Projects</h1>
+          <p className={pj.pageSubtitle}>
+            Quản lý dự án
+            {showList && (
+              <>
+                {" "}
+                · {filteredProjects.length}
+                {search.trim() ? ` / ${projects.length}` : ""} hiển thị
+              </>
+            )}
+          </p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="size-4" />
+        <Button className={cn(pj.primaryBtn, "shrink-0")} onClick={openCreate}>
+          <Plus className="size-4 mr-2" />
           New project
         </Button>
-      </div>
+      </header>
 
-      {(createOpen || editing) && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>{editing ? "Edit project" : "New project"}</CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setCreateOpen(false);
-                setEditing(null);
-                setName("");
-                setDescription("");
-              }}
-            >
-              Cancel
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="project-name">Project name</Label>
-                <Input
-                  id="project-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. TaskMate App"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="project-desc">Description</Label>
-                <Input
-                  id="project-desc"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Short description"
-                />
-              </div>
-              <Button
-                type="submit"
-                disabled={createMutation.isPending || updateMutation.isPending || !name.trim()}
-              >
-                {editing ? "Update" : "Create"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+      {showList && (
+        <div className={pj.surface}>
+          <div className={pj.toolbar}>
+            <div className="relative max-w-md">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
+              <input
+                type="search"
+                className={pj.search}
+                placeholder="Tìm theo tên hoặc mô tả..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                aria-label="Tìm project"
+              />
+            </div>
+          </div>
+        </div>
       )}
 
-      {projects.length === 0 && !createOpen && !editing ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-            <FolderKanban className="size-12 mb-4 opacity-50" />
-            <p className="font-medium">No projects yet</p>
-            <p className="text-sm">Create a project to organize tasks.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-2">
-          {projects.map((project) => (
-            <Card key={project.id}>
-              <CardContent className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
+      {showEmpty && (
+        <div
+          className={`${pj.surface} flex flex-col items-center justify-center px-6 py-16 text-center`}
+        >
+          <FolderKanban className="mb-4 size-12 text-gray-300" />
+          <p className="text-lg font-medium text-gray-900">Chưa có project</p>
+          <p className="mt-1 max-w-sm text-sm text-gray-500">
+            Tạo project đầu tiên để nhóm task theo dự án và quản lý thành viên.
+          </p>
+          <Button className={cn(pj.primaryBtn, "mt-6")} onClick={openCreate}>
+            <Plus className="size-4 mr-2" />
+            New project
+          </Button>
+        </div>
+      )}
+
+      {showNoResults && (
+        <div className={`${pj.surface} px-6 py-12 text-center`}>
+          <p className="text-sm text-gray-500">
+            Không tìm thấy project cho &quot;{search.trim()}&quot;.
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 text-blue-600"
+            onClick={() => setSearch("")}
+          >
+            Xóa bộ lọc
+          </Button>
+        </div>
+      )}
+
+      {!showEmpty && !showNoResults && (
+        <ul className="space-y-3">
+          {filteredProjects.map((project) => (
+            <li
+              key={project.id}
+              className={cn(
+                pj.projectCard,
+                editing?.id === project.id && pj.projectCardActive
+              )}
+            >
+              <div className="flex flex-col gap-3">
                 <div className="min-w-0 flex-1">
                   <Link
                     to={`/admin/projects/${project.id}`}
-                    className="font-medium text-primary hover:underline"
+                    className="text-base font-semibold text-gray-900 hover:text-[#2563EB] sm:text-lg"
                   >
                     {project.name}
                   </Link>
-                  <p className="text-sm text-muted-foreground">{project.description || "—"}</p>
+                  <ProjectDescription description={project.description} />
                 </div>
-                <div className="flex flex-wrap gap-2 justify-end">
-                  <Button variant="outline" size="sm" onClick={() => openEdit(project)}>
+
+                <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3 sm:border-0 sm:pt-0 sm:justify-end">
+                  <MembersLink projectId={project.id} />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={pj.iconBtnPrimary}
+                    onClick={() => openEdit(project)}
+                    title="Chỉnh sửa"
+                    aria-label="Chỉnh sửa"
+                  >
                     <Pencil className="size-4" />
-                    Edit
                   </Button>
                   <Button
-                    variant="destructive"
-                    size="sm"
-                    className="bg-red-600 text-white hover:bg-red-700"
+                    variant="ghost"
+                    size="icon"
+                    className={pj.iconBtnDanger}
+                    title="Xóa project"
+                    aria-label="Xóa project"
                     onClick={() => {
-                      if (confirm("Delete this project? All its tasks will be removed."))
+                      if (
+                        confirm(
+                          "Xóa project này? Tất cả task thuộc project sẽ bị xóa."
+                        )
+                      ) {
                         deleteMutation.mutate(project.id);
+                      }
                     }}
                   >
                     <Trash2 className="size-4" />
-                    Xóa
-                  </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to={`/admin/projects/${project.id}`}>
-                      <Users className="size-4" />
-                      Thành viên
-                    </Link>
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
+
+      <ProjectFormDrawer
+        open={drawerOpen}
+        onClose={closeDrawer}
+        mode={createOpen ? "create" : "edit"}
+        name={name}
+        description={description}
+        onNameChange={setName}
+        onDescriptionChange={setDescription}
+        onSubmit={handleSubmit}
+        isPending={formPending}
+      />
     </div>
   );
 }

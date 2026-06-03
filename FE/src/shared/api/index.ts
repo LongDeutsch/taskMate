@@ -31,9 +31,34 @@ export const getDeletedProjects = useRealApi ? client.getDeletedProjects : async
 export const restoreProject = useRealApi ? client.restoreProject : async () => null;
 export const getDeletedTasks = useRealApi ? client.getDeletedTasks : async () => [];
 export const restoreTask = useRealApi ? client.restoreTask : async () => null;
-export const syncTasksToSheets = useRealApi
-  ? client.syncTasksToSheets
-  : async () => ({ total: 0, synced: 0, skipped: 0, failed: 0, errors: [] });
+export const userUpdateTask = useRealApi
+  ? client.userUpdateTask
+  : (async (id: string, data: { status: import("@/shared/types").TaskStatus }) => {
+      void id;
+      void data;
+      throw new Error("userUpdateTask không khả dụng ở chế độ mock");
+    });
+export const saveResponseDraft = useRealApi
+  ? client.saveResponseDraft
+  : (async (id: string, draft: string) => {
+      void id;
+      void draft;
+      throw new Error("saveResponseDraft không khả dụng ở chế độ mock");
+    });
+export const sendResponse = useRealApi
+  ? client.sendResponse
+  : (async (id: string, content: string) => {
+      void id;
+      void content;
+      throw new Error("sendResponse không khả dụng ở chế độ mock");
+    });
+export const undoResponse = useRealApi
+  ? client.undoResponse
+  : (async (id: string, undoToken: string) => {
+      void id;
+      void undoToken;
+      throw new Error("undoResponse không khả dụng ở chế độ mock");
+    });
 export const getAutomationRules = useRealApi
   ? client.getAutomationRules
   : mock.mockGetAutomationRules;
@@ -44,4 +69,30 @@ export const aiChat = useRealApi ? client.aiChat : async (message: string) => {
   // Khi dùng mock (không có BE), trả lời đơn giản.
   return `Hiện đang chạy ở chế độ mock. Bạn đã hỏi: \"${message}\".`;
 };
+export const getNotifications = useRealApi
+  ? client.getNotifications
+  : async () => ({ items: [], unreadCount: 0 });
+export const markNotificationRead = useRealApi
+  ? client.markNotificationRead
+  : async () => false;
+export const markAllNotificationsRead = useRealApi
+  ? client.markAllNotificationsRead
+  : async () => 0;
 export const clearToken = useRealApi ? client.clearToken : () => {};
+
+export const createTimeOff = useRealApi
+  ? client.createTimeOff
+  : async () => {
+      throw new Error("Time-off không khả dụng ở chế độ mock");
+    };
+export const getTimeOffRecipients = useRealApi ? client.getTimeOffRecipients : async () => [];
+export const getMyTimeOffs = useRealApi ? client.getMyTimeOffs : async () => [];
+export const getAllTimeOffs = useRealApi ? client.getAllTimeOffs : async () => [];
+export const cancelTimeOff = useRealApi
+  ? client.cancelTimeOff
+  : async () => false;
+export const setTimeOffStatus = useRealApi
+  ? client.setTimeOffStatus
+  : async () => {
+      throw new Error("Time-off không khả dụng ở chế độ mock");
+    };

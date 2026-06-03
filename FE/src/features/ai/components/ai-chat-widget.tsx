@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { MessageCircle, X, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,19 @@ export function AiChatWidget() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [overlayOpen, setOverlayOpen] = useState(false);
+
+  useEffect(() => {
+    const sync = () =>
+      setOverlayOpen(document.documentElement.dataset.taskmateOverlay === "open");
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-taskmate-overlay"],
+    });
+    return () => observer.disconnect();
+  }, []);
 
   const mutation = useMutation({
     mutationFn: async (message: string) => {
@@ -30,6 +43,8 @@ export function AiChatWidget() {
 
   if (!isAdmin) return null;
 
+  const hideFab = overlayOpen && !open;
+
   const handleSend = () => {
     const text = input.trim();
     if (!text || mutation.isPending) return;
@@ -42,10 +57,10 @@ export function AiChatWidget() {
   return (
     <>
       {/* Floating button - xanh biển nhạt */}
-      {!open && (
+      {!open && !hideFab && (
         <button
           type="button"
-          className="fixed bottom-4 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-sky-400 text-white shadow-lg hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2"
+          className="fixed bottom-6 right-6 z-30 flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-white shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           onClick={() => setOpen(true)}
           aria-label="Open AI assistant"
         >
@@ -56,11 +71,11 @@ export function AiChatWidget() {
       {/* Chat panel - nền đặc, đổ bóng */}
       {open && (
         <div
-          className="fixed bottom-4 right-4 z-40 flex w-80 max-w-[90vw] flex-col rounded-xl border border-border bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:bg-gray-950 dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
+          className="fixed bottom-6 right-6 z-30 flex w-80 max-w-[calc(100vw-3rem)] flex-col rounded-2xl border border-gray-200 bg-white shadow-lg"
           style={{ minHeight: "320px", maxHeight: "85vh" }}
         >
           {/* Header - xanh biển chủ đạo */}
-          <div className="flex items-center justify-between rounded-t-xl border-b border-sky-700/30 bg-sky-600 px-3 py-2.5 text-white">
+          <div className="flex items-center justify-between rounded-t-2xl border-b border-blue-700/20 bg-blue-600 px-3 py-2.5 text-white">
             <div className="flex items-center gap-2 text-sm font-semibold">
               <MessageCircle className="size-4 shrink-0" />
               <span>TaskMate Assistant</span>
@@ -91,7 +106,7 @@ export function AiChatWidget() {
                   <div
                     className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
                       m.role === "user"
-                        ? "bg-sky-600 text-white"
+                        ? "bg-blue-600 text-white"
                         : "bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100"
                     }`}
                   >
@@ -133,7 +148,7 @@ export function AiChatWidget() {
             <div className="mt-2 flex justify-end">
               <Button
                 size="sm"
-                className="gap-2 bg-sky-600 font-medium text-white shadow-md hover:bg-sky-700"
+                className="gap-2 bg-blue-600 font-medium text-white shadow-sm hover:bg-blue-700"
                 onClick={handleSend}
                 disabled={mutation.isPending || !input.trim()}
               >

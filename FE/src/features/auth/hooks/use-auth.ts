@@ -21,8 +21,17 @@ export function useAuth(): {
 
   useEffect(() => {
     const handler = () => setUser(getStoredAuthUser());
+    const storageHandler = (event: StorageEvent) => {
+      if (event.key === "taskmate_auth_user" || event.key === "taskmate_token") {
+        setUser(getStoredAuthUser());
+      }
+    };
     window.addEventListener("taskmate-auth-update", handler);
-    return () => window.removeEventListener("taskmate-auth-update", handler);
+    window.addEventListener("storage", storageHandler);
+    return () => {
+      window.removeEventListener("taskmate-auth-update", handler);
+      window.removeEventListener("storage", storageHandler);
+    };
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {

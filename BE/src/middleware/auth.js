@@ -22,7 +22,14 @@ export async function authMiddleware(req, res, next) {
     if (user.disabled) {
       return next(createUnauthorizedError("Account is disabled"));
     }
-    req.user = { id: user._id, username: user.username, role: user.role, fullName: user.fullName };
+    const roleLabel = user.roleLabel ?? (user.role === "ADMIN" ? "ADMIN" : "STAFF");
+    req.user = {
+      id: user._id,
+      username: user.username,
+      role: user.role,
+      roleLabel,
+      fullName: user.fullName,
+    };
     next();
   } catch (err) {
     if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {

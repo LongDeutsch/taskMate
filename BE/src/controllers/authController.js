@@ -31,10 +31,17 @@ export async function login(req, res, next) {
     const { password: _, ...userWithoutPassword } = user;
     const avatarUrl = user.avatar ? `/avatars/${user.avatar}` : null;
     const joinDateStr = user.joinDate?.toISOString?.()?.slice(0, 10) ?? null;
+    const roleLabel = user.roleLabel ?? (user.role === "ADMIN" ? "ADMIN" : "STAFF");
     res.status(200).json({
       success: true,
       data: {
-        user: { ...userWithoutPassword, id: user._id, avatar: avatarUrl, joinDate: joinDateStr },
+        user: {
+          ...userWithoutPassword,
+          id: user._id,
+          avatar: avatarUrl,
+          joinDate: joinDateStr,
+          roleLabel,
+        },
         token,
       },
     });

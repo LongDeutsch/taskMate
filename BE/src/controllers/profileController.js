@@ -17,6 +17,7 @@ export async function getProfile(req, res, next) {
       id: user._id,
       joinDate: user.joinDate?.toISOString?.()?.slice(0, 10) ?? user.joinDate,
       avatar: user.avatar ? getAvatarUrl(user.avatar) : null,
+      roleLabel: user.roleLabel ?? (user.role === "ADMIN" ? "ADMIN" : "STAFF"),
     };
     res.json({ success: true, data: result });
   } catch (err) {
