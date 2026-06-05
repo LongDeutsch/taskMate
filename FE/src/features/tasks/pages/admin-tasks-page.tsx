@@ -73,6 +73,7 @@ export function AdminTasksPage() {
   });
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof TaskFormValues, string>>>({});
   const [filterOpen, setFilterOpen] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const activeFilterCount = [
     status,
@@ -223,8 +224,12 @@ export function AdminTasksPage() {
   const createMutation = useMutation({
     mutationFn: createTask,
     onSuccess: () => {
+      setSaveError(null);
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       closeDrawer();
+    },
+    onError: (err) => {
+      setSaveError(err instanceof Error ? err.message : "Không tạo được task.");
     },
   });
 
@@ -232,8 +237,12 @@ export function AdminTasksPage() {
     mutationFn: ({ id, data }: { id: string; data: Partial<Task> }) =>
       updateTask(id, data),
     onSuccess: () => {
+      setSaveError(null);
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       closeDrawer();
+    },
+    onError: (err) => {
+      setSaveError(err instanceof Error ? err.message : "Không lưu được task.");
     },
   });
 
@@ -272,6 +281,7 @@ export function AdminTasksPage() {
   function closeDrawer() {
     setCreateOpen(false);
     setEditing(null);
+    setSaveError(null);
     resetForm();
   }
 
@@ -667,6 +677,7 @@ export function AdminTasksPage() {
         users={users}
         authUser={authUser ? { id: authUser.id, fullName: authUser.fullName } : null}
         collaboratorOptions={collaboratorOptions}
+        saveError={saveError}
       />
     </div>
   );

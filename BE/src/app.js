@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { corsOptions } from "./config/cors.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import authRoutes from "./routes/authRoutes.js";
@@ -17,7 +18,8 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use("/avatars", express.static(path.join(__dirname, "..", "uploads", "avatars")));
 

@@ -28,6 +28,13 @@ export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+const REQUEST_TIMEOUT_MS = 45_000;
+
+function networkErrorMessage(): string {
+  const be = BASE_URL || "BE (VITE_API_URL)";
+  return `Không kết nối được API (${be}). Thường do BE Render đang ngủ (free tier) hoặc CORS — mở ${be}/health trong tab mới, đợi phản hồi rồi thử lại.`;
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {}
@@ -39,7 +46,24 @@ async function request<T>(
     ...(options.headers as Record<string, string>),
   };
   if (token) (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
-  const res = await fetch(url, { ...options, headers });
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  let res: Response;
+  try {
+    res = await fetch(url, { ...options, headers, signal: controller.signal });
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error(
+        `API không phản hồi sau ${REQUEST_TIMEOUT_MS / 1000}s. BE Render có thể đang khởi động — thử lại sau 1 phút.`
+      );
+    }
+    throw new Error(networkErrorMessage());
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
     if (res.status === 401) {
