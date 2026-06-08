@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getUsers, apiBaseUrl } from "@/shared/api";
+import { getUsers } from "@/shared/api";
+import { UserAvatar } from "@/shared/components/user-avatar";
 import { formatRoleLabel, getRoleLabel } from "@/shared/types";
 import { PageHeader } from "@/app/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, User } from "lucide-react";
+import { Eye } from "lucide-react";
 
 function roleBadgeClass(roleLabel: ReturnType<typeof getRoleLabel>) {
   switch (roleLabel) {
@@ -54,25 +55,16 @@ export function UsersPage() {
           ) : (
             activeUsers.map((user) => {
               const roleLabel = getRoleLabel(user);
-              const avatarSrc = user.avatar
-                ? user.avatar.startsWith("http")
-                  ? user.avatar
-                  : `${apiBaseUrl}${user.avatar}`
-                : null;
-
               return (
                 <div
                   key={user.id}
                   className="flex min-w-0 flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="size-11 shrink-0 overflow-hidden rounded-full bg-muted border border-border flex items-center justify-center">
-                      {avatarSrc ? (
-                        <img src={avatarSrc} alt="" className="size-full object-cover" />
-                      ) : (
-                        <User className="size-5 text-muted-foreground" />
-                      )}
-                    </div>
+                    <UserAvatar
+                      avatar={user.avatar}
+                      className="size-11 shrink-0 border border-border"
+                    />
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <Link

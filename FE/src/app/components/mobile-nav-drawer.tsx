@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { X, FolderKanban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/shared/lib/utils";
-import { SidebarNav, useSidebarAvatarUrl } from "./sidebar-nav";
+import { SidebarNav } from "./sidebar-nav";
 
 type MobileNavDrawerProps = {
   open: boolean;
@@ -11,8 +11,6 @@ type MobileNavDrawerProps = {
 };
 
 export function MobileNavDrawer({ open, onClose }: MobileNavDrawerProps) {
-  const avatarUrl = useSidebarAvatarUrl();
-
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -54,7 +52,7 @@ export function MobileNavDrawer({ open, onClose }: MobileNavDrawerProps) {
             <X className="size-5" />
           </Button>
         </div>
-        <SidebarNav avatarUrl={avatarUrl} onNavigate={onClose} className="min-h-0 flex-1" />
+        <SidebarNav onNavigate={onClose} className="min-h-0 flex-1" />
       </aside>
     </div>,
     document.body

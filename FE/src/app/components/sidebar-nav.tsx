@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { UserCircle } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { getRoleLabel } from "@/shared/types";
-import { apiBaseUrl } from "@/shared/api";
+import { UserAvatar } from "@/shared/components/user-avatar";
 import { adminNavItems, baseNavItems } from "../config/nav-items";
 
 export function navLinkClass({ isActive }: { isActive: boolean }) {
@@ -17,13 +17,13 @@ export function navLinkClass({ isActive }: { isActive: boolean }) {
 }
 
 type SidebarNavProps = {
-  avatarUrl: string | null;
   onNavigate?: () => void;
   className?: string;
 };
 
-export function SidebarNav({ avatarUrl, onNavigate, className }: SidebarNavProps) {
+export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
   const { isAdmin, user } = useAuth();
+  const avatarTs = useAvatarCacheBust();
   const roleLabel = user ? getRoleLabel(user) : "STAFF";
   const navItems = baseNavItems.filter((item) => !(item.hideForHr && roleLabel === "HR"));
 
@@ -58,8 +58,8 @@ export function SidebarNav({ avatarUrl, onNavigate, className }: SidebarNavProps
       <div className="shrink-0 border-t border-[#E5E7EB] p-3">
         <div className="flex min-h-11 items-center gap-3 rounded-xl bg-gray-50 px-3 py-2">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-[#E5E7EB]">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="size-8 rounded-full object-cover" />
+            {user?.avatar ? (
+              <UserAvatar avatar={user.avatar} cacheBust={avatarTs} className="size-8" />
             ) : (
               <UserCircle className="size-5 text-gray-500" />
             )}
@@ -76,8 +76,7 @@ export function SidebarNav({ avatarUrl, onNavigate, className }: SidebarNavProps
   );
 }
 
-export function useSidebarAvatarUrl() {
-  const { user } = useAuth();
+export function useAvatarCacheBust() {
   const [avatarTs, setAvatarTs] = useState("0");
   useEffect(() => {
     const sync = () => setAvatarTs(localStorage.getItem("taskmate_avatar_ts") ?? "0");
@@ -85,10 +84,5 @@ export function useSidebarAvatarUrl() {
     window.addEventListener("taskmate-auth-update", sync);
     return () => window.removeEventListener("taskmate-auth-update", sync);
   }, []);
-  return useMemo(() => {
-    const raw = user?.avatar;
-    if (!raw) return null;
-    const base = raw.startsWith("http") ? raw : `${apiBaseUrl}${raw}`;
-    return `${base}${base.includes("?") ? "&" : "?"}v=${avatarTs}`;
-  }, [user?.avatar, avatarTs]);
+  return avatarTs;
 }

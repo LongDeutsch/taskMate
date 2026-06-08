@@ -1,10 +1,8 @@
 // File: src/app/components/app-sidebar.tsx
 import { FolderKanban } from "lucide-react";
-import { SidebarNav, useSidebarAvatarUrl } from "./sidebar-nav";
+import { SidebarNav } from "./sidebar-nav";
 
 export function AppSidebar() {
-  const avatarUrl = useSidebarAvatarUrl();
-
   return (
     <div className="flex h-full w-full flex-col bg-white">
       <div className="flex h-14 shrink-0 items-center gap-3 border-b border-[#E5E7EB] px-4">
@@ -16,7 +14,7 @@ export function AppSidebar() {
           <div className="text-xs text-gray-500">Workspace</div>
         </div>
       </div>
-      <SidebarNav avatarUrl={avatarUrl} className="min-h-0 flex-1" />
+      <SidebarNav className="min-h-0 flex-1" />
     </div>
   );
 }

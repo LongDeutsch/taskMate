@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getProfile, updateProfile, apiBaseUrl } from "@/shared/api";
+import { getProfile, updateProfile } from "@/shared/api";
+import { resolveAvatarUrl } from "@/shared/lib/avatar-url";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { setStoredAuthUser } from "@/features/auth/store/auth-store";
 import { Button } from "@/components/ui/button";
@@ -84,14 +85,11 @@ export function ProfilePage() {
     },
   });
 
-  const baseAvatarUrl = profile?.avatar
-    ? profile.avatar.startsWith("http")
-      ? profile.avatar
-      : `${apiBaseUrl}${profile.avatar}`
-    : null;
-  const avatarUrl = baseAvatarUrl
-    ? `${baseAvatarUrl}${baseAvatarUrl.includes("?") ? "&" : "?"}v=${avatarVersion}`
-    : null;
+  const baseAvatarUrl = resolveAvatarUrl(profile?.avatar);
+  const avatarUrl =
+    baseAvatarUrl && !baseAvatarUrl.startsWith("data:")
+      ? `${baseAvatarUrl}${baseAvatarUrl.includes("?") ? "&" : "?"}v=${avatarVersion}`
+      : baseAvatarUrl;
   const previewUrl = avatarFile ? URL.createObjectURL(avatarFile) : avatarUrl;
 
   if (!authUser) {

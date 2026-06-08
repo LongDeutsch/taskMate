@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { User } from "../models/User.js";
 import { createUnauthorizedError } from "../utils/errors.js";
+import { formatPublicUser } from "../utils/userFormat.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
 const JWT_EXPIRES = process.env.JWT_EXPIRES || "1d";
@@ -28,22 +29,10 @@ export async function login(req, res, next) {
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES }
     );
-    const { password: _, ...userWithoutPassword } = user;
-    const avatarUrl = user.avatar ? `/avatars/${user.avatar}` : null;
-    const joinDateStr = user.joinDate?.toISOString?.()?.slice(0, 10) ?? null;
-    const dateOfBirthStr = user.dateOfBirth?.toISOString?.()?.slice(0, 10) ?? null;
-    const roleLabel = user.roleLabel ?? (user.role === "ADMIN" ? "ADMIN" : "STAFF");
     res.status(200).json({
       success: true,
       data: {
-        user: {
-          ...userWithoutPassword,
-          id: user._id,
-          avatar: avatarUrl,
-          joinDate: joinDateStr,
-          dateOfBirth: dateOfBirthStr,
-          roleLabel,
-        },
+        user: formatPublicUser(user),
         token,
       },
     });

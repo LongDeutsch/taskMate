@@ -1,12 +1,12 @@
 // File: src/app/components/app-header.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { NotificationBell } from "@/features/notifications/components/notification-bell";
 import { FolderKanban, LogOut, Menu, UserCircle } from "lucide-react";
 import { formatRoleLabel, getRoleLabel } from "@/shared/types";
-import { apiBaseUrl } from "@/shared/api";
+import { UserAvatar } from "@/shared/components/user-avatar";
 
 type AppHeaderProps = {
   onOpenMenu?: () => void;
@@ -33,13 +33,6 @@ export function AppHeader({ onOpenMenu }: AppHeaderProps) {
   }
 
   const roleLabel = user ? formatRoleLabel(getRoleLabel(user)) : "";
-  const avatarUrl = useMemo(() => {
-    const raw = user?.avatar;
-    if (!raw) return null;
-    const base = raw.startsWith("http") ? raw : `${apiBaseUrl}${raw}`;
-    return `${base}${base.includes("?") ? "&" : "?"}v=${avatarTs}`;
-  }, [user?.avatar, avatarTs]);
-
   return (
     <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-[#E5E7EB] bg-white px-3 md:px-4">
       <div className="flex min-w-0 items-center gap-2">
@@ -61,11 +54,11 @@ export function AppHeader({ onOpenMenu }: AppHeaderProps) {
         </div>
         <div className="hidden min-w-0 items-center gap-2 text-sm text-gray-600 md:flex">
           <span className="inline-flex max-w-[min(100%,420px)] items-center gap-2 rounded-full border border-[#E5E7EB] bg-gray-50 px-3 py-1.5">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt=""
-                className="size-6 shrink-0 rounded-full object-cover ring-1 ring-[#E5E7EB]"
+            {user?.avatar ? (
+              <UserAvatar
+                avatar={user.avatar}
+                cacheBust={avatarTs}
+                className="size-6 shrink-0 ring-1 ring-[#E5E7EB]"
               />
             ) : (
               <UserCircle className="size-5 shrink-0 text-gray-500" />

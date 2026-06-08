@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { User } from "lucide-react";
 import type { User as AppUser } from "@/shared/types";
 import { formatRoleLabel, getRoleLabel } from "@/shared/types";
-import { apiBaseUrl } from "@/shared/api";
+import { UserAvatar } from "@/shared/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { calcAgeFromDateOfBirth } from "@/shared/lib/birthday";
@@ -39,12 +39,6 @@ type UserProfileViewProps = {
 export function UserProfileView({ user, isOwnProfile }: UserProfileViewProps) {
   const roleLabel = getRoleLabel(user);
   const age = user.age ?? calcAgeFromDateOfBirth(user.dateOfBirth);
-  const avatarSrc = user.avatar
-    ? user.avatar.startsWith("http")
-      ? user.avatar
-      : `${apiBaseUrl}${user.avatar}`
-    : null;
-
   return (
     <Card>
       <CardHeader>
@@ -60,13 +54,11 @@ export function UserProfileView({ user, isOwnProfile }: UserProfileViewProps) {
       <CardContent className="space-y-6">
         <div className="flex flex-col gap-6 sm:flex-row">
           <div className="flex flex-col items-center gap-2">
-            <div className="size-24 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-border">
-              {avatarSrc ? (
-                <img src={avatarSrc} alt="" className="size-full object-cover" />
-              ) : (
-                <User className="size-12 text-muted-foreground" />
-              )}
-            </div>
+            <UserAvatar
+              avatar={user.avatar}
+              className="size-24 border-2 border-border"
+              iconClassName="size-12"
+            />
             <span
               className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${roleBadgeClass(roleLabel)}`}
             >
