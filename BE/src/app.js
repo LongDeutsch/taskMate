@@ -12,6 +12,7 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import timeOffRoutes from "./routes/timeOffRoutes.js";
 import bugReportRoutes from "./routes/bugReportRoutes.js";
 import birthdayRoutes from "./routes/birthdayRoutes.js";
+import * as userController from "./controllers/userController.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { checkDatabase } from "./config/database.js";
 
@@ -24,6 +25,9 @@ app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use("/avatars", express.static(path.join(__dirname, "..", "uploads", "avatars")));
+
+/** Avatar công khai — <img src> không gửi Authorization header */
+app.get("/api/users/:id/avatar", userController.getUserAvatar);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);

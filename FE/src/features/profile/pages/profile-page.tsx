@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getProfile, updateProfile } from "@/shared/api";
 import { resolveAvatarUrl } from "@/shared/lib/avatar-url";
+import { compressAvatarFile } from "@/shared/lib/compress-avatar";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { setStoredAuthUser } from "@/features/auth/store/auth-store";
 import { Button } from "@/components/ui/button";
@@ -63,20 +64,24 @@ export function ProfilePage() {
   };
 
   const updateMutation = useMutation({
-    mutationFn: () =>
-      updateProfile(
+    mutationFn: async () => {
+      const file = avatarFile ? await compressAvatarFile(avatarFile) : undefined;
+      return updateProfile(
         {
           dateOfBirth: form.dateOfBirth || null,
           gender: form.gender || null,
           joinDate: form.joinDate || null,
           position: form.position || null,
         },
-        avatarFile ?? undefined
-      ),
+        file
+      );
+    },
     onSuccess: (updated) => {
       setStoredAuthUser(updated);
       queryClient.setQueryData(["profile", authUser?.id], updated);
       queryClient.invalidateQueries({ queryKey: ["birthdays", "today"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["users", updated.id] });
       setAvatarVersion((v) => v + 1);
       localStorage.setItem("taskmate_avatar_ts", String(Date.now()));
       window.dispatchEvent(new CustomEvent("taskmate-auth-update"));

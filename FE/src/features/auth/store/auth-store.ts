@@ -13,7 +13,22 @@ export function getStoredAuthUser(): User | null {
   }
 }
 
+/** Không lưu data URL vào localStorage (vượt quota ~5MB). */
+function slimUserForStorage(user: User): User {
+  if (!user.avatar?.startsWith("data:")) return user;
+  return { ...user, avatar: `/api/users/${user.id}/avatar` };
+}
+
 export function setStoredAuthUser(user: User | null): void {
-  if (user) localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-  else localStorage.removeItem(STORAGE_KEY);
+  if (!user) {
+    localStorage.removeItem(STORAGE_KEY);
+    return;
+  }
+  const slim = slimUserForStorage(user);
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(slim));
+  } catch {
+    const { avatar: _a, ...withoutAvatar } = slim;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(withoutAvatar));
+  }
 }

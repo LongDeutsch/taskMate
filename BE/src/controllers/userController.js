@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { User } from "../models/User.js";
 import { createNotFoundError, createBadRequestError } from "../utils/errors.js";
 import { formatPublicUser } from "../utils/userFormat.js";
+import { readAvatarPayload } from "../utils/avatarServe.js";
 
 const TRASH_RETENTION_DAYS = 5;
 
@@ -30,8 +31,29 @@ export async function list(req, res, next) {
       .select("-password")
       .sort({ username: 1 })
       .lean();
-    const result = users.map(formatPublicUser);
+    const result = users.map((u) =>
+      formatPublicUser({ ...u, avatar: u.avatar ? true : null })
+    );
     res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** Public — trình duyệt load ảnh qua <img> không gửi JWT. */
+export async function getUserAvatar(req, res, next) {
+  try {
+    const user = await User.findById(req.params.id).select("avatar deletedAt").lean();
+    if (!user?.avatar || user.deletedAt) {
+      return res.status(404).end();
+    }
+    const payload = readAvatarPayload(user.avatar);
+    if (!payload) {
+      return res.status(404).end();
+    }
+    res.set("Content-Type", payload.mime);
+    res.set("Cache-Control", "public, max-age=3600");
+    res.send(payload.buffer);
   } catch (err) {
     next(err);
   }

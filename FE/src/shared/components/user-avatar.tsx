@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { User } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { resolveAvatarUrl } from "@/shared/lib/avatar-url";
@@ -13,6 +13,10 @@ type UserAvatarProps = {
 export function UserAvatar({ avatar, className, iconClassName, cacheBust }: UserAvatarProps) {
   const [failed, setFailed] = useState(false);
   const base = resolveAvatarUrl(avatar);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [avatar, cacheBust]);
 
   const src =
     base && cacheBust != null && !base.startsWith("data:")
