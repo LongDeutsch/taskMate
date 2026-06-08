@@ -15,11 +15,19 @@ function newId() {
 }
 
 function isHr(user) {
-  return user?.roleLabel === "HR";
+  return roleLabelOf(user) === "HR";
 }
 
 function canViewAll(user) {
   return user?.role === "ADMIN" || ["HR", "BODS"].includes(user?.roleLabel);
+}
+
+/** User active — `disabled` có thể chưa có trên document cũ. */
+function activeUserFilter() {
+  return {
+    deletedAt: null,
+    $or: [{ disabled: false }, { disabled: { $exists: false } }],
+  };
 }
 
 function parseDateOnly(value, field) {
@@ -36,9 +44,8 @@ function parseDateOnly(value, field) {
 
 async function getHrRecipients(excludeUserId) {
   const hrs = await User.find({
+    ...activeUserFilter(),
     roleLabel: "HR",
-    deletedAt: null,
-    disabled: false,
   })
     .select("_id")
     .lean();
@@ -47,11 +54,6 @@ async function getHrRecipients(excludeUserId) {
 
 function roleLabelOf(user) {
   return user?.roleLabel ?? (user?.role === "ADMIN" ? "ADMIN" : "STAFF");
-}
-
-function isTimeOffRecipientCandidate(user) {
-  const label = roleLabelOf(user);
-  return user?.role === "ADMIN" || label === "HR" || label === "BODS";
 }
 
 async function resolveRecipients(requestedRecipientIds, excludeUserId) {
@@ -64,26 +66,25 @@ async function resolveRecipients(requestedRecipientIds, excludeUserId) {
 
   const users = await User.find({
     _id: { $in: ids },
-    deletedAt: null,
-    disabled: false,
+    ...activeUserFilter(),
+    roleLabel: "HR",
   })
     .select("_id username fullName role roleLabel")
     .lean();
 
-  const valid = users.filter(isTimeOffRecipientCandidate);
-  const validIds = new Set(valid.map((u) => u._id));
+  const validIds = new Set(users.map((u) => u._id));
   const invalid = ids.filter((id) => !validIds.has(id));
   if (invalid.length > 0) {
-    throw createBadRequestError("Người nhận phải là tài khoản active có quyền cao hơn Staff");
+    throw createBadRequestError("Người nhận phải là tài khoản HR active");
   }
 
   return {
-    recipientIds: valid.map((u) => u._id),
-    recipients: valid.map((u) => ({
+    recipientIds: users.map((u) => u._id),
+    recipients: users.map((u) => ({
       id: u._id,
       fullName: u.fullName ?? "",
       username: u.username ?? "",
-      roleLabel: roleLabelOf(u),
+      roleLabel: "HR",
     })),
   };
 }
@@ -152,7 +153,7 @@ export async function create(req, res, next) {
     const userRoleLabel = roleLabelOf(me);
     const resolvedRecipients = await resolveRecipients(recipientIds, req.user.id);
     if (resolvedRecipients.recipientIds.length === 0) {
-      return next(createBadRequestError("Vui lòng chọn ít nhất một người nhận xin off"));
+      return next(createBadRequestError("Chưa có tài khoản HR active để nhận yêu cầu xin off"));
     }
 
     const id = newId();
@@ -245,27 +246,27 @@ export async function create(req, res, next) {
   }
 }
 
-/** Danh sách người nhận mà user có thể chọn khi xin off. */
+/** Danh sách người nhận xin off — tất cả HR active (trừ chính mình). */
 export async function listRecipients(req, res, next) {
   try {
     const users = await User.find({
-      deletedAt: null,
-      disabled: false,
+      ...activeUserFilter(),
+      roleLabel: "HR",
     })
-      .select("_id username fullName role roleLabel")
-      .sort({ roleLabel: 1, fullName: 1 })
+      .select("_id username fullName role roleLabel email")
+      .sort({ fullName: 1, username: 1 })
       .lean();
 
     const data = users
       .filter((u) => u._id !== req.user.id)
-      .filter(isTimeOffRecipientCandidate)
       .map((u) => ({
         id: u._id,
         username: u.username,
         fullName: u.fullName,
         role: u.role,
-        roleLabel: roleLabelOf(u),
-        isDefault: roleLabelOf(u) === "HR",
+        roleLabel: "HR",
+        email: String(u.email ?? "").trim() || undefined,
+        isDefault: true,
       }));
 
     res.json({ success: true, data });

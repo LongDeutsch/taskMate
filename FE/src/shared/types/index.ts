@@ -205,6 +205,7 @@ export interface TimeOffRecipient {
   fullName: string;
   role?: Role;
   roleLabel?: RoleLabel | null;
+  email?: string;
   isDefault?: boolean;
 }
 

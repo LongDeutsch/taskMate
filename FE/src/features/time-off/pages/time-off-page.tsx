@@ -281,7 +281,6 @@ export function TimeOffPage() {
     businessTripSchedule: [] as BusinessTripScheduleItem[],
     recipientIds: [] as string[],
   });
-  const [recipientsInitialized, setRecipientsInitialized] = useState(false);
   const [filterStatus, setFilterStatus] = useState<"all" | TimeOffStatus>("all");
 
   const [mailSuccess, setMailSuccess] = useState<string | null>(null);
@@ -305,6 +304,11 @@ export function TimeOffPage() {
     queryFn: () => getAllTimeOffs(),
     enabled: canViewAll,
   });
+
+  const hrRecipientIds = useMemo(
+    () => (recipientQuery.data ?? []).map((r) => r.id),
+    [recipientQuery.data]
+  );
 
   const createMutation = useMutation({
     mutationFn: createTimeOff,
@@ -346,7 +350,7 @@ export function TimeOffPage() {
         reasonOther: "",
         details: "",
         businessTripSchedule: [],
-        recipientIds: defaultRecipientIds,
+        recipientIds: hrRecipientIds,
       });
     },
     onError: (err) => setError(err instanceof Error ? err.message : String(err)),
@@ -369,16 +373,10 @@ export function TimeOffPage() {
     return items.filter((t) => t.status === filterStatus);
   }, [allQuery.data, filterStatus]);
 
-  const defaultRecipientIds = useMemo(
-    () => (recipientQuery.data ?? []).filter((r) => r.isDefault).map((r) => r.id),
-    [recipientQuery.data]
-  );
-
   useEffect(() => {
-    if (recipientsInitialized || defaultRecipientIds.length === 0) return;
-    setForm((f) => ({ ...f, recipientIds: defaultRecipientIds }));
-    setRecipientsInitialized(true);
-  }, [defaultRecipientIds, recipientsInitialized]);
+    if (!open || hrRecipientIds.length === 0) return;
+    setForm((f) => ({ ...f, recipientIds: hrRecipientIds }));
+  }, [open, hrRecipientIds]);
 
   const selectedRecipientNames = useMemo(() => {
     const recipients = recipientQuery.data ?? [];
@@ -388,15 +386,6 @@ export function TimeOffPage() {
       .filter((r): r is TimeOffRecipient => Boolean(r))
       .map(recipientLabel);
   }, [form.recipientIds, recipientQuery.data]);
-
-  function toggleRecipient(id: string) {
-    setForm((f) => ({
-      ...f,
-      recipientIds: f.recipientIds.includes(id)
-        ? f.recipientIds.filter((v) => v !== id)
-        : [...f.recipientIds, id],
-    }));
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -419,8 +408,9 @@ export function TimeOffPage() {
       setError('Lý do "Khác" cần nhập nội dung');
       return;
     }
-    if (form.recipientIds.length === 0) {
-      setError("Vui lòng chọn ít nhất một người nhận");
+    const recipientIds = hrRecipientIds.length > 0 ? hrRecipientIds : form.recipientIds;
+    if (recipientIds.length === 0) {
+      setError("Chưa có tài khoản HR active để nhận yêu cầu xin off");
       return;
     }
     if (form.reason === "BUSINESS_TRIP") {
@@ -471,7 +461,7 @@ export function TimeOffPage() {
       reasonOther: form.reason === "OTHER" ? form.reasonOther.trim() : undefined,
       details: form.reason === "BUSINESS_TRIP" ? undefined : form.details.trim() || undefined,
       businessTripSchedule: schedulePayload,
-      recipientIds: form.recipientIds,
+      recipientIds,
     });
   }
 
@@ -783,56 +773,43 @@ export function TimeOffPage() {
 
               <div className="grid gap-2">
                 <Label>
-                  Người nhận{" "}
+                  Người nhận HR{" "}
                   <span className="text-xs font-normal text-muted-foreground">
-                    (chọn nhiều, mặc định có HR)
+                    (tự động gửi tới tất cả HR)
                   </span>
                 </Label>
                 {recipientQuery.isLoading ? (
                   <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-                    Đang tải người nhận...
+                    Đang tải danh sách HR...
                   </div>
                 ) : (recipientQuery.data ?? []).length === 0 ? (
                   <div className="rounded-lg border border-dashed p-3 text-sm text-amber-700">
-                    Chưa có HR/Admin/BODs active để nhận yêu cầu.
+                    Chưa có tài khoản HR active. Tạo user HR (có email) trong mục Users.
                   </div>
                 ) : (
                   <div className="grid gap-2 sm:grid-cols-2">
-                    {(recipientQuery.data ?? []).map((recipient) => {
-                      const checked = form.recipientIds.includes(recipient.id);
-                      const role = recipient.roleLabel ?? (recipient.role === "ADMIN" ? "ADMIN" : "STAFF");
-                      return (
-                        <button
-                          key={recipient.id}
-                          type="button"
-                          onClick={() => toggleRecipient(recipient.id)}
-                          className={`relative rounded-lg border p-3 text-left transition ${
-                            checked
-                              ? "border-violet-600 bg-violet-50 text-violet-800 ring-2 ring-violet-600"
-                              : "border-slate-200 bg-background hover:bg-accent"
-                          }`}
-                          aria-pressed={checked}
-                        >
-                          {checked && (
-                            <span className="absolute right-2 top-2 inline-flex size-5 items-center justify-center rounded-full bg-violet-600 text-white">
-                              <Check className="size-3" />
-                            </span>
-                          )}
-                          <div className="pr-6 text-sm font-semibold">{recipient.fullName}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {recipient.username} · {formatRoleLabel(role)}
-                            {recipient.isDefault ? " · mặc định HR" : ""}
-                          </div>
-                        </button>
-                      );
-                    })}
+                    {(recipientQuery.data ?? []).map((recipient) => (
+                      <div
+                        key={recipient.id}
+                        className="relative rounded-lg border border-violet-200 bg-violet-50/60 p-3 text-left"
+                      >
+                        <span className="absolute right-2 top-2 inline-flex size-5 items-center justify-center rounded-full bg-violet-600 text-white">
+                          <Check className="size-3" />
+                        </span>
+                        <div className="pr-6 text-sm font-semibold">{recipient.fullName}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {recipient.username} · HR
+                          {recipient.email ? ` · ${recipient.email}` : " · chưa có email"}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Đang chọn:{" "}
+                  Sẽ gửi thông báo & email tới:{" "}
                   {selectedRecipientNames.length > 0
                     ? selectedRecipientNames.join(", ")
-                    : "chưa chọn người nhận"}
+                    : "chưa có HR"}
                 </p>
               </div>
 
