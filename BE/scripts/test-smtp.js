@@ -1,16 +1,13 @@
 /**
- * Test SMTP port 465 từ máy local.
+ * Test SMTP port 465 từ máy local hoặc Render Shell.
  *
- * Cách dùng:
  *   cd BE
  *   SMTP_EMAIL=long.nguyen@cybertech.com.vn \
  *   SMTP_PASSWORD='your-password' \
  *   SMTP_TO=duy.pham@cybertech.com.vn \
  *   npm run test:smtp
  *
- * Tuỳ chọn:
- *   SMTP_HOST=mail.cybertech.com.vn  (mặc định)
- *   SMTP_PORT=465                    (mặc định)
+ * Tuỳ chọn: SMTP_HOST, SMTP_PORT (mặc định 465)
  */
 import "dotenv/config";
 import nodemailer from "nodemailer";
@@ -30,7 +27,7 @@ function log(title, detail = "") {
 
 async function testTcp() {
   return new Promise((resolve) => {
-    const socket = net.connect({ host, port, timeout: 10000 }, () => {
+    const socket = net.connect({ host, port, timeout: 15000 }, () => {
       log("TCP", `Kết nối TCP tới ${host}:${port} — OK`);
       socket.end();
       resolve(true);
@@ -40,7 +37,7 @@ async function testTcp() {
       resolve(false);
     });
     socket.on("timeout", () => {
-      log("TCP", "Timeout sau 10s");
+      log("TCP", "Timeout sau 15s");
       socket.destroy();
       resolve(false);
     });
@@ -50,10 +47,9 @@ async function testTcp() {
 async function testTls() {
   return new Promise((resolve) => {
     const socket = tls.connect(
-      { host, port, servername: host, rejectUnauthorized: false, timeout: 10000 },
+      { host, port, servername: host, rejectUnauthorized: false, timeout: 15000 },
       () => {
-        log("TLS", `Bắt tay SSL trên port ${port} — OK`);
-        log("TLS cert", socket.getPeerCertificate()?.subject?.CN ?? "(không đọc được CN)");
+        log("TLS", `Bắt tay SSL port ${port} — OK`);
         socket.end();
         resolve(true);
       }
@@ -63,7 +59,6 @@ async function testTls() {
       resolve(false);
     });
     socket.on("timeout", () => {
-      log("TLS", "Timeout sau 10s");
       socket.destroy();
       resolve(false);
     });
@@ -76,45 +71,34 @@ async function testSmtpAuthAndSend() {
     port,
     secure: true,
     auth: { user: email, pass: password },
+    connectionTimeout: 25_000,
+    socketTimeout: 30_000,
     tls: { rejectUnauthorized: false },
-    logger: true,
-    debug: true,
   });
 
-  log("SMTP verify", "Đang xác thực đăng nhập SMTP...");
+  log("SMTP verify", `Đang xác thực ${host}:${port}...`);
   await transporter.verify();
   log("SMTP verify", "Đăng nhập SMTP — OK");
 
   const subject = `[TaskMate SMTP Test] ${new Date().toISOString()}`;
-  const text = [
-    "Đây là email test từ script BE/scripts/test-smtp.js",
-    "",
-    "Nếu nhận được mail này → SMTP 465 hoạt động.",
-    "Lưu ý: gửi qua SMTP thường KHÔNG hiện trong thư mục Đã gửi trên webmail.",
-    "Hãy kiểm tra hộp thư đến của người nhận (hoặc Spam).",
-  ].join("\n");
-
-  log("SMTP send", `Gửi thử tới ${to}...`);
   const info = await transporter.sendMail({
     from: email,
     to,
     subject,
-    text,
+    text: "Test SMTP port 465 từ TaskMate.",
   });
 
-  log("SMTP send — kết quả", JSON.stringify({
+  log("SMTP send", JSON.stringify({
     messageId: info.messageId,
     accepted: info.accepted,
-    rejected: info.rejected,
     response: info.response,
-    envelope: info.envelope,
   }, null, 2));
-
+  transporter.close?.();
   return info;
 }
 
 async function main() {
-  console.log("TaskMate — SMTP test (port 465)");
+  console.log(`TaskMate — SMTP test port ${port}`);
   console.log(`Host: ${host}:${port}`);
 
   const tcpOk = await testTcp();
@@ -126,25 +110,16 @@ async function main() {
   await testTls();
 
   if (!email || !password) {
-    log("Bỏ qua gửi mail", [
-      "Thiếu SMTP_EMAIL hoặc SMTP_PASSWORD.",
-      "Chạy lại với:",
-      "  SMTP_EMAIL=you@cybertech.com.vn SMTP_PASSWORD='...' SMTP_TO=recipient@... npm run test:smtp",
-    ].join("\n"));
+    log("Bỏ qua gửi mail", "Thiếu SMTP_EMAIL hoặc SMTP_PASSWORD.");
     process.exit(0);
   }
 
   try {
     await testSmtpAuthAndSend();
-    log("Hoàn tất", [
-      "SMTP chấp nhận gửi (accepted).",
-      "Kiểm tra INBOX người nhận — không kiểm tra thư mục Đã gửi của người gửi.",
-      "Webmail Roundcube chỉ lưu Đã gửi khi soạn/gửi trong giao diện web, không phải SMTP API.",
-    ].join("\n"));
+    log("Hoàn tất", `Gửi thành công qua port ${port}. Kiểm tra INBOX ${to}.`);
   } catch (err) {
     console.error("\nSMTP thất bại:", err?.message ?? err);
     if (err?.code) console.error("Code:", err.code);
-    if (err?.response) console.error("Response:", err.response);
     process.exit(1);
   }
 }

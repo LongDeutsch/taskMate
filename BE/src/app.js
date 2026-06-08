@@ -39,7 +39,11 @@ app.use("/api/time-off", timeOffRoutes);
 app.use("/api/bug-reports", bugReportRoutes);
 app.use("/api/birthdays", birthdayRoutes);
 
-/** Wake Render nhanh — không chờ DB. */
+/** Wake Render — path /api/ping tránh ad-blocker chặn /health/live */
+app.get("/api/ping", (req, res) => {
+  res.json({ success: true, message: "ok" });
+});
+
 app.get("/health/live", (req, res) => {
   res.json({ success: true, message: "alive" });
 });

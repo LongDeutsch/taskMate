@@ -40,7 +40,7 @@ function sleep(ms: number) {
 
 function networkErrorMessage(): string {
   const be = BASE_URL || "BE (VITE_API_URL)";
-  return `Không kết nối được API (${be}). BE Render có thể đang khởi động (free tier) — đợi 30–60 giây, mở ${be}/health/live rồi thử lại.`;
+  return `Không kết nối được API (${be}). BE Render có thể đang khởi động (free tier) — đợi 30–60 giây, mở ${be}/api/ping rồi thử lại.`;
 }
 
 /** Đánh thức BE Render trước khi gọi API chính. */
@@ -49,7 +49,7 @@ export async function wakeApi(): Promise<boolean> {
   try {
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), 90_000);
-    const res = await fetch(`${BASE_URL}/health/live`, { signal: controller.signal });
+    const res = await fetch(`${BASE_URL}/api/ping`, { signal: controller.signal });
     clearTimeout(t);
     return res.ok;
   } catch {
@@ -95,7 +95,7 @@ async function request<T>(
   } catch (err) {
     if (err instanceof Error && err.name === "AbortError") {
       throw new Error(
-        `API không phản hồi sau ${REQUEST_TIMEOUT_MS / 1000}s. BE Render có thể đang khởi động — mở ${BASE_URL}/health/live, đợi phản hồi rồi thử lại.`
+        `API không phản hồi sau ${REQUEST_TIMEOUT_MS / 1000}s. BE Render có thể đang khởi động — mở ${BASE_URL}/api/ping, đợi phản hồi rồi thử lại.`
       );
     }
     throw new Error(networkErrorMessage());

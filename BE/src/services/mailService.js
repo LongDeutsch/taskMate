@@ -6,29 +6,29 @@ import {
 } from "../utils/mailCredentials.js";
 import { buildTimeOffEmailContent } from "../utils/timeOffLabels.js";
 
-const SMTP_CONNECTION_TIMEOUT_MS = Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 15_000);
-const SMTP_SOCKET_TIMEOUT_MS = Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 20_000);
+const SMTP_CONNECTION_TIMEOUT_MS = Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 25_000);
+const SMTP_SOCKET_TIMEOUT_MS = Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 30_000);
+const SMTP_PORT = Number(process.env.SMTP_PORT || DEFAULT_SMTP_PORT);
 
-function buildTransporter({ smtpHost, email, password }) {
+function tlsOptions() {
   const rejectUnauthorized =
     process.env.SMTP_TLS_REJECT_UNAUTHORIZED === "false"
       ? false
       : process.env.NODE_ENV === "production";
+  return { rejectUnauthorized };
+}
 
+function createTransporter(smtpHost, auth) {
+  const host = smtpHost || DEFAULT_SMTP_HOST;
   return nodemailer.createTransport({
-    host: smtpHost || DEFAULT_SMTP_HOST,
-    port: DEFAULT_SMTP_PORT,
+    host,
+    port: SMTP_PORT,
     secure: true,
-    auth: {
-      user: email,
-      pass: password,
-    },
+    auth,
     connectionTimeout: SMTP_CONNECTION_TIMEOUT_MS,
     greetingTimeout: SMTP_CONNECTION_TIMEOUT_MS,
     socketTimeout: SMTP_SOCKET_TIMEOUT_MS,
-    tls: {
-      rejectUnauthorized,
-    },
+    tls: tlsOptions(),
   });
 }
 
@@ -41,8 +41,7 @@ function parseNotifyEmails(raw) {
 }
 
 /**
- * Gửi email xin off qua SMTP port 465.
- * @returns {{ sent: string[], failed: string[] }}
+ * Gửi email xin off qua SMTP SSL port 465.
  */
 export async function sendTimeOffEmails(user, notifyEmails, request) {
   const emails = parseNotifyEmails(notifyEmails);
@@ -54,15 +53,11 @@ export async function sendTimeOffEmails(user, notifyEmails, request) {
 
   const password = decryptWebmailPassword(user.webmailPasswordEnc);
   if (!password) {
-    throw new Error("Không giải mã được mật khẩu webmail");
+    throw new Error("Không giải mã được mật khẩu webmail — kiểm tra MAIL_CREDENTIALS_KEY trên Render và lưu lại mật khẩu Profile");
   }
 
-  const transporter = buildTransporter({
-    smtpHost: user.smtpHost,
-    email: user.email,
-    password,
-  });
-
+  const auth = { user: user.email, pass: password };
+  const transporter = createTransporter(user.smtpHost, auth);
   const { text, html, subject } = buildTimeOffEmailContent(request);
 
   const sent = [];
@@ -84,19 +79,29 @@ export async function sendTimeOffEmails(user, notifyEmails, request) {
         messageId: info.messageId ?? null,
         response: info.response ?? null,
       });
-      console.info("[mail] accepted by SMTP", to, info.messageId ?? "", info.response ?? "");
+      console.info(
+        "[mail] accepted by SMTP",
+        to,
+        `${DEFAULT_SMTP_HOST}:${SMTP_PORT}`,
+        info.messageId ?? "",
+        info.response ?? ""
+      );
     } catch (err) {
       failed.push(to);
       console.warn("[mail] send failed to", to, err?.message ?? err);
     }
   }
 
+  transporter.close?.();
+
   return {
     sent,
     failed,
     details: sendDetails,
     note:
-      "SMTP đã chấp nhận gửi. Mail gửi qua API thường không xuất hiện trong thư mục Đã gửi trên webmail — kiểm tra hộp thư đến người nhận.",
+      sent.length > 0
+        ? "SMTP đã chấp nhận gửi. Kiểm tra hộp thư đến người nhận (có thể trong Spam)."
+        : "Không gửi được qua SMTP port 465 từ server — có thể mail server chặn IP datacenter Render; nhờ IT whitelist.",
   };
 }
 
