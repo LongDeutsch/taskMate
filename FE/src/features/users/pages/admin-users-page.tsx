@@ -263,8 +263,8 @@ export function AdminUsersPage() {
                   </span>
                   <div>
                     <Link
-                      to={user.role === "USER" ? `/admin/users/${user.id}` : "#"}
-                      className={user.role === "USER" ? "font-medium text-primary hover:underline" : "font-medium"}
+                      to={`/users/${user.id}`}
+                      className="font-medium text-primary hover:underline"
                     >
                       {user.fullName}
                     </Link>
@@ -277,7 +277,10 @@ export function AdminUsersPage() {
                 {user.role === "USER" && (
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" asChild>
-                      <Link to={`/admin/users/${user.id}`}>Xem dự án</Link>
+                      <Link to={`/users/${user.id}`}>Xem profile</Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to={`/admin/users/${user.id}`}>Dự án</Link>
                     </Button>
                     <Button
                       variant="destructive"

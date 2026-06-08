@@ -23,6 +23,7 @@ export const baseNavItems: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/bug-reports", label: "Báo bug", icon: Bug },
   { to: "/tasks", label: "My Tasks", icon: ListTodo, hideForHr: true },
+  { to: "/users", label: "Users", icon: Users },
   { to: "/time-off", label: "Xin off", icon: CalendarOff },
   { to: "/profile", label: "Profile", icon: UserCircle },
   { to: "/automation", label: "Automation", icon: Zap },
@@ -31,6 +32,6 @@ export const baseNavItems: NavItem[] = [
 export const adminNavItems: NavItem[] = [
   { to: "/admin/projects", label: "Projects", icon: FolderKanban },
   { to: "/admin/tasks", label: "Tasks (CRUD)", icon: ClipboardList },
-  { to: "/admin/users", label: "Users", icon: Users },
+  { to: "/admin/users", label: "Quản lý Users", icon: Users },
   { to: "/admin/trash", label: "Thùng rác", icon: Trash2 },
 ];

@@ -224,6 +224,12 @@ export async function getUsers(): Promise<User[]> {
   return json.data ?? [];
 }
 
+export async function getUserById(id: string): Promise<User> {
+  const json = await request<User>(`/api/users/${id}`);
+  if (!json.data) throw new Error("User not found");
+  return json.data;
+}
+
 export async function createUser(data: {
   username: string;
   fullName: string;

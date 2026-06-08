@@ -181,9 +181,25 @@ export async function mockDeleteTask(id: string): Promise<boolean> {
   return true;
 }
 
+function mergeUserProfile(user: User): User {
+  const profiles = getStoredProfile();
+  const profile = profiles[user.id] ?? {};
+  const { password: _, ...rest } = user;
+  return { ...rest, ...profile } as User;
+}
+
 export async function mockGetUsers(): Promise<User[]> {
   await delay(300);
-  return getStoredUsers().map(({ password: _, ...u }) => u as User);
+  return getStoredUsers()
+    .filter((u) => !u.deletedAt)
+    .map(mergeUserProfile);
+}
+
+export async function mockGetUserById(id: string): Promise<User> {
+  await delay(200);
+  const user = getStoredUsers().find((u) => u.id === id && !u.deletedAt);
+  if (!user) throw new Error("User not found");
+  return mergeUserProfile(user);
 }
 
 export async function mockCreateUser(data: {

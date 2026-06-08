@@ -18,6 +18,7 @@ export const updateTask = useRealApi ? client.updateTask : mock.mockUpdateTask;
 export const deleteTask = useRealApi ? client.deleteTask : mock.mockDeleteTask;
 export const deleteAllTasks = useRealApi ? client.deleteAllTasks : async () => 0;
 export const getUsers = useRealApi ? client.getUsers : mock.mockGetUsers;
+export const getUserById = useRealApi ? client.getUserById : mock.mockGetUserById;
 export const createUser = useRealApi ? client.createUser : mock.mockCreateUser;
 export const toggleUserDisabled = useRealApi
   ? client.toggleUserDisabled

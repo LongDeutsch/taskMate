@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { User } from "../models/User.js";
 import { createNotFoundError, createBadRequestError } from "../utils/errors.js";
+import { formatPublicUser } from "../utils/userFormat.js";
 
 const TRASH_RETENTION_DAYS = 5;
 
@@ -20,15 +21,6 @@ async function purgeExpiredDeletedUsers() {
   });
 }
 
-/** Suy ra roleLabel cho user lean (cũ) chưa có trường roleLabel. */
-function withRoleLabel(u) {
-  return {
-    ...u,
-    id: u._id,
-    roleLabel: u.roleLabel ?? (u.role === "ADMIN" ? "ADMIN" : "STAFF"),
-  };
-}
-
 const ALLOWED_ROLE_LABELS = ["ADMIN", "STAFF", "HR", "BODS"];
 
 export async function list(req, res, next) {
@@ -38,7 +30,7 @@ export async function list(req, res, next) {
       .select("-password")
       .sort({ username: 1 })
       .lean();
-    const result = users.map(withRoleLabel);
+    const result = users.map(formatPublicUser);
     res.json({ success: true, data: result });
   } catch (err) {
     next(err);
@@ -51,7 +43,10 @@ export async function getById(req, res, next) {
     if (!user) {
       return next(createNotFoundError("User not found"));
     }
-    res.json({ success: true, data: withRoleLabel(user) });
+    if (user.deletedAt) {
+      return next(createNotFoundError("User not found"));
+    }
+    res.json({ success: true, data: formatPublicUser(user) });
   } catch (err) {
     next(err);
   }

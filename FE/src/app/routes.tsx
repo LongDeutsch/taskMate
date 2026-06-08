@@ -10,6 +10,8 @@ import { TaskDetailPage } from "@/features/tasks/pages/task-detail-page";
 import { AdminTasksPage } from "@/features/tasks/pages/admin-tasks-page";
 import { AdminUsersPage } from "@/features/users/pages/admin-users-page";
 import { AdminUserDetailPage } from "@/features/users/pages/admin-user-detail-page";
+import { UsersPage } from "@/features/users/pages/users-page";
+import { UserProfilePage } from "@/features/users/pages/user-profile-page";
 import { AdminProjectsPage } from "@/features/projects/pages/admin-projects-page";
 import { AdminProjectDetailPage } from "@/features/projects/pages/admin-project-detail-page";
 import { AutomationPage } from "@/features/automation/pages/automation-page";
@@ -35,6 +37,8 @@ const router = createBrowserRouter([
       { path: "tasks/:id", element: <TaskDetailPage /> },
       { path: "automation", element: <AutomationPage /> },
       { path: "profile", element: <ProfilePage /> },
+      { path: "users", element: <UsersPage /> },
+      { path: "users/:id", element: <UserProfilePage /> },
       { path: "time-off", element: <TimeOffPage /> },
       {
         path: "admin/projects",

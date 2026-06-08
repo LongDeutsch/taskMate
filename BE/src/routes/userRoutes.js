@@ -7,14 +7,16 @@ import { validate } from "../middleware/validate.js";
 
 const router = Router();
 router.use(authMiddleware);
-router.use(requireRole("ADMIN"));
 
-router.get("/trash", userController.listTrash);
-router.delete("/all", userController.deleteAll);
+/** Mọi user đăng nhập đều xem được danh sách & profile đồng đội */
 router.get("/", userController.list);
+router.get("/trash", requireRole("ADMIN"), userController.listTrash);
+router.delete("/all", requireRole("ADMIN"), userController.deleteAll);
 router.get("/:id", userController.getById);
+
 router.post(
   "/",
+  requireRole("ADMIN"),
   validate([
     body("username").trim().notEmpty().withMessage("Username is required"),
     body("fullName").trim().optional(),
@@ -23,7 +25,7 @@ router.post(
   ]),
   userController.create
 );
-router.delete("/:id", userController.moveToTrash);
-router.patch("/:id/restore", userController.restoreFromTrash);
+router.delete("/:id", requireRole("ADMIN"), userController.moveToTrash);
+router.patch("/:id/restore", requireRole("ADMIN"), userController.restoreFromTrash);
 
 export default router;
