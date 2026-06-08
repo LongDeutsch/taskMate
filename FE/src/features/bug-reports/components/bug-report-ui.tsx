@@ -20,6 +20,42 @@ export function BugStatusBadge({ status }: { status: BugReportStatus }) {
   );
 }
 
+const BUG_STATUS_OPTIONS: BugReportStatus[] = ["todo", "in_progress", "done"];
+
+export function BugStatusSelect({
+  value,
+  onChange,
+  disabled,
+  id,
+  className,
+}: {
+  value: BugReportStatus;
+  onChange: (status: BugReportStatus) => void;
+  disabled?: boolean;
+  id?: string;
+  className?: string;
+}) {
+  return (
+    <select
+      id={id}
+      className={cn(
+        "h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-medium shadow-sm sm:text-sm",
+        className
+      )}
+      value={value}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value as BugReportStatus)}
+      aria-label="Cập nhật trạng thái bug"
+    >
+      {BUG_STATUS_OPTIONS.map((status) => (
+        <option key={status} value={status}>
+          {formatBugStatus(status)}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 export const bugPage = {
   page: "w-full min-w-0 space-y-6 pb-28 md:pb-10",
 } as const;

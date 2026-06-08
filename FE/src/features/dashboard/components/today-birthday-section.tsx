@@ -6,6 +6,7 @@ import { BirthdayCelebrationCard } from "./birthday-celebration-card";
 type TodayBirthdaySectionProps = {
   /** Khi có: cá nhân hóa lời chúc nếu user đang đăng nhập trùng sinh nhật hôm nay */
   currentUserId?: string;
+  variant?: "default" | "sidebar";
 };
 
 function formatBirthdayExtraLine(names: string[]): string {
@@ -13,7 +14,7 @@ function formatBirthdayExtraLine(names: string[]): string {
   return `Hôm nay là sinh nhật của ${names.join(", ")} 🎈`;
 }
 
-export function TodayBirthdaySection({ currentUserId }: TodayBirthdaySectionProps) {
+export function TodayBirthdaySection({ currentUserId, variant = "default" }: TodayBirthdaySectionProps) {
   const todayKey = getTodayDateKey();
 
   const { data: birthdays = [] } = useQuery({
@@ -29,10 +30,13 @@ export function TodayBirthdaySection({ currentUserId }: TodayBirthdaySectionProp
   const person = birthdays[0]!;
   const isSelf = !!currentUserId && birthdays.some((b) => b.id === currentUserId);
 
+  const cardProps = { variant, playConfettiOnMount: variant !== "sidebar" };
+
   if (isSingle) {
     const selfToday = currentUserId === person.id;
     return (
       <BirthdayCelebrationCard
+        {...cardProps}
         fullName={person.fullName}
         dateOfBirth={person.dateOfBirth}
         showAge
@@ -56,6 +60,7 @@ export function TodayBirthdaySection({ currentUserId }: TodayBirthdaySectionProp
 
   return (
     <BirthdayCelebrationCard
+      {...cardProps}
       fullName=""
       showAge={false}
       titleSuffix={isSelf ? " bạn" : " các bạn"}

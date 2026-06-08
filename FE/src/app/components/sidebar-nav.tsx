@@ -5,6 +5,7 @@ import { cn } from "@/shared/lib/utils";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { getRoleLabel } from "@/shared/types";
 import { UserAvatar } from "@/shared/components/user-avatar";
+import { TodayBirthdaySection } from "@/features/dashboard/components/today-birthday-section";
 import { adminNavItems, baseNavItems } from "../config/nav-items";
 
 export function navLinkClass({ isActive }: { isActive: boolean }) {
@@ -53,6 +54,10 @@ export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
             </div>
           </>
         )}
+      </div>
+
+      <div className="shrink-0 px-3 pb-2">
+        <TodayBirthdaySection currentUserId={user?.id} variant="sidebar" />
       </div>
 
       <div className="shrink-0 border-t border-[#E5E7EB] p-3">

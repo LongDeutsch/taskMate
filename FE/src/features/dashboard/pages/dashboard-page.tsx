@@ -15,11 +15,10 @@ import {
   updateBugReport,
   updateBugReportStatus,
 } from "@/shared/api";
-import { TodayBirthdaySection } from "@/features/dashboard/components/today-birthday-section";
 import type { BugReport, BugReportStatus } from "@/shared/types";
 import { BugReportIconActions } from "@/features/bug-reports/components/bug-report-actions";
 import { BugEditModal, BugViewModal } from "@/features/bug-reports/components/bug-report-modals";
-import { BugStatusBadge } from "@/features/bug-reports/components/bug-report-ui";
+import { BugStatusBadge, BugStatusSelect } from "@/features/bug-reports/components/bug-report-ui";
 import { at } from "@/features/tasks/components/admin-tasks-ui";
 import { ListTodo, CheckCircle, Clock, Calendar, User, FolderKanban, Bug } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
@@ -138,8 +137,6 @@ export function DashboardPage() {
         </p>
       </div>
 
-      <TodayBirthdaySection currentUserId={user?.id} />
-
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card
           role="button"
@@ -205,7 +202,9 @@ export function DashboardPage() {
               Bug cần xử lý
             </CardTitle>
             <p className="mt-1 text-sm text-muted-foreground">
-              To do và In progress — mọi user có thể xem
+              {isAdmin
+                ? "To do / In progress — PM có thể đổi trạng thái trực tiếp"
+                : "To do và In progress — mọi user có thể xem"}
             </p>
           </div>
           <Button variant="outline" size="sm" asChild>
@@ -234,6 +233,12 @@ export function DashboardPage() {
                     if (confirm("Xóa bug report này?")) bugDeleteMutation.mutate(bug.id);
                   }}
                   deletePending={bugDeleteMutation.isPending}
+                  onStatusChange={
+                    isAdmin
+                      ? (status) => bugStatusMutation.mutate({ id: bug.id, status })
+                      : undefined
+                  }
+                  statusPending={bugStatusMutation.isPending}
                 />
               ))}
             </ul>
@@ -337,6 +342,8 @@ function DashboardBugRow({
   onEdit,
   onDelete,
   deletePending,
+  onStatusChange,
+  statusPending,
 }: {
   bug: BugReport;
   userId: string | undefined;
@@ -345,6 +352,8 @@ function DashboardBugRow({
   onEdit: () => void;
   onDelete: () => void;
   deletePending: boolean;
+  onStatusChange?: (status: BugReportStatus) => void;
+  statusPending?: boolean;
 }) {
   return (
     <li className={at.taskCard}>
@@ -354,7 +363,16 @@ function DashboardBugRow({
             <span className="text-base font-semibold text-gray-900">{bug.title}</span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <BugStatusBadge status={bug.status} />
+            {isAdmin && onStatusChange ? (
+              <BugStatusSelect
+                id={`bug-status-${bug.id}`}
+                value={bug.status}
+                disabled={statusPending}
+                onChange={onStatusChange}
+              />
+            ) : (
+              <BugStatusBadge status={bug.status} />
+            )}
             <span className="inline-flex max-w-[200px] truncate rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
               {bug.userName}
             </span>
