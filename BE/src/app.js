@@ -39,6 +39,11 @@ app.use("/api/time-off", timeOffRoutes);
 app.use("/api/bug-reports", bugReportRoutes);
 app.use("/api/birthdays", birthdayRoutes);
 
+/** Wake Render nhanh — không chờ DB. */
+app.get("/health/live", (req, res) => {
+  res.json({ success: true, message: "alive" });
+});
+
 app.get("/health", async (req, res) => {
   const check = await checkDatabase();
   if (!check.ok) {

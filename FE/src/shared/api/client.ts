@@ -32,10 +32,46 @@ export function clearToken(): void {
 }
 
 const REQUEST_TIMEOUT_MS = 45_000;
+const NETWORK_RETRY_DELAYS_MS = [2_000, 4_000];
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function networkErrorMessage(): string {
   const be = BASE_URL || "BE (VITE_API_URL)";
-  return `Không kết nối được API (${be}). Thường do BE Render đang ngủ (free tier) hoặc CORS — mở ${be}/health trong tab mới, đợi phản hồi rồi thử lại.`;
+  return `Không kết nối được API (${be}). BE Render có thể đang khởi động (free tier) — đợi 30–60 giây, mở ${be}/health/live rồi thử lại.`;
+}
+
+/** Đánh thức BE Render trước khi gọi API chính. */
+export async function wakeApi(): Promise<boolean> {
+  if (!BASE_URL) return true;
+  try {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), 90_000);
+    const res = await fetch(`${BASE_URL}/health/live`, { signal: controller.signal });
+    clearTimeout(t);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
+  let lastError: unknown;
+  const attempts = NETWORK_RETRY_DELAYS_MS.length + 1;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fetch(url, init);
+    } catch (err) {
+      lastError = err;
+      if (err instanceof Error && err.name === "AbortError") throw err;
+      if (i < NETWORK_RETRY_DELAYS_MS.length) {
+        await sleep(NETWORK_RETRY_DELAYS_MS[i]);
+      }
+    }
+  }
+  throw lastError;
 }
 
 async function request<T>(
@@ -55,11 +91,11 @@ async function request<T>(
 
   let res: Response;
   try {
-    res = await fetch(url, { ...options, headers, signal: controller.signal });
+    res = await fetchWithRetry(url, { ...options, headers, signal: controller.signal });
   } catch (err) {
     if (err instanceof Error && err.name === "AbortError") {
       throw new Error(
-        `API không phản hồi sau ${REQUEST_TIMEOUT_MS / 1000}s. BE Render có thể đang khởi động — thử lại sau 1 phút.`
+        `API không phản hồi sau ${REQUEST_TIMEOUT_MS / 1000}s. BE Render có thể đang khởi động — mở ${BASE_URL}/health/live, đợi phản hồi rồi thử lại.`
       );
     }
     throw new Error(networkErrorMessage());

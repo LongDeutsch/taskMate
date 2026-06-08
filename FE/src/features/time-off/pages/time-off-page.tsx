@@ -14,6 +14,7 @@ import {
 import {
   cancelTimeOff,
   createTimeOff,
+  wakeApi,
   getAllTimeOffs,
   getMyTimeOffs,
   getTimeOffRecipients,
@@ -287,6 +288,7 @@ export function TimeOffPage() {
   const [exportFrom, setExportFrom] = useState(todayIso());
   const [exportTo, setExportTo] = useState(todayIso());
   const [exportError, setExportError] = useState<string | null>(null);
+  const [isWakingApi, setIsWakingApi] = useState(false);
 
   const recipientQuery = useQuery({
     queryKey: ["time-off", "recipients"],
@@ -396,9 +398,15 @@ export function TimeOffPage() {
     }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setIsWakingApi(true);
+    try {
+      await wakeApi();
+    } finally {
+      setIsWakingApi(false);
+    }
     if (!form.startDate || !form.endDate) {
       setError("Vui lòng chọn ngày bắt đầu và kết thúc");
       return;
@@ -837,14 +845,14 @@ export function TimeOffPage() {
               </p>
 
               <div className="flex gap-2">
-                <Button type="submit" disabled={createMutation.isPending}>
-                  Gửi yêu cầu
+                <Button type="submit" disabled={createMutation.isPending || isWakingApi}>
+                  {isWakingApi ? "Đang kết nối server..." : "Gửi yêu cầu"}
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
                   onClick={() => setOpen(false)}
-                  disabled={createMutation.isPending}
+                  disabled={createMutation.isPending || isWakingApi}
                 >
                   Huỷ
                 </Button>

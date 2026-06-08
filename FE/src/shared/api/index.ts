@@ -5,6 +5,7 @@ const useRealApi = !!import.meta.env.VITE_API_URL;
 /** URL BE khi dùng API thật; rỗng khi dùng mock. */
 export const apiBaseUrl = (import.meta.env.VITE_API_URL as string) || "";
 export const isUsingRealApi = useRealApi;
+export const wakeApi = useRealApi ? client.wakeApi : async () => true;
 
 export const login = useRealApi ? client.login : mock.mockLogin;
 export const getProfile = useRealApi ? client.getProfile : mock.mockGetProfile;

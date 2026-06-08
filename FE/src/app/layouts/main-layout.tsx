@@ -1,6 +1,7 @@
 // File: src/app/layouts/main-layout.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
+import { wakeApi } from "@/shared/api";
 import { AppSidebar } from "../components/app-sidebar";
 import { AppHeader } from "../components/app-header";
 import { MobileNavDrawer } from "../components/mobile-nav-drawer";
@@ -9,6 +10,10 @@ import { NewTaskLoginToast } from "@/features/notifications/components/new-task-
 
 export function MainLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    void wakeApi();
+  }, []);
 
   return (
     <div className="flex h-[100dvh] w-full overflow-hidden bg-[#F9FAFB]">
