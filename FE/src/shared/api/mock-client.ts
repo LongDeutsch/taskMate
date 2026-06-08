@@ -71,12 +71,16 @@ export async function mockGetProfile(): Promise<User> {
 
 export async function mockUpdateProfile(
   data: {
+    fullName?: string | null;
     dateOfBirth?: string | null;
     gender?: string | null;
     joinDate?: string | null;
     position?: string | null;
     phone?: string | null;
     email?: string | null;
+    webmailUrl?: string | null;
+    smtpHost?: string | null;
+    webmailPassword?: string | null;
   },
   _avatarFile?: File
 ): Promise<User> {
@@ -93,19 +97,36 @@ export async function mockUpdateProfile(
     data.dateOfBirth !== undefined
       ? calcAgeFromDateOfBirth(data.dateOfBirth)
       : current.age ?? user.age ?? null;
-  const updated = { ...user, ...current, ...data, age };
+  if (data.fullName !== undefined && !String(data.fullName ?? "").trim()) {
+    throw new Error("Họ và tên không được để trống");
+  }
+  const updated = {
+    ...user,
+    ...current,
+    ...data,
+    age,
+    hasWebmailPassword:
+      data.webmailPassword?.trim()
+        ? true
+        : current.hasWebmailPassword ?? user.hasWebmailPassword ?? false,
+  };
+  const { webmailPassword: _pw, ...stored } = updated;
   profiles[user.id] = {
-    dateOfBirth: updated.dateOfBirth,
-    age: updated.age,
-    gender: updated.gender,
-    joinDate: updated.joinDate,
-    position: updated.position,
-    phone: updated.phone,
-    email: updated.email,
+    ...(stored.fullName != null ? { fullName: stored.fullName } : {}),
+    dateOfBirth: stored.dateOfBirth,
+    age: stored.age,
+    gender: stored.gender,
+    joinDate: stored.joinDate,
+    position: stored.position,
+    phone: stored.phone,
+    email: stored.email,
+    webmailUrl: stored.webmailUrl,
+    smtpHost: stored.smtpHost,
+    hasWebmailPassword: stored.hasWebmailPassword,
   };
   setStoredProfile(profiles);
-  setStoredAuthUser(updated as User);
-  return updated as User;
+  setStoredAuthUser(stored as User);
+  return stored as User;
 }
 
 export async function mockGetTasks(filters?: {
@@ -209,16 +230,22 @@ export async function mockGetUserById(id: string): Promise<User> {
 export async function mockCreateUser(data: {
   username: string;
   fullName: string;
+  email?: string | null;
   roleLabel?: "ADMIN" | "STAFF" | "HR" | "BODS";
 }): Promise<User> {
   await delay(300);
   const users = getStoredUsers();
   const roleLabel = data.roleLabel ?? "STAFF";
   const role = roleLabel === "ADMIN" ? "ADMIN" : "USER";
+  const email = data.email?.trim() || null;
+  if (roleLabel === "HR" && !email) {
+    throw new Error("Email bắt buộc khi tạo user HR");
+  }
   const user: User = {
     id: `u-${Date.now()}`,
     username: data.username,
     fullName: data.fullName,
+    email,
     role,
     roleLabel,
     disabled: false,

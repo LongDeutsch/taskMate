@@ -76,7 +76,7 @@ export async function getById(req, res, next) {
 
 export async function create(req, res, next) {
   try {
-    const { username, fullName, role, password } = req.body;
+    const { username, fullName, role, password, email } = req.body;
     const existing = await User.findOne({ username });
     if (existing) {
       return next(createBadRequestError("Username already exists"));
@@ -89,12 +89,24 @@ export async function create(req, res, next) {
     }
     const rbacRole = roleLabel === "ADMIN" ? "ADMIN" : "USER";
 
+    let normalizedEmail = null;
+    if (email !== undefined && email !== null && String(email).trim() !== "") {
+      normalizedEmail = String(email).trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+        return next(createBadRequestError("Email không hợp lệ"));
+      }
+    }
+    if (roleLabel === "HR" && !normalizedEmail) {
+      return next(createBadRequestError("Email bắt buộc khi tạo user HR"));
+    }
+
     const hashed = await bcrypt.hash(password || "123456", 12);
     const id = newId();
     const user = await User.create({
       _id: id,
       username,
       fullName: fullName || username,
+      email: normalizedEmail,
       role: rbacRole,
       roleLabel,
       password: hashed,

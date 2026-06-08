@@ -19,6 +19,8 @@ export type NavItem = {
   hideForHr?: boolean;
 };
 
+export const hrNavPaths = ["/users", "/time-off", "/profile"] as const;
+
 export const baseNavItems: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/bug-reports", label: "Báo bug", icon: Bug },
@@ -28,6 +30,15 @@ export const baseNavItems: NavItem[] = [
   { to: "/profile", label: "Profile", icon: UserCircle },
   { to: "/automation", label: "Automation", icon: Zap },
 ];
+
+export function getBaseNavItems(roleLabel: string) {
+  if (roleLabel === "HR") {
+    return baseNavItems.filter((item) =>
+      (hrNavPaths as readonly string[]).includes(item.to)
+    );
+  }
+  return baseNavItems.filter((item) => !(item.hideForHr && roleLabel === "HR"));
+}
 
 export const adminNavItems: NavItem[] = [
   { to: "/admin/projects", label: "Projects", icon: FolderKanban },

@@ -32,6 +32,21 @@ const timeOffSchema = new mongoose.Schema(
     reason: { type: String, enum: REASON_ENUM, required: true },
     /** Bắt buộc khi reason === "OTHER". */
     reasonOther: { type: String, default: "" },
+    /** Thông tin bổ sung (tùy chọn). */
+    details: { type: String, default: "" },
+    /** Lịch trình công tác — chỉ dùng khi reason === BUSINESS_TRIP. */
+    businessTripSchedule: {
+      type: [
+        {
+          startDate: { type: Date, required: true },
+          endDate: { type: Date, required: true },
+          staff: { type: String, default: "" },
+          location: { type: String, default: "" },
+          description: { type: String, default: "" },
+        },
+      ],
+      default: [],
+    },
 
     status: { type: String, enum: STATUS_ENUM, default: "pending" },
     /** Người thay đổi status (HR). */
@@ -57,6 +72,13 @@ timeOffSchema.set("toJSON", {
     if (ret.createdAt) ret.createdAt = ret.createdAt.toISOString?.() ?? ret.createdAt;
     if (ret.updatedAt) ret.updatedAt = ret.updatedAt.toISOString?.() ?? ret.updatedAt;
     if (ret.decidedAt) ret.decidedAt = ret.decidedAt.toISOString?.() ?? ret.decidedAt;
+    if (Array.isArray(ret.businessTripSchedule)) {
+      ret.businessTripSchedule = ret.businessTripSchedule.map((row) => ({
+        ...row,
+        startDate: row.startDate?.toISOString?.()?.slice(0, 10) ?? row.startDate,
+        endDate: row.endDate?.toISOString?.()?.slice(0, 10) ?? row.endDate,
+      }));
+    }
     return ret;
   },
 });

@@ -49,17 +49,40 @@ const ROLE_LABEL_OPTIONS: {
   },
 ];
 
-const createUserSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  fullName: z.string().min(1, "Full name is required"),
-  roleLabel: z.enum(["ADMIN", "STAFF", "HR", "BODS"]),
-});
+const createUserSchema = z
+  .object({
+    username: z.string().min(1, "Username is required"),
+    fullName: z.string().min(1, "Full name is required"),
+    email: z.string().optional(),
+    roleLabel: z.enum(["ADMIN", "STAFF", "HR", "BODS"]),
+  })
+  .superRefine((data, ctx) => {
+    if (data.roleLabel === "HR") {
+      const email = data.email?.trim() ?? "";
+      if (!email) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Email bắt buộc khi tạo user HR",
+          path: ["email"],
+        });
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Email không hợp lệ",
+          path: ["email"],
+        });
+      }
+    }
+  });
 
 export function AdminUsersPage() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
   const [roleLabel, setRoleLabel] = useState<RoleLabel>("STAFF");
   const [error, setError] = useState<string | null>(null);
 
@@ -69,13 +92,18 @@ export function AdminUsersPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: { username: string; fullName: string; roleLabel: RoleLabel }) =>
-      createUser(data),
+    mutationFn: (data: {
+      username: string;
+      fullName: string;
+      email?: string;
+      roleLabel: RoleLabel;
+    }) => createUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       setOpen(false);
       setUsername("");
       setFullName("");
+      setEmail("");
       setRoleLabel("STAFF");
       setError(null);
     },
@@ -105,12 +133,15 @@ export function AdminUsersPage() {
   function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const result = createUserSchema.safeParse({ username, fullName, roleLabel });
+    const result = createUserSchema.safeParse({ username, fullName, email, roleLabel });
     if (!result.success) {
       setError(result.error.issues.map((issue) => issue.message).join(". "));
       return;
     }
-    createMutation.mutate(result.data);
+    createMutation.mutate({
+      ...result.data,
+      email: result.data.email?.trim() || undefined,
+    });
   }
 
   if (isLoading) {
@@ -184,6 +215,28 @@ export function AdminUsersPage() {
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Full Name"
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="email">
+                  Email{roleLabel === "HR" ? " *" : ""}
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={
+                    roleLabel === "HR"
+                      ? "hr@cybertech.com.vn"
+                      : "Tùy chọn (bắt buộc với HR)"
+                  }
+                  required={roleLabel === "HR"}
+                />
+                {roleLabel === "HR" && (
+                  <p className="text-xs text-muted-foreground">
+                    Email HR dùng để nhận thông báo xin off qua SMTP.
+                  </p>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label>

@@ -19,6 +19,7 @@ import { ProfilePage } from "@/features/profile/pages/profile-page";
 import { AdminTrashPage } from "@/features/trash/pages/admin-trash-page";
 import { TimeOffPage } from "@/features/time-off/pages/time-off-page";
 import { BugReportsPage } from "@/features/bug-reports/pages/bug-reports-page";
+import { HomeRedirect } from "./components/home-redirect";
 
 const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -30,7 +31,7 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <Navigate to="/dashboard" replace /> },
+      { index: true, element: <HomeRedirect /> },
       { path: "dashboard", element: <DashboardPage /> },
       { path: "bug-reports", element: <BugReportsPage /> },
       { path: "tasks", element: <TaskListPage /> },

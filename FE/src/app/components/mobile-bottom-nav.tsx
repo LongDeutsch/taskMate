@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { CalendarOff, LayoutDashboard, ListTodo, UserCircle } from "lucide-react";
+import { CalendarOff, LayoutDashboard, ListTodo, UserCircle, Users } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { getRoleLabel } from "@/shared/types";
@@ -10,15 +10,18 @@ export function MobileBottomNav() {
 
   const tasksTo = isAdmin ? "/admin/tasks" : "/tasks";
   const tasksLabel = isAdmin ? "Tasks" : "My Tasks";
-  const hideMyTasks = roleLabel === "HR";
-
-  const items = [
-    { to: "/dashboard", label: "Home", icon: LayoutDashboard },
-    ...(hideMyTasks
-      ? [{ to: "/time-off", label: "Xin off", icon: CalendarOff }]
-      : [{ to: tasksTo, label: tasksLabel, icon: ListTodo }]),
-    { to: "/profile", label: "Profile", icon: UserCircle },
-  ];
+  const items =
+    roleLabel === "HR"
+      ? [
+          { to: "/users", label: "Users", icon: Users },
+          { to: "/time-off", label: "Xin off", icon: CalendarOff },
+          { to: "/profile", label: "Profile", icon: UserCircle },
+        ]
+      : [
+          { to: "/dashboard", label: "Home", icon: LayoutDashboard },
+          { to: tasksTo, label: tasksLabel, icon: ListTodo },
+          { to: "/profile", label: "Profile", icon: UserCircle },
+        ];
 
   return (
     <nav

@@ -10,7 +10,7 @@ export const login = useRealApi ? client.login : mock.mockLogin;
 export const getProfile = useRealApi ? client.getProfile : mock.mockGetProfile;
 export const getTodayBirthdays = useRealApi ? client.getTodayBirthdays : mock.mockGetTodayBirthdays;
 export const updateProfile = useRealApi ? client.updateProfile : mock.mockUpdateProfile;
-export type { ProfileUpdate } from "./client";
+export type { ProfileUpdate, CreateTimeOffResult } from "./client";
 export const getTasks = useRealApi ? client.getTasks : mock.mockGetTasks;
 export const getTaskById = useRealApi ? client.getTaskById : mock.mockGetTaskById;
 export const createTask = useRealApi ? client.createTask : mock.mockCreateTask;

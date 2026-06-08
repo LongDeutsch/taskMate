@@ -4,6 +4,12 @@ import { createBadRequestError } from "../utils/errors.js";
 import { calcAgeFromDateOfBirth, formatDateOnly, getProfileAgeError } from "../utils/birthday.js";
 import { avatarFromUploadedFile } from "../utils/avatarStorage.js";
 import { formatPublicUser } from "../utils/userFormat.js";
+import {
+  encryptWebmailPassword,
+  hashWebmailPassword,
+  DEFAULT_WEBMAIL_URL,
+  DEFAULT_SMTP_HOST,
+} from "../utils/mailCredentials.js";
 
 function normalizeEmail(value) {
   if (value === undefined) return undefined;
@@ -25,13 +31,33 @@ function normalizePhone(value) {
   return phone;
 }
 
+function normalizeWebmailUrl(value) {
+  if (value === undefined) return undefined;
+  if (value === "" || value === null) return DEFAULT_WEBMAIL_URL;
+  const url = String(value).trim();
+  if (!/^https?:\/\/.+/i.test(url)) {
+    throw createBadRequestError("Địa chỉ webmail phải là URL (https://...)");
+  }
+  return url.replace(/\/$/, "") + "/";
+}
+
+function normalizeSmtpHost(value) {
+  if (value === undefined) return undefined;
+  if (value === "" || value === null) return DEFAULT_SMTP_HOST;
+  const host = String(value).trim().replace(/^https?:\/\//, "").split("/")[0];
+  if (!host) throw createBadRequestError("SMTP host không hợp lệ");
+  return host;
+}
+
 export async function getProfile(req, res, next) {
   try {
-    const user = await User.findById(req.user.id).select("-password").lean();
+    const user = await User.findById(req.user.id)
+      .select("-password +webmailPasswordEnc +webmailPasswordHash")
+      .lean();
     if (!user) {
       return next(createNotFoundError("User not found"));
     }
-    res.json({ success: true, data: formatPublicUser(user) });
+    res.json({ success: true, data: formatPublicUser(user, { includeWebmail: true }) });
   } catch (err) {
     next(err);
   }
@@ -39,10 +65,26 @@ export async function getProfile(req, res, next) {
 
 export async function updateProfile(req, res, next) {
   try {
-    const { dateOfBirth, gender, joinDate, position, phone, email } = req.body;
-    const user = await User.findById(req.user.id);
+    const {
+      fullName,
+      dateOfBirth,
+      gender,
+      joinDate,
+      position,
+      phone,
+      email,
+      webmailUrl,
+      smtpHost,
+      webmailPassword,
+    } = req.body;
+    const user = await User.findById(req.user.id).select("+webmailPasswordEnc +webmailPasswordHash");
     if (!user) {
       return next(createNotFoundError("User not found"));
+    }
+    if (fullName !== undefined) {
+      const name = String(fullName).trim();
+      if (!name) return next(createBadRequestError("Họ và tên không được để trống"));
+      user.fullName = name;
     }
     if (dateOfBirth !== undefined) {
       if (dateOfBirth) {
@@ -63,12 +105,27 @@ export async function updateProfile(req, res, next) {
     if (normalizedPhone !== undefined) user.phone = normalizedPhone;
     const normalizedEmail = normalizeEmail(email);
     if (normalizedEmail !== undefined) user.email = normalizedEmail;
+    const normalizedWebmailUrl = normalizeWebmailUrl(webmailUrl);
+    if (normalizedWebmailUrl !== undefined) user.webmailUrl = normalizedWebmailUrl;
+    const normalizedSmtpHost = normalizeSmtpHost(smtpHost);
+    if (normalizedSmtpHost !== undefined) user.smtpHost = normalizedSmtpHost;
+    if (webmailPassword !== undefined && webmailPassword !== null && String(webmailPassword).trim() !== "") {
+      const plain = String(webmailPassword);
+      user.webmailPasswordEnc = encryptWebmailPassword(plain);
+      user.webmailPasswordHash = await hashWebmailPassword(plain);
+    }
     if (req.file) {
       user.avatar = avatarFromUploadedFile(req.file);
     }
     await user.save();
     const doc = user.toJSON();
-    res.json({ success: true, data: formatPublicUser({ ...doc, _id: doc._id }) });
+    res.json({
+      success: true,
+      data: formatPublicUser(
+        { ...doc, _id: doc._id, webmailPasswordEnc: user.webmailPasswordEnc, webmailPasswordHash: user.webmailPasswordHash },
+        { includeWebmail: true }
+      ),
+    });
   } catch (err) {
     next(err);
   }

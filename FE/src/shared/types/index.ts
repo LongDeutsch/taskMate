@@ -27,10 +27,17 @@ export interface User {
   position?: string | null;
   phone?: string | null;
   email?: string | null;
+  webmailUrl?: string | null;
+  smtpHost?: string | null;
+  /** Đã cấu hình mật khẩu webmail (không trả mật khẩu) */
+  hasWebmailPassword?: boolean;
   avatar?: string | null;
   deletedAt?: string | null;
   restoreUntil?: string | null;
 }
+
+export const DEFAULT_WEBMAIL_URL = "https://mail.cybertech.com.vn/mail/";
+export const DEFAULT_SMTP_HOST = "mail.cybertech.com.vn";
 
 export interface Project {
   id: string;
@@ -161,6 +168,14 @@ export type TimeOffSession = "MORNING" | "AFTERNOON" | "FULL";
 export type TimeOffReason = "ANNUAL_LEAVE" | "WFH" | "BUSINESS_TRIP" | "OTHER";
 export type TimeOffStatus = "pending" | "approved" | "rejected";
 
+export interface BusinessTripScheduleItem {
+  startDate: string;
+  endDate: string;
+  staff: string;
+  location: string;
+  description: string;
+}
+
 export interface TimeOffRequest {
   id: string;
   userId: string;
@@ -173,6 +188,8 @@ export interface TimeOffRequest {
   session: TimeOffSession;
   reason: TimeOffReason;
   reasonOther?: string;
+  details?: string;
+  businessTripSchedule?: BusinessTripScheduleItem[];
   status: TimeOffStatus;
   decidedById?: string | null;
   decidedByName?: string;

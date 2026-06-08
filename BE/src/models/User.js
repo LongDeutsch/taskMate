@@ -27,6 +27,12 @@ const userSchema = new mongoose.Schema(
     position: { type: String, default: null },
     phone: { type: String, default: null },
     email: { type: String, default: null },
+    webmailUrl: { type: String, default: "https://mail.cybertech.com.vn/mail/" },
+    smtpHost: { type: String, default: "mail.cybertech.com.vn" },
+    /** Mã hóa AES — dùng gửi SMTP */
+    webmailPasswordEnc: { type: String, default: null, select: false },
+    /** Hash bcrypt — xác minh đã cấu hình, không trả client */
+    webmailPasswordHash: { type: String, default: null, select: false },
     avatar: { type: String, default: null },
   },
   { timestamps: false, id: false }
@@ -35,6 +41,8 @@ const userSchema = new mongoose.Schema(
 userSchema.set("toJSON", {
   transform: (doc, ret) => {
     delete ret.password;
+    delete ret.webmailPasswordEnc;
+    delete ret.webmailPasswordHash;
     ret.id = ret._id;
     if (ret.joinDate) ret.joinDate = ret.joinDate.toISOString?.()?.slice(0, 10) ?? ret.joinDate;
     if (ret.dateOfBirth) {

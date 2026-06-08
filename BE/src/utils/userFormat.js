@@ -13,10 +13,17 @@ export function getPublicAvatarUrl(user) {
 }
 
 /** Chuẩn hóa user trả về FE (không có password, không nhúng data URL). */
-export function formatPublicUser(user) {
+export function formatPublicUser(user, opts = {}) {
   if (!user) return null;
-  const { password: _pw, _id, avatar: _avatar, ...rest } = user;
-  return {
+  const {
+    password: _pw,
+    webmailPasswordEnc: _enc,
+    webmailPasswordHash: _hash,
+    _id,
+    avatar: _avatar,
+    ...rest
+  } = user;
+  const base = {
     ...rest,
     id: user._id ?? user.id,
     joinDate: formatDateOnly(user.joinDate),
@@ -24,4 +31,13 @@ export function formatPublicUser(user) {
     avatar: getPublicAvatarUrl(user),
     roleLabel: user.roleLabel ?? (user.role === "ADMIN" ? "ADMIN" : "STAFF"),
   };
+  if (opts.includeWebmail) {
+    return {
+      ...base,
+      webmailUrl: user.webmailUrl ?? "https://mail.cybertech.com.vn/mail/",
+      smtpHost: user.smtpHost ?? "mail.cybertech.com.vn",
+      hasWebmailPassword: !!(user.webmailPasswordEnc || user.webmailPasswordHash),
+    };
+  }
+  return base;
 }

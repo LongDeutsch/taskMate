@@ -3,6 +3,12 @@ import { TimeOffRequest, TIME_OFF_REASONS, TIME_OFF_SESSIONS, TIME_OFF_STATUSES 
 import { User } from "../models/User.js";
 import { createBadRequestError, createForbiddenError, createNotFoundError } from "../utils/errors.js";
 import { createNotification } from "./notificationController.js";
+import { sendTimeOffEmails } from "../services/mailService.js";
+import {
+  normalizeBusinessTripSchedule,
+  scheduleOverallDateRange,
+  serializeBusinessTripSchedule,
+} from "../utils/businessTripSchedule.js";
 
 function newId() {
   return "to-" + crypto.randomUUID().replace(/-/g, "").slice(0, 12);
@@ -91,12 +97,16 @@ function serialize(doc) {
   if (d.createdAt instanceof Date) d.createdAt = d.createdAt.toISOString();
   if (d.updatedAt instanceof Date) d.updatedAt = d.updatedAt.toISOString();
   if (d.decidedAt instanceof Date) d.decidedAt = d.decidedAt.toISOString();
+  if (Array.isArray(d.businessTripSchedule) && d.businessTripSchedule.length > 0) {
+    d.businessTripSchedule = serializeBusinessTripSchedule(d.businessTripSchedule);
+  }
   return d;
 }
 
 export async function create(req, res, next) {
   try {
-    const { startDate, endDate, session, reason, reasonOther, recipientIds } = req.body ?? {};
+    const { startDate, endDate, session, reason, reasonOther, details, businessTripSchedule, recipientIds } =
+      req.body ?? {};
 
     if (!TIME_OFF_SESSIONS.includes(session)) {
       return next(createBadRequestError("session must be MORNING / AFTERNOON / FULL"));
@@ -106,6 +116,15 @@ export async function create(req, res, next) {
     }
     if (reason === "OTHER" && !String(reasonOther ?? "").trim()) {
       return next(createBadRequestError('reasonOther is required when reason is "OTHER"'));
+    }
+
+    let normalizedSchedule = [];
+    if (reason === "BUSINESS_TRIP") {
+      try {
+        normalizedSchedule = normalizeBusinessTripSchedule(businessTripSchedule);
+      } catch (err) {
+        return next(err);
+      }
     }
 
     let start;
@@ -118,6 +137,14 @@ export async function create(req, res, next) {
     }
     if (end < start) {
       return next(createBadRequestError("endDate must be after or equal to startDate"));
+    }
+
+    if (reason === "BUSINESS_TRIP" && normalizedSchedule.length > 0) {
+      const range = scheduleOverallDateRange(
+        serializeBusinessTripSchedule(normalizedSchedule)
+      );
+      if (range.start) start = parseDateOnly(range.start, "startDate");
+      if (range.end) end = parseDateOnly(range.end, "endDate");
     }
 
     // Snapshot tên + role hiển thị của user để HR vẫn thấy được sau này.
@@ -141,6 +168,8 @@ export async function create(req, res, next) {
       session,
       reason,
       reasonOther: reason === "OTHER" ? String(reasonOther).trim() : "",
+      details: reason === "BUSINESS_TRIP" ? "" : String(details ?? "").trim(),
+      businessTripSchedule: reason === "BUSINESS_TRIP" ? normalizedSchedule : [],
       status: "pending",
     });
 
@@ -158,7 +187,44 @@ export async function create(req, res, next) {
       )
     );
 
-    res.status(201).json({ success: true, data: serialize(created) });
+    let mailResult = null;
+    const recipientUsers = await User.find({ _id: { $in: resolvedRecipients.recipientIds } })
+      .select("email")
+      .lean();
+    const recipientEmails = [
+      ...new Set(
+        recipientUsers
+          .map((u) => String(u.email ?? "").trim().toLowerCase())
+          .filter((e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))
+      ),
+    ];
+
+    if (recipientEmails.length > 0) {
+      const meMail = await User.findById(req.user.id)
+        .select("email webmailUrl smtpHost webmailPasswordEnc")
+        .lean();
+      if (meMail?.email && meMail?.webmailPasswordEnc) {
+        try {
+          mailResult = await sendTimeOffEmails(meMail, recipientEmails, created);
+          if (mailResult.sent.length === 0 && mailResult.failed.length > 0) {
+            console.warn("[time-off] all recipient emails failed");
+          }
+        } catch (mailErr) {
+          console.warn("[time-off] notify email error:", mailErr?.message ?? mailErr);
+          mailResult = { error: mailErr?.message ?? "Gửi email thất bại" };
+        }
+      } else {
+        mailResult = {
+          error: "Chưa cấu hình email và mật khẩu webmail trong Profile",
+        };
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      data: serialize(created),
+      mail: mailResult,
+    });
   } catch (err) {
     next(err);
   }

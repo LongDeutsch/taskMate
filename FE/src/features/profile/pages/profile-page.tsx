@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Upload, Loader2 } from "lucide-react";
+import { DEFAULT_SMTP_HOST, DEFAULT_WEBMAIL_URL } from "@/shared/types";
 import {
   calcAgeFromDateOfBirth,
   getProfileAgeError,
@@ -36,42 +37,55 @@ export function ProfilePage() {
     enabled: !!authUser,
   });
 
+  const [webmailPassword, setWebmailPassword] = useState("");
+
   const [form, setForm] = useState({
+    fullName: "",
     dateOfBirth: "",
     gender: "",
     joinDate: "",
     position: "",
     phone: "",
     email: "",
+    webmailUrl: DEFAULT_WEBMAIL_URL,
+    smtpHost: DEFAULT_SMTP_HOST,
   });
 
   useEffect(() => {
     if (profile) {
       setForm({
+        fullName: profile.fullName ?? "",
         dateOfBirth: profile.dateOfBirth ?? "",
         gender: profile.gender ?? "",
         joinDate: profile.joinDate ?? "",
         position: profile.position ?? "",
         phone: profile.phone ?? "",
         email: profile.email ?? "",
+        webmailUrl: profile.webmailUrl ?? DEFAULT_WEBMAIL_URL,
+        smtpHost: profile.smtpHost ?? DEFAULT_SMTP_HOST,
       });
     }
   }, [
     profile?.id,
+    profile?.fullName,
     profile?.dateOfBirth,
     profile?.gender,
     profile?.joinDate,
     profile?.position,
     profile?.phone,
     profile?.email,
+    profile?.webmailUrl,
+    profile?.smtpHost,
   ]);
 
   const computedAge = calcAgeFromDateOfBirth(form.dateOfBirth || profile?.dateOfBirth);
   const dateOfBirthError = getProfileAgeError(form.dateOfBirth || null);
   const dobBounds = getProfileDateOfBirthBounds();
 
+  const fullNameError = !form.fullName.trim() ? "Họ và tên không được để trống" : null;
+
   const handleSave = () => {
-    if (form.dateOfBirth && dateOfBirthError) return;
+    if (fullNameError || (form.dateOfBirth && dateOfBirthError)) return;
     updateMutation.mutate();
   };
 
@@ -80,12 +94,16 @@ export function ProfilePage() {
       const file = avatarFile ? await compressAvatarFile(avatarFile) : undefined;
       return updateProfile(
         {
+          fullName: form.fullName.trim() || null,
           dateOfBirth: form.dateOfBirth || null,
           gender: form.gender || null,
           joinDate: form.joinDate || null,
           position: form.position || null,
           phone: form.phone.trim() || null,
           email: form.email.trim() || null,
+          webmailUrl: form.webmailUrl.trim() || DEFAULT_WEBMAIL_URL,
+          smtpHost: form.smtpHost.trim() || DEFAULT_SMTP_HOST,
+          webmailPassword: webmailPassword.trim() || undefined,
         },
         file
       );
@@ -100,6 +118,7 @@ export function ProfilePage() {
       localStorage.setItem("taskmate_avatar_ts", String(Date.now()));
       window.dispatchEvent(new CustomEvent("taskmate-auth-update"));
       setAvatarFile(null);
+      setWebmailPassword("");
       if (fileInputRef.current) fileInputRef.current.value = "";
     },
   });
@@ -172,6 +191,35 @@ export function ProfilePage() {
               )}
             </div>
             <div className="flex-1 grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="profile-fullName">Họ và tên</Label>
+                <Input
+                  id="profile-fullName"
+                  type="text"
+                  placeholder="Ví dụ: Nguyễn Văn A"
+                  value={form.fullName}
+                  onChange={(e) => setForm((f) => ({ ...f, fullName: e.target.value }))}
+                  className="h-9"
+                  autoComplete="name"
+                  aria-invalid={!!fullNameError}
+                />
+                {fullNameError && (
+                  <p className="text-xs text-destructive" role="alert">
+                    {fullNameError}
+                  </p>
+                )}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="profile-username">Username</Label>
+                <Input
+                  id="profile-username"
+                  type="text"
+                  readOnly
+                  tabIndex={-1}
+                  value={profile?.username ?? authUser.username}
+                  className="h-9 bg-muted/50 text-muted-foreground"
+                />
+              </div>
               <div className="grid gap-2 sm:col-span-2 sm:grid-cols-2">
                 <div className="grid gap-2">
                   <Label htmlFor="profile-dateOfBirth">Ngày sinh</Label>
@@ -223,7 +271,7 @@ export function ProfilePage() {
                   ))}
                 </select>
               </div>
-              <div className="grid gap-2">
+              <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="profile-phone">Số điện thoại</Label>
                 <Input
                   id="profile-phone"
@@ -232,18 +280,6 @@ export function ProfilePage() {
                   value={form.phone}
                   onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                   className="h-9"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="profile-email">Email</Label>
-                <Input
-                  id="profile-email"
-                  type="email"
-                  placeholder="Ví dụ: name@company.com"
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  className="h-9"
-                  autoComplete="email"
                 />
               </div>
               <div className="grid gap-2 sm:col-span-2">
@@ -267,10 +303,87 @@ export function ProfilePage() {
               </div>
             </div>
           </div>
+
+          <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4 space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold">Cấu hình Webmail (gửi mail xin off)</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                SMTP port 465 · Webmail{" "}
+                <a
+                  href={form.webmailUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  mở hộp thư
+                </a>
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2 sm:col-span-2">
+                <Label htmlFor="profile-webmailUrl">Địa chỉ Webmail</Label>
+                <Input
+                  id="profile-webmailUrl"
+                  type="url"
+                  placeholder={DEFAULT_WEBMAIL_URL}
+                  value={form.webmailUrl}
+                  onChange={(e) => setForm((f) => ({ ...f, webmailUrl: e.target.value }))}
+                  className="h-9"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="profile-smtpHost">SMTP Host</Label>
+                <Input
+                  id="profile-smtpHost"
+                  type="text"
+                  placeholder={DEFAULT_SMTP_HOST}
+                  value={form.smtpHost}
+                  onChange={(e) => setForm((f) => ({ ...f, smtpHost: e.target.value }))}
+                  className="h-9"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="profile-webmail-email">Tài khoản email</Label>
+                <Input
+                  id="profile-webmail-email"
+                  type="email"
+                  placeholder="long.nguyen@cybertech.com.vn"
+                  value={form.email}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  className="h-9"
+                  autoComplete="email"
+                />
+              </div>
+              <div className="grid gap-2 sm:col-span-2">
+                <Label htmlFor="profile-webmailPassword">Mật khẩu webmail</Label>
+                <Input
+                  id="profile-webmailPassword"
+                  type="password"
+                  placeholder={
+                    profile?.hasWebmailPassword
+                      ? "Để trống nếu không đổi mật khẩu"
+                      : "Nhập mật khẩu đăng nhập webmail"
+                  }
+                  value={webmailPassword}
+                  onChange={(e) => setWebmailPassword(e.target.value)}
+                  className="h-9"
+                  autoComplete="new-password"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Mật khẩu được hash (bcrypt) và mã hóa trước khi lưu DB — không hiển thị lại.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="flex gap-2 pt-2">
             <Button
               onClick={handleSave}
-              disabled={updateMutation.isPending || (!!form.dateOfBirth && !!dateOfBirthError)}
+              disabled={
+                updateMutation.isPending ||
+                !!fullNameError ||
+                (!!form.dateOfBirth && !!dateOfBirthError)
+              }
             >
               {updateMutation.isPending ? (
                 <>

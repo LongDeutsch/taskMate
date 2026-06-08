@@ -6,7 +6,7 @@ import { useAuth } from "@/features/auth/hooks/use-auth";
 import { getRoleLabel } from "@/shared/types";
 import { UserAvatar } from "@/shared/components/user-avatar";
 import { TodayBirthdaySection } from "@/features/dashboard/components/today-birthday-section";
-import { adminNavItems, baseNavItems } from "../config/nav-items";
+import { adminNavItems, getBaseNavItems } from "../config/nav-items";
 
 export function navLinkClass({ isActive }: { isActive: boolean }) {
   return cn(
@@ -26,7 +26,7 @@ export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
   const { isAdmin, user } = useAuth();
   const avatarTs = useAvatarCacheBust();
   const roleLabel = user ? getRoleLabel(user) : "STAFF";
-  const navItems = baseNavItems.filter((item) => !(item.hideForHr && roleLabel === "HR"));
+  const navItems = getBaseNavItems(roleLabel);
 
   return (
     <nav className={cn("flex flex-1 flex-col", className)}>

@@ -187,12 +187,16 @@ export async function getTodayBirthdays(): Promise<TodayBirthday[]> {
 }
 
 export type ProfileUpdate = {
+  fullName?: string | null;
   dateOfBirth?: string | null;
   gender?: string | null;
   joinDate?: string | null;
   position?: string | null;
   phone?: string | null;
   email?: string | null;
+  webmailUrl?: string | null;
+  smtpHost?: string | null;
+  webmailPassword?: string | null;
 };
 
 export async function updateProfile(data: ProfileUpdate, avatarFile?: File): Promise<User> {
@@ -201,12 +205,16 @@ export async function updateProfile(data: ProfileUpdate, avatarFile?: File): Pro
   if (avatarFile != null) {
     const form = new FormData();
     form.append("avatar", avatarFile);
+    if (data.fullName !== undefined) form.append("fullName", data.fullName ?? "");
     if (data.dateOfBirth !== undefined) form.append("dateOfBirth", data.dateOfBirth ?? "");
     if (data.gender !== undefined) form.append("gender", data.gender ?? "");
     if (data.joinDate !== undefined) form.append("joinDate", data.joinDate ?? "");
     if (data.position !== undefined) form.append("position", data.position ?? "");
     if (data.phone !== undefined) form.append("phone", data.phone ?? "");
     if (data.email !== undefined) form.append("email", data.email ?? "");
+    if (data.webmailUrl !== undefined) form.append("webmailUrl", data.webmailUrl ?? "");
+    if (data.smtpHost !== undefined) form.append("smtpHost", data.smtpHost ?? "");
+    if (data.webmailPassword) form.append("webmailPassword", data.webmailPassword);
     const headers: HeadersInit = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;
     const res = await fetch(url, { method: "PATCH", body: form, headers });
@@ -237,6 +245,7 @@ export async function getUserById(id: string): Promise<User> {
 export async function createUser(data: {
   username: string;
   fullName: string;
+  email?: string | null;
   /** Label hiển thị: ADMIN / STAFF / HR / BODS. Mặc định STAFF. */
   roleLabel?: "ADMIN" | "STAFF" | "HR" | "BODS";
   password?: string;
@@ -462,16 +471,30 @@ export interface CreateTimeOffPayload {
   session: TimeOffSession;
   reason: TimeOffReason;
   reasonOther?: string;
+  details?: string;
+  businessTripSchedule?: import("@/shared/types").BusinessTripScheduleItem[];
   recipientIds?: string[];
 }
 
-export async function createTimeOff(payload: CreateTimeOffPayload): Promise<TimeOffRequest> {
+export type CreateTimeOffResult = {
+  request: TimeOffRequest;
+  mail?: {
+    sent?: string[];
+    failed?: string[];
+    error?: string;
+    note?: string;
+    details?: { to: string; messageId: string | null; response: string | null }[];
+  } | null;
+};
+
+export async function createTimeOff(payload: CreateTimeOffPayload): Promise<CreateTimeOffResult> {
   const json = await request<TimeOffRequest>("/api/time-off", {
     method: "POST",
     body: JSON.stringify(payload),
   });
   if (!json.data) throw new Error("Tạo yêu cầu xin off thất bại");
-  return json.data;
+  const full = json as { data?: TimeOffRequest; mail?: CreateTimeOffResult["mail"] };
+  return { request: full.data!, mail: full.mail ?? null };
 }
 
 export async function getTimeOffRecipients(): Promise<TimeOffRecipient[]> {
