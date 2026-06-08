@@ -6,7 +6,15 @@ import {
 } from "../utils/mailCredentials.js";
 import { buildTimeOffEmailContent } from "../utils/timeOffLabels.js";
 
+const SMTP_CONNECTION_TIMEOUT_MS = Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 15_000);
+const SMTP_SOCKET_TIMEOUT_MS = Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 20_000);
+
 function buildTransporter({ smtpHost, email, password }) {
+  const rejectUnauthorized =
+    process.env.SMTP_TLS_REJECT_UNAUTHORIZED === "false"
+      ? false
+      : process.env.NODE_ENV === "production";
+
   return nodemailer.createTransport({
     host: smtpHost || DEFAULT_SMTP_HOST,
     port: DEFAULT_SMTP_PORT,
@@ -15,8 +23,11 @@ function buildTransporter({ smtpHost, email, password }) {
       user: email,
       pass: password,
     },
+    connectionTimeout: SMTP_CONNECTION_TIMEOUT_MS,
+    greetingTimeout: SMTP_CONNECTION_TIMEOUT_MS,
+    socketTimeout: SMTP_SOCKET_TIMEOUT_MS,
     tls: {
-      rejectUnauthorized: process.env.NODE_ENV === "production",
+      rejectUnauthorized,
     },
   });
 }

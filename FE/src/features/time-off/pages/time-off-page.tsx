@@ -311,7 +311,13 @@ export function TimeOffPage() {
       setOpen(false);
       setError(null);
       setMailSuccess(null);
-      if (result.mail?.sent?.length) {
+      if (result.mail?.queued) {
+        setMailSuccess(
+          `Yêu cầu đã tạo. Email đang gửi tới: ${(result.mail.recipients ?? []).join(", ")}. ` +
+            (result.mail.note ??
+              "Kiểm tra hộp thư đến người nhận sau 1–2 phút (có thể trong Spam).")
+        );
+      } else if (result.mail?.sent?.length) {
         const ids = result.mail.details
           ?.map((d) => d.messageId)
           .filter(Boolean)
@@ -319,10 +325,14 @@ export function TimeOffPage() {
         setMailSuccess(
           `SMTP đã chấp nhận gửi tới: ${result.mail.sent.join(", ")}.` +
             (ids ? ` Message-ID: ${ids}.` : "") +
-            " Kiểm tra hộp thư đến người nhận (có thể trong Spam). Mail gửi qua TaskMate thường không hiện trong mục Đã gửi trên webmail."
+            " Kiểm tra hộp thư đến người nhận (có thể trong Spam)."
         );
       } else if (result.mail?.error) {
-        setMailSuccess(`Yêu cầu đã tạo nhưng gửi mail thất bại: ${result.mail.error}`);
+        setMailSuccess(`Yêu cầu đã tạo. Gửi mail: ${result.mail.error}`);
+      } else if (result.mail?.skipped) {
+        setMailSuccess(
+          result.mail.note ?? "Yêu cầu đã tạo. Người nhận chưa có email trong hồ sơ."
+        );
       } else if (result.mail?.failed?.length) {
         setMailSuccess(`Không gửi được tới: ${result.mail.failed.join(", ")}`);
       }

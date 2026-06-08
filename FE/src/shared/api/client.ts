@@ -483,6 +483,9 @@ export type CreateTimeOffResult = {
     failed?: string[];
     error?: string;
     note?: string;
+    queued?: boolean;
+    recipients?: string[];
+    skipped?: boolean;
     details?: { to: string; messageId: string | null; response: string | null }[];
   } | null;
 };

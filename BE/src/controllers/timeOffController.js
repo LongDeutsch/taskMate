@@ -187,7 +187,6 @@ export async function create(req, res, next) {
       )
     );
 
-    let mailResult = null;
     const recipientUsers = await User.find({ _id: { $in: resolvedRecipients.recipientIds } })
       .select("email")
       .lean();
@@ -199,24 +198,40 @@ export async function create(req, res, next) {
       ),
     ];
 
-    if (recipientEmails.length > 0) {
+    let mailResult = null;
+    if (recipientEmails.length === 0) {
+      mailResult = {
+        skipped: true,
+        note: "Người nhận chưa có email trong hồ sơ — không gửi SMTP.",
+      };
+    } else {
       const meMail = await User.findById(req.user.id)
         .select("email webmailUrl smtpHost webmailPasswordEnc")
         .lean();
-      if (meMail?.email && meMail?.webmailPasswordEnc) {
-        try {
-          mailResult = await sendTimeOffEmails(meMail, recipientEmails, created);
-          if (mailResult.sent.length === 0 && mailResult.failed.length > 0) {
-            console.warn("[time-off] all recipient emails failed");
-          }
-        } catch (mailErr) {
-          console.warn("[time-off] notify email error:", mailErr?.message ?? mailErr);
-          mailResult = { error: mailErr?.message ?? "Gửi email thất bại" };
-        }
-      } else {
+      if (!meMail?.email || !meMail?.webmailPasswordEnc) {
         mailResult = {
           error: "Chưa cấu hình email và mật khẩu webmail trong Profile",
         };
+      } else {
+        mailResult = {
+          queued: true,
+          recipients: recipientEmails,
+          note: "Yêu cầu đã lưu. Email đang được gửi nền — kiểm tra hộp thư đến người nhận sau 1–2 phút.",
+        };
+        const mailUser = meMail;
+        const mailRequest = created;
+        void sendTimeOffEmails(mailUser, recipientEmails, mailRequest)
+          .then((result) => {
+            if (result.sent?.length) {
+              console.info("[time-off] mail sent:", result.sent.join(", "));
+            }
+            if (result.failed?.length) {
+              console.warn("[time-off] mail failed:", result.failed.join(", "));
+            }
+          })
+          .catch((mailErr) => {
+            console.warn("[time-off] background mail error:", mailErr?.message ?? mailErr);
+          });
       }
     }
 
