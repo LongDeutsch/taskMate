@@ -155,36 +155,41 @@ export function ProfilePage() {
               )}
             </div>
             <div className="flex-1 grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="profile-dateOfBirth">Ngày sinh</Label>
-                <Input
-                  id="profile-dateOfBirth"
-                  type="date"
-                  min={dobBounds.min}
-                  max={dobBounds.max}
-                  value={form.dateOfBirth}
-                  onChange={(e) => setForm((f) => ({ ...f, dateOfBirth: e.target.value }))}
-                  aria-invalid={!!dateOfBirthError}
-                />
+              <div className="grid gap-2 sm:col-span-2 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="profile-dateOfBirth">Ngày sinh</Label>
+                  <Input
+                    id="profile-dateOfBirth"
+                    type="date"
+                    min={dobBounds.min}
+                    max={dobBounds.max}
+                    value={form.dateOfBirth}
+                    onChange={(e) => setForm((f) => ({ ...f, dateOfBirth: e.target.value }))}
+                    aria-invalid={!!dateOfBirthError}
+                    className="h-9"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="profile-age">Độ tuổi</Label>
+                  <Input
+                    id="profile-age"
+                    type="text"
+                    readOnly
+                    tabIndex={-1}
+                    placeholder="Tự tính từ ngày sinh"
+                    value={computedAge != null ? `${computedAge} tuổi` : ""}
+                    className="h-9 bg-muted/50 text-muted-foreground"
+                  />
+                </div>
                 {dateOfBirthError ? (
-                  <p className="text-xs text-destructive" role="alert">
+                  <p className="text-xs text-destructive sm:col-span-2" role="alert">
                     {dateOfBirthError}
                   </p>
                 ) : (
-                  <p className="text-xs text-muted-foreground">Độ tuổi từ 19 đến 99</p>
+                  <p className="text-xs text-muted-foreground sm:col-span-2">
+                    Độ tuổi từ 19 đến 99
+                  </p>
                 )}
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="profile-age">Độ tuổi</Label>
-                <Input
-                  id="profile-age"
-                  type="text"
-                  readOnly
-                  tabIndex={-1}
-                  placeholder="Tự tính từ ngày sinh"
-                  value={computedAge != null ? `${computedAge} tuổi` : ""}
-                  className="bg-muted/50 text-muted-foreground"
-                />
               </div>
               <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="profile-gender">Giới tính</Label>
