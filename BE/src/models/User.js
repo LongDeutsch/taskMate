@@ -25,6 +25,8 @@ const userSchema = new mongoose.Schema(
     gender: { type: String, default: null },
     joinDate: { type: Date, default: null },
     position: { type: String, default: null },
+    phone: { type: String, default: null },
+    email: { type: String, default: null },
     avatar: { type: String, default: null },
   },
   { timestamps: false, id: false }

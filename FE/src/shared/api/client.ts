@@ -191,6 +191,8 @@ export type ProfileUpdate = {
   gender?: string | null;
   joinDate?: string | null;
   position?: string | null;
+  phone?: string | null;
+  email?: string | null;
 };
 
 export async function updateProfile(data: ProfileUpdate, avatarFile?: File): Promise<User> {
@@ -203,6 +205,8 @@ export async function updateProfile(data: ProfileUpdate, avatarFile?: File): Pro
     if (data.gender !== undefined) form.append("gender", data.gender ?? "");
     if (data.joinDate !== undefined) form.append("joinDate", data.joinDate ?? "");
     if (data.position !== undefined) form.append("position", data.position ?? "");
+    if (data.phone !== undefined) form.append("phone", data.phone ?? "");
+    if (data.email !== undefined) form.append("email", data.email ?? "");
     const headers: HeadersInit = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;
     const res = await fetch(url, { method: "PATCH", body: form, headers });

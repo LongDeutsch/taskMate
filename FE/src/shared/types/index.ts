@@ -25,6 +25,8 @@ export interface User {
   gender?: string | null;
   joinDate?: string | null;
   position?: string | null;
+  phone?: string | null;
+  email?: string | null;
   avatar?: string | null;
   deletedAt?: string | null;
   restoreUntil?: string | null;

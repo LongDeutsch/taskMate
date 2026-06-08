@@ -5,6 +5,26 @@ import { calcAgeFromDateOfBirth, formatDateOnly, getProfileAgeError } from "../u
 import { avatarFromUploadedFile } from "../utils/avatarStorage.js";
 import { formatPublicUser } from "../utils/userFormat.js";
 
+function normalizeEmail(value) {
+  if (value === undefined) return undefined;
+  if (value === "" || value === null) return null;
+  const email = String(value).trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw createBadRequestError("Email không hợp lệ");
+  }
+  return email;
+}
+
+function normalizePhone(value) {
+  if (value === undefined) return undefined;
+  if (value === "" || value === null) return null;
+  const phone = String(value).trim();
+  if (!/^[+0-9\s\-().]{8,20}$/.test(phone)) {
+    throw createBadRequestError("Số điện thoại không hợp lệ");
+  }
+  return phone;
+}
+
 export async function getProfile(req, res, next) {
   try {
     const user = await User.findById(req.user.id).select("-password").lean();
@@ -19,7 +39,7 @@ export async function getProfile(req, res, next) {
 
 export async function updateProfile(req, res, next) {
   try {
-    const { dateOfBirth, gender, joinDate, position } = req.body;
+    const { dateOfBirth, gender, joinDate, position, phone, email } = req.body;
     const user = await User.findById(req.user.id);
     if (!user) {
       return next(createNotFoundError("User not found"));
@@ -39,6 +59,10 @@ export async function updateProfile(req, res, next) {
     if (gender !== undefined) user.gender = gender || null;
     if (joinDate !== undefined) user.joinDate = joinDate ? new Date(joinDate) : null;
     if (position !== undefined) user.position = position || null;
+    const normalizedPhone = normalizePhone(phone);
+    if (normalizedPhone !== undefined) user.phone = normalizedPhone;
+    const normalizedEmail = normalizeEmail(email);
+    if (normalizedEmail !== undefined) user.email = normalizedEmail;
     if (req.file) {
       user.avatar = avatarFromUploadedFile(req.file);
     }

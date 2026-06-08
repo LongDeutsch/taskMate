@@ -75,6 +75,8 @@ export async function mockUpdateProfile(
     gender?: string | null;
     joinDate?: string | null;
     position?: string | null;
+    phone?: string | null;
+    email?: string | null;
   },
   _avatarFile?: File
 ): Promise<User> {
@@ -98,6 +100,8 @@ export async function mockUpdateProfile(
     gender: updated.gender,
     joinDate: updated.joinDate,
     position: updated.position,
+    phone: updated.phone,
+    email: updated.email,
   };
   setStoredProfile(profiles);
   setStoredAuthUser(updated as User);

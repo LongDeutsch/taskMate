@@ -88,6 +88,22 @@ export function UserProfileView({ user, isOwnProfile }: UserProfileViewProps) {
               <dd className="mt-1 text-sm">{user.gender || "—"}</dd>
             </div>
             <div>
+              <dt className="text-sm font-medium text-muted-foreground">Số điện thoại</dt>
+              <dd className="mt-1 text-sm [overflow-wrap:anywhere]">{user.phone || "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-muted-foreground">Email</dt>
+              <dd className="mt-1 text-sm [overflow-wrap:anywhere]">
+                {user.email ? (
+                  <a href={`mailto:${user.email}`} className="text-primary hover:underline">
+                    {user.email}
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </dd>
+            </div>
+            <div>
               <dt className="text-sm font-medium text-muted-foreground">Ngày vào làm</dt>
               <dd className="mt-1 text-sm">{formatDate(user.joinDate)}</dd>
             </div>

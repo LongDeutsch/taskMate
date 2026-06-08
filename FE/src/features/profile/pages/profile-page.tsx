@@ -41,6 +41,8 @@ export function ProfilePage() {
     gender: "",
     joinDate: "",
     position: "",
+    phone: "",
+    email: "",
   });
 
   useEffect(() => {
@@ -50,9 +52,19 @@ export function ProfilePage() {
         gender: profile.gender ?? "",
         joinDate: profile.joinDate ?? "",
         position: profile.position ?? "",
+        phone: profile.phone ?? "",
+        email: profile.email ?? "",
       });
     }
-  }, [profile?.id, profile?.dateOfBirth, profile?.gender, profile?.joinDate, profile?.position]);
+  }, [
+    profile?.id,
+    profile?.dateOfBirth,
+    profile?.gender,
+    profile?.joinDate,
+    profile?.position,
+    profile?.phone,
+    profile?.email,
+  ]);
 
   const computedAge = calcAgeFromDateOfBirth(form.dateOfBirth || profile?.dateOfBirth);
   const dateOfBirthError = getProfileAgeError(form.dateOfBirth || null);
@@ -72,6 +84,8 @@ export function ProfilePage() {
           gender: form.gender || null,
           joinDate: form.joinDate || null,
           position: form.position || null,
+          phone: form.phone.trim() || null,
+          email: form.email.trim() || null,
         },
         file
       );
@@ -208,6 +222,29 @@ export function ProfilePage() {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="profile-phone">Số điện thoại</Label>
+                <Input
+                  id="profile-phone"
+                  type="tel"
+                  placeholder="Ví dụ: 0901234567"
+                  value={form.phone}
+                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                  className="h-9"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="profile-email">Email</Label>
+                <Input
+                  id="profile-email"
+                  type="email"
+                  placeholder="Ví dụ: name@company.com"
+                  value={form.email}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  className="h-9"
+                  autoComplete="email"
+                />
               </div>
               <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="profile-joinDate">Ngày vào làm</Label>
