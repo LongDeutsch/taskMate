@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema(
     deletedAt: { type: Date, default: null },
     restoreUntil: { type: Date, default: null },
     // Profile
+    dateOfBirth: { type: Date, default: null },
     age: { type: Number, default: null },
     gender: { type: String, default: null },
     joinDate: { type: Date, default: null },
@@ -34,6 +35,9 @@ userSchema.set("toJSON", {
     delete ret.password;
     ret.id = ret._id;
     if (ret.joinDate) ret.joinDate = ret.joinDate.toISOString?.()?.slice(0, 10) ?? ret.joinDate;
+    if (ret.dateOfBirth) {
+      ret.dateOfBirth = ret.dateOfBirth.toISOString?.()?.slice(0, 10) ?? ret.dateOfBirth;
+    }
     if (!ret.roleLabel) ret.roleLabel = ret.role === "ADMIN" ? "ADMIN" : "STAFF";
     return ret;
   },

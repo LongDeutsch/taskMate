@@ -4,6 +4,13 @@ export type Role = "ADMIN" | "USER";
 /** Label vai trò hiển thị (HR / Staff / Admin / BODs). */
 export type RoleLabel = "ADMIN" | "STAFF" | "HR" | "BODS";
 
+export interface TodayBirthday {
+  id: string;
+  fullName: string;
+  dateOfBirth: string;
+  age: number | null;
+}
+
 export interface User {
   id: string;
   username: string;
@@ -13,6 +20,7 @@ export interface User {
   roleLabel?: RoleLabel;
   disabled: boolean;
   password?: string; // only for mock; never expose in real API
+  dateOfBirth?: string | null;
   age?: number | null;
   gender?: string | null;
   joinDate?: string | null;
@@ -206,6 +214,32 @@ export function formatTimeOffReason(r: TimeOffReason): string {
       return "Khác";
     default:
       return r;
+  }
+}
+
+export type BugReportStatus = "todo" | "in_progress" | "done";
+
+export interface BugReport {
+  id: string;
+  userId: string;
+  userName: string;
+  title: string;
+  content: string;
+  status: BugReportStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function formatBugStatus(status: BugReportStatus): string {
+  switch (status) {
+    case "todo":
+      return "To do";
+    case "in_progress":
+      return "In progress";
+    case "done":
+      return "Done";
+    default:
+      return status;
   }
 }
 

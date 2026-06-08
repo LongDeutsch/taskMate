@@ -1,12 +1,16 @@
 // File: src/features/auth/pages/login-page.tsx
 import { LoginForm } from "../components/login-form";
+import { LoginBirthdaySection } from "../components/login-birthday-section";
 
 const TAGLINE = "Đăng nhập đi, task không tự thêm đâu 😐";
 
 export function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-white px-6 py-8 md:px-8">
-      <div className="grid w-full max-w-[1120px] grid-cols-1 items-center gap-10 md:grid-cols-[minmax(0,1fr)_420px] md:gap-[96px]">
+      <div className="flex w-full max-w-[1120px] flex-col gap-6">
+        <LoginBirthdaySection />
+
+        <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-[minmax(0,1fr)_420px] md:gap-[96px]">
         {/* Login card first on mobile */}
         <div className="order-1 flex w-full justify-center md:order-2 md:justify-start">
           <LoginForm />
@@ -31,6 +35,7 @@ export function LoginPage() {
               {TAGLINE}
             </p>
           </div>
+        </div>
         </div>
       </div>
     </div>

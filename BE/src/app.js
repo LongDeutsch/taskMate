@@ -10,6 +10,8 @@ import taskRoutes from "./routes/taskRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import timeOffRoutes from "./routes/timeOffRoutes.js";
+import bugReportRoutes from "./routes/bugReportRoutes.js";
+import birthdayRoutes from "./routes/birthdayRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { checkDatabase } from "./config/database.js";
 
@@ -30,6 +32,8 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/time-off", timeOffRoutes);
+app.use("/api/bug-reports", bugReportRoutes);
+app.use("/api/birthdays", birthdayRoutes);
 
 app.get("/health", async (req, res) => {
   const check = await checkDatabase();

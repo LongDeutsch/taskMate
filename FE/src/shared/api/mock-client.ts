@@ -1,5 +1,5 @@
 // File: src/shared/api/mock-client.ts
-import type { User, Task, AutomationRule, TaskStatus, TaskPriority, Project } from "@/shared/types";
+import type { User, Task, AutomationRule, TaskStatus, TaskPriority, Project, TodayBirthday } from "@/shared/types";
 import {
   getStoredUsers,
   getStoredTasks,
@@ -11,6 +11,7 @@ import {
   setStoredProjects,
 } from "./mock-data";
 import { getStoredAuthUser, setStoredAuthUser } from "@/features/auth/store/auth-store";
+import { calcAgeFromDateOfBirth, getProfileAgeError, isBirthdayToday } from "@/shared/lib/birthday";
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -40,6 +41,25 @@ export async function mockLogin(username: string, password: string): Promise<Use
   return rest as User;
 }
 
+export async function mockGetTodayBirthdays(): Promise<TodayBirthday[]> {
+  await delay(150);
+  const users = getStoredUsers().filter((u) => !u.disabled);
+  const profiles = getStoredProfile();
+  return users
+    .map((u) => {
+      const profile = profiles[u.id] ?? {};
+      const dateOfBirth = profile.dateOfBirth ?? u.dateOfBirth ?? null;
+      if (!dateOfBirth || !isBirthdayToday(dateOfBirth)) return null;
+      return {
+        id: u.id,
+        fullName: u.fullName,
+        dateOfBirth,
+        age: calcAgeFromDateOfBirth(dateOfBirth),
+      };
+    })
+    .filter((b): b is TodayBirthday => b != null);
+}
+
 export async function mockGetProfile(): Promise<User> {
   await delay(200);
   const user = getStoredAuthUser();
@@ -50,16 +70,30 @@ export async function mockGetProfile(): Promise<User> {
 }
 
 export async function mockUpdateProfile(
-  data: { age?: number | null; gender?: string | null; joinDate?: string | null; position?: string | null },
+  data: {
+    dateOfBirth?: string | null;
+    gender?: string | null;
+    joinDate?: string | null;
+    position?: string | null;
+  },
   _avatarFile?: File
 ): Promise<User> {
   await delay(300);
   const user = getStoredAuthUser();
   if (!user) throw new Error("Chưa đăng nhập");
+  if (data.dateOfBirth) {
+    const ageError = getProfileAgeError(data.dateOfBirth);
+    if (ageError) throw new Error(ageError);
+  }
   const profiles = getStoredProfile();
   const current = profiles[user.id] ?? {};
-  const updated = { ...user, ...current, ...data };
+  const age =
+    data.dateOfBirth !== undefined
+      ? calcAgeFromDateOfBirth(data.dateOfBirth)
+      : current.age ?? user.age ?? null;
+  const updated = { ...user, ...current, ...data, age };
   profiles[user.id] = {
+    dateOfBirth: updated.dateOfBirth,
     age: updated.age,
     gender: updated.gender,
     joinDate: updated.joinDate,

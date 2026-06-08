@@ -8,6 +8,7 @@ export const isUsingRealApi = useRealApi;
 
 export const login = useRealApi ? client.login : mock.mockLogin;
 export const getProfile = useRealApi ? client.getProfile : mock.mockGetProfile;
+export const getTodayBirthdays = useRealApi ? client.getTodayBirthdays : mock.mockGetTodayBirthdays;
 export const updateProfile = useRealApi ? client.updateProfile : mock.mockUpdateProfile;
 export type { ProfileUpdate } from "./client";
 export const getTasks = useRealApi ? client.getTasks : mock.mockGetTasks;
@@ -95,3 +96,25 @@ export const setTimeOffStatus = useRealApi
   : async () => {
       throw new Error("Time-off không khả dụng ở chế độ mock");
     };
+
+export const getBugReports = useRealApi ? client.getBugReports : async () => [];
+export const getBugReportById = useRealApi ? client.getBugReportById : async () => null;
+export const getOpenBugReports = useRealApi ? client.getOpenBugReports : async () => [];
+export const updateBugReport = useRealApi
+  ? client.updateBugReport
+  : async () => {
+      throw new Error("Báo bug không khả dụng ở chế độ mock");
+    };
+export const createBugReport = useRealApi
+  ? client.createBugReport
+  : async () => {
+      throw new Error("Báo bug không khả dụng ở chế độ mock");
+    };
+export const updateBugReportStatus = useRealApi
+  ? client.updateBugReportStatus
+  : async () => {
+      throw new Error("Báo bug không khả dụng ở chế độ mock");
+    };
+export const deleteBugReport = useRealApi
+  ? client.deleteBugReport
+  : async () => false;

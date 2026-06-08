@@ -11,6 +11,9 @@ import type {
   TimeOffSession,
   TimeOffReason,
   TimeOffStatus,
+  BugReport,
+  BugReportStatus,
+  TodayBirthday,
 } from "@/shared/types";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "";
@@ -178,8 +181,13 @@ export async function getProfile(): Promise<User> {
   return json.data;
 }
 
+export async function getTodayBirthdays(): Promise<TodayBirthday[]> {
+  const json = await request<TodayBirthday[]>("/api/birthdays/today");
+  return json.data ?? [];
+}
+
 export type ProfileUpdate = {
-  age?: number | null;
+  dateOfBirth?: string | null;
   gender?: string | null;
   joinDate?: string | null;
   position?: string | null;
@@ -191,7 +199,7 @@ export async function updateProfile(data: ProfileUpdate, avatarFile?: File): Pro
   if (avatarFile != null) {
     const form = new FormData();
     form.append("avatar", avatarFile);
-    if (data.age !== undefined) form.append("age", String(data.age ?? ""));
+    if (data.dateOfBirth !== undefined) form.append("dateOfBirth", data.dateOfBirth ?? "");
     if (data.gender !== undefined) form.append("gender", data.gender ?? "");
     if (data.joinDate !== undefined) form.append("joinDate", data.joinDate ?? "");
     if (data.position !== undefined) form.append("position", data.position ?? "");
@@ -492,3 +500,58 @@ export async function setTimeOffStatus(
   return json.data;
 }
 
+export async function getBugReports(): Promise<BugReport[]> {
+  const json = await request<BugReport[]>("/api/bug-reports");
+  return json.data ?? [];
+}
+
+export async function getBugReportById(id: string): Promise<BugReport | null> {
+  const json = await request<BugReport>(`/api/bug-reports/${id}`);
+  return json.data ?? null;
+}
+
+export async function getOpenBugReports(): Promise<BugReport[]> {
+  const json = await request<BugReport[]>("/api/bug-reports/open");
+  return json.data ?? [];
+}
+
+export async function createBugReport(data: {
+  title: string;
+  content: string;
+}): Promise<BugReport> {
+  const json = await request<BugReport>("/api/bug-reports", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  if (!json.data) throw new Error("Tạo bug report thất bại");
+  return json.data;
+}
+
+export async function updateBugReport(
+  id: string,
+  data: { title: string; content: string }
+): Promise<BugReport> {
+  const json = await request<BugReport>(`/api/bug-reports/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  if (!json.data) throw new Error("Cập nhật bug thất bại");
+  return json.data;
+}
+
+export async function updateBugReportStatus(
+  id: string,
+  status: BugReportStatus
+): Promise<BugReport> {
+  const json = await request<BugReport>(`/api/bug-reports/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+  if (!json.data) throw new Error("Cập nhật trạng thái bug thất bại");
+  return json.data;
+}
+
+export async function deleteBugReport(id: string): Promise<boolean> {
+  await request(`/api/bug-reports/${id}`, { method: "DELETE" });
+  return true;
+}

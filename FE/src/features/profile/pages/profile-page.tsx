@@ -8,6 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Upload, Loader2 } from "lucide-react";
+import {
+  calcAgeFromDateOfBirth,
+  getProfileAgeError,
+  getProfileDateOfBirthBounds,
+} from "@/shared/lib/birthday";
 
 const GENDER_OPTIONS = [
   { value: "", label: "— Chọn —" },
@@ -30,7 +35,7 @@ export function ProfilePage() {
   });
 
   const [form, setForm] = useState({
-    age: "" as string | number,
+    dateOfBirth: "",
     gender: "",
     joinDate: "",
     position: "",
@@ -39,19 +44,28 @@ export function ProfilePage() {
   useEffect(() => {
     if (profile) {
       setForm({
-        age: profile.age ?? "",
+        dateOfBirth: profile.dateOfBirth ?? "",
         gender: profile.gender ?? "",
         joinDate: profile.joinDate ?? "",
         position: profile.position ?? "",
       });
     }
-  }, [profile?.id, profile?.age, profile?.gender, profile?.joinDate, profile?.position]);
+  }, [profile?.id, profile?.dateOfBirth, profile?.gender, profile?.joinDate, profile?.position]);
+
+  const computedAge = calcAgeFromDateOfBirth(form.dateOfBirth || profile?.dateOfBirth);
+  const dateOfBirthError = getProfileAgeError(form.dateOfBirth || null);
+  const dobBounds = getProfileDateOfBirthBounds();
+
+  const handleSave = () => {
+    if (form.dateOfBirth && dateOfBirthError) return;
+    updateMutation.mutate();
+  };
 
   const updateMutation = useMutation({
     mutationFn: () =>
       updateProfile(
         {
-          age: form.age === "" ? null : Number(form.age),
+          dateOfBirth: form.dateOfBirth || null,
           gender: form.gender || null,
           joinDate: form.joinDate || null,
           position: form.position || null,
@@ -61,6 +75,7 @@ export function ProfilePage() {
     onSuccess: (updated) => {
       setStoredAuthUser(updated);
       queryClient.setQueryData(["profile", authUser?.id], updated);
+      queryClient.invalidateQueries({ queryKey: ["birthdays", "today"] });
       setAvatarVersion((v) => v + 1);
       localStorage.setItem("taskmate_avatar_ts", String(Date.now()));
       window.dispatchEvent(new CustomEvent("taskmate-auth-update"));
@@ -141,18 +156,37 @@ export function ProfilePage() {
             </div>
             <div className="flex-1 grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
+                <Label htmlFor="profile-dateOfBirth">Ngày sinh</Label>
+                <Input
+                  id="profile-dateOfBirth"
+                  type="date"
+                  min={dobBounds.min}
+                  max={dobBounds.max}
+                  value={form.dateOfBirth}
+                  onChange={(e) => setForm((f) => ({ ...f, dateOfBirth: e.target.value }))}
+                  aria-invalid={!!dateOfBirthError}
+                />
+                {dateOfBirthError ? (
+                  <p className="text-xs text-destructive" role="alert">
+                    {dateOfBirthError}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Độ tuổi từ 19 đến 99</p>
+                )}
+              </div>
+              <div className="grid gap-2">
                 <Label htmlFor="profile-age">Độ tuổi</Label>
                 <Input
                   id="profile-age"
-                  type="number"
-                  min={1}
-                  max={120}
-                  placeholder="Ví dụ: 28"
-                  value={form.age}
-                  onChange={(e) => setForm((f) => ({ ...f, age: e.target.value }))}
+                  type="text"
+                  readOnly
+                  tabIndex={-1}
+                  placeholder="Tự tính từ ngày sinh"
+                  value={computedAge != null ? `${computedAge} tuổi` : ""}
+                  className="bg-muted/50 text-muted-foreground"
                 />
               </div>
-              <div className="grid gap-2">
+              <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="profile-gender">Giới tính</Label>
                 <select
                   id="profile-gender"
@@ -190,8 +224,8 @@ export function ProfilePage() {
           </div>
           <div className="flex gap-2 pt-2">
             <Button
-              onClick={() => updateMutation.mutate()}
-              disabled={updateMutation.isPending}
+              onClick={handleSave}
+              disabled={updateMutation.isPending || (!!form.dateOfBirth && !!dateOfBirthError)}
             >
               {updateMutation.isPending ? (
                 <>

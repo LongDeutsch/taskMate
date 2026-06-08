@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Bug,
   CalendarOff,
   ClipboardList,
   FolderKanban,
@@ -20,6 +21,7 @@ export type NavItem = {
 
 export const baseNavItems: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/bug-reports", label: "Báo bug", icon: Bug },
   { to: "/tasks", label: "My Tasks", icon: ListTodo, hideForHr: true },
   { to: "/time-off", label: "Xin off", icon: CalendarOff },
   { to: "/profile", label: "Profile", icon: UserCircle },
