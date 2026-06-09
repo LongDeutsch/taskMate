@@ -18,6 +18,7 @@ import {
   getAllTimeOffs,
   getMyTimeOffs,
   getTimeOffRecipients,
+  getUsers,
   setTimeOffStatus,
 } from "@/shared/api";
 import {
@@ -282,7 +283,7 @@ export function TimeOffPage() {
     businessTripSchedule: [] as BusinessTripScheduleItem[],
     recipientIds: [] as string[],
   });
-  const [filterStatus, setFilterStatus] = useState<"all" | TimeOffStatus>("all");
+  const [filterUserId, setFilterUserId] = useState("");
   const [draftDateFrom, setDraftDateFrom] = useState("");
   const [draftDateTo, setDraftDateTo] = useState("");
   const [appliedDateFrom, setAppliedDateFrom] = useState("");
@@ -308,6 +309,24 @@ export function TimeOffPage() {
     queryFn: () => getAllTimeOffs(),
     enabled: canViewAll,
   });
+
+  const usersQuery = useQuery({
+    queryKey: ["users"],
+    queryFn: getUsers,
+    enabled: canViewAll,
+  });
+
+  const userFilterOptions = useMemo(() => {
+    return (usersQuery.data ?? [])
+      .filter((u) => !u.disabled && !u.deletedAt)
+      .map((u) => ({ id: u.id, name: u.fullName || u.username }))
+      .sort((a, b) => a.name.localeCompare(b.name, "vi"));
+  }, [usersQuery.data]);
+
+  const filterUserName = useMemo(() => {
+    if (!filterUserId) return null;
+    return userFilterOptions.find((u) => u.id === filterUserId)?.name ?? null;
+  }, [filterUserId, userFilterOptions]);
 
   const hrRecipientIds = useMemo(
     () => (recipientQuery.data ?? []).map((r) => r.id),
@@ -378,11 +397,11 @@ export function TimeOffPage() {
 
   const displayList = useMemo(() => {
     let items = baseList;
-    if (filterStatus !== "all") {
-      items = items.filter((t) => t.status === filterStatus);
+    if (canViewAll && filterUserId) {
+      items = items.filter((t) => t.userId === filterUserId);
     }
     return filterTimeOffByCreatedDate(items, appliedDateFrom, appliedDateTo);
-  }, [baseList, filterStatus, appliedDateFrom, appliedDateTo]);
+  }, [baseList, canViewAll, filterUserId, appliedDateFrom, appliedDateTo]);
 
   const deletableMine = useMemo(
     () => displayList.filter((r) => r.userId === user?.id),
@@ -406,6 +425,7 @@ export function TimeOffPage() {
     setDraftDateTo("");
     setAppliedDateFrom("");
     setAppliedDateTo("");
+    setFilterUserId("");
     setFilterError(null);
   }
 
@@ -610,7 +630,9 @@ export function TimeOffPage() {
             Bộ lọc &amp; báo cáo
           </p>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="grid flex-1 gap-3 sm:grid-cols-2 lg:max-w-md">
+            <div
+              className={`grid flex-1 gap-3 sm:grid-cols-2 ${canViewAll ? "lg:grid-cols-3 lg:max-w-3xl" : "lg:max-w-md"}`}
+            >
               <div className="grid gap-1.5">
                 <Label htmlFor="filter-from" className="text-sm">
                   Từ ngày
@@ -633,6 +655,27 @@ export function TimeOffPage() {
                   onChange={(e) => setDraftDateTo(e.target.value)}
                 />
               </div>
+              {canViewAll && (
+                <div className="grid gap-1.5 sm:col-span-2 lg:col-span-1">
+                  <Label htmlFor="filter-user" className="text-sm">
+                    Nhân viên
+                  </Label>
+                  <select
+                    id="filter-user"
+                    value={filterUserId}
+                    onChange={(e) => setFilterUserId(e.target.value)}
+                    disabled={usersQuery.isLoading}
+                    className="border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                  >
+                    <option value="">Tất cả nhân viên</option>
+                    {userFilterOptions.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Button type="button" size="sm" onClick={handleApplyDateFilter}>
@@ -643,7 +686,13 @@ export function TimeOffPage() {
                 size="sm"
                 variant="outline"
                 onClick={handleClearDateFilter}
-                disabled={!draftDateFrom && !draftDateTo && !appliedDateFrom && !appliedDateTo}
+                disabled={
+                  !draftDateFrom &&
+                  !draftDateTo &&
+                  !appliedDateFrom &&
+                  !appliedDateTo &&
+                  !filterUserId
+                }
               >
                 Xóa lọc
               </Button>
@@ -666,9 +715,21 @@ export function TimeOffPage() {
             {canViewAll
               ? " Excel xuất theo ngày bắt đầu/kết thúc off trong khoảng đã chọn."
               : ""}
-            {(appliedDateFrom || appliedDateTo) && (
+            {(appliedDateFrom || appliedDateTo || filterUserId) && (
               <span className="ml-1 text-foreground">
-                Đang lọc: {appliedDateFrom || "…"} → {appliedDateTo || "…"}
+                Đang lọc:
+                {(appliedDateFrom || appliedDateTo) && (
+                  <span>
+                    {" "}
+                    ngày tạo {appliedDateFrom || "…"} → {appliedDateTo || "…"}
+                  </span>
+                )}
+                {filterUserId && (
+                  <span>
+                    {(appliedDateFrom || appliedDateTo) ? " ·" : ""} nhân viên:{" "}
+                    {filterUserName ?? "…"}
+                  </span>
+                )}
               </span>
             )}
           </p>
@@ -990,7 +1051,7 @@ export function TimeOffPage() {
                   ? "Đang tải..."
                   : displayList.length > 0
                     ? `${displayList.length} yêu cầu${
-                        appliedDateFrom || appliedDateTo ? " (đã lọc theo ngày tạo)" : ""
+                        appliedDateFrom || appliedDateTo || filterUserId ? " (đã lọc)" : ""
                       }`
                     : baseList.length > 0
                       ? "Không có yêu cầu trong khoảng ngày đã chọn."
@@ -1012,28 +1073,6 @@ export function TimeOffPage() {
                 {isDeletingAll ? "Đang xóa..." : `Xóa tất cả (${deletableMine.length})`}
               </Button>
             )}
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {(["all", "pending", "approved", "rejected"] as const).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setFilterStatus(s)}
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-                  filterStatus === s
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-input bg-background hover:bg-accent"
-                }`}
-              >
-                {s === "all"
-                  ? "Tất cả"
-                  : s === "pending"
-                    ? "Chờ duyệt"
-                    : s === "approved"
-                      ? "Đã duyệt"
-                      : "Từ chối"}
-              </button>
-            ))}
           </div>
         </CardHeader>
         <CardContent className="pt-0">
