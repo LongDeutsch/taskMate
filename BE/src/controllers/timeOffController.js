@@ -317,16 +317,13 @@ export async function listAll(req, res, next) {
   }
 }
 
-/** User huỷ yêu cầu của chính mình khi còn pending. */
+/** User xóa yêu cầu do chính mình tạo. */
 export async function cancelMine(req, res, next) {
   try {
     const doc = await TimeOffRequest.findById(req.params.id);
     if (!doc) return next(createNotFoundError("Time-off request not found"));
     if (doc.userId !== req.user.id) {
-      return next(createForbiddenError("Cannot cancel other user's request"));
-    }
-    if (doc.status !== "pending") {
-      return next(createBadRequestError("Only pending requests can be cancelled"));
+      return next(createForbiddenError("Chỉ người tạo yêu cầu mới được xóa"));
     }
     await doc.deleteOne();
     res.json({ success: true, data: { id: doc._id } });

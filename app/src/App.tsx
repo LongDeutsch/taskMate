@@ -18,6 +18,7 @@ import {
   sendDesktopMail,
   setDesktopConfig,
 } from "./lib/desktop";
+import { filterTimeOffByCreatedDate } from "./lib/filterByCreatedDate";
 import { buildTimeOffEmailContent } from "./lib/timeOffEmail";
 import type {
   BusinessTripScheduleItem,
@@ -49,13 +50,15 @@ function RequestCard({
   req,
   showOwner,
   canDecide,
-  onCancel,
+  canDelete,
+  onDelete,
   onDecide,
 }: {
   req: TimeOffRequest;
   showOwner?: boolean;
+  canDelete?: boolean;
   canDecide?: boolean;
-  onCancel?: () => void;
+  onDelete?: () => void;
   onDecide?: (status: "approved" | "rejected") => void;
 }) {
   const badgeClass =
@@ -85,10 +88,10 @@ function RequestCard({
           HR: {req.recipients.map((r) => r.fullName).join(", ")}
         </p>
       )}
-      {req.status === "pending" && onCancel && (
+      {canDelete && onDelete && (
         <div className="actions">
-          <button type="button" className="btn btn-danger" onClick={onCancel}>
-            Huỷ yêu cầu
+          <button type="button" className="btn btn-danger" onClick={onDelete}>
+            Xóa
           </button>
         </div>
       )}
@@ -122,6 +125,8 @@ export function App() {
   const [recipients, setRecipients] = useState<Awaited<ReturnType<typeof getTimeOffRecipients>>>([]);
   const [myRequests, setMyRequests] = useState<TimeOffRequest[]>([]);
   const [allRequests, setAllRequests] = useState<TimeOffRequest[]>([]);
+  const [listCreatedFrom, setListCreatedFrom] = useState("");
+  const [listCreatedTo, setListCreatedTo] = useState("");
 
   const [form, setForm] = useState({
     startDate: todayIso(),
@@ -134,6 +139,16 @@ export function App() {
   });
 
   const canViewAll = user ? canViewAllTimeOffs(user) : false;
+
+  const filteredMine = useMemo(
+    () => filterTimeOffByCreatedDate(myRequests, listCreatedFrom, listCreatedTo),
+    [myRequests, listCreatedFrom, listCreatedTo]
+  );
+
+  const filteredAll = useMemo(
+    () => filterTimeOffByCreatedDate(allRequests, listCreatedFrom, listCreatedTo),
+    [allRequests, listCreatedFrom, listCreatedTo]
+  );
   const hrRecipientIds = useMemo(() => recipients.map((r) => r.id), [recipients]);
   const hrEmails = useMemo(
     () => recipients.map((r) => r.email).filter((e): e is string => Boolean(e)),
@@ -676,24 +691,59 @@ export function App() {
           </form>
         )}
 
+        {(tab === "mine" || tab === "all") && (
+          <div className="card" style={{ marginBottom: 12 }}>
+            <h3 style={{ marginTop: 0 }}>Lọc theo ngày tạo</h3>
+            <div className="field-row">
+              <div className="field">
+                <label htmlFor="app-created-from">Từ ngày</label>
+                <input
+                  id="app-created-from"
+                  type="date"
+                  value={listCreatedFrom}
+                  onChange={(e) => setListCreatedFrom(e.target.value)}
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="app-created-to">Đến ngày</label>
+                <input
+                  id="app-created-to"
+                  type="date"
+                  value={listCreatedTo}
+                  onChange={(e) => setListCreatedTo(e.target.value)}
+                />
+              </div>
+            </div>
+            {(listCreatedFrom || listCreatedTo) && (
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  setListCreatedFrom("");
+                  setListCreatedTo("");
+                }}
+              >
+                Xóa bộ lọc
+              </button>
+            )}
+          </div>
+        )}
+
         {tab === "mine" && (
           <div>
-            {myRequests.length === 0 ? (
-              <p className="muted">Chưa có yêu cầu.</p>
+            {filteredMine.length === 0 ? (
+              <p className="muted">Chưa có yêu cầu trong khoảng ngày đã chọn.</p>
             ) : (
-              myRequests.map((req) => (
+              filteredMine.map((req) => (
                 <RequestCard
                   key={req.id}
                   req={req}
-                  onCancel={
-                    req.status === "pending"
-                      ? async () => {
-                          if (!confirm("Huỷ yêu cầu này?")) return;
-                          await cancelTimeOff(req.id);
-                          await refreshLists();
-                        }
-                      : undefined
-                  }
+                  canDelete={req.userId === user?.id}
+                  onDelete={async () => {
+                    if (!confirm("Xóa yêu cầu này?")) return;
+                    await cancelTimeOff(req.id);
+                    await refreshLists();
+                  }}
                 />
               ))
             )}
@@ -702,15 +752,21 @@ export function App() {
 
         {tab === "all" && canViewAll && (
           <div>
-            {allRequests.length === 0 ? (
-              <p className="muted">Chưa có yêu cầu.</p>
+            {filteredAll.length === 0 ? (
+              <p className="muted">Chưa có yêu cầu trong khoảng ngày đã chọn.</p>
             ) : (
-              allRequests.map((req) => (
+              filteredAll.map((req) => (
                 <RequestCard
                   key={req.id}
                   req={req}
                   showOwner
+                  canDelete={req.userId === user?.id}
                   canDecide
+                  onDelete={async () => {
+                    if (!confirm("Xóa yêu cầu này?")) return;
+                    await cancelTimeOff(req.id);
+                    await refreshLists();
+                  }}
                   onDecide={async (status) => {
                     await setTimeOffStatus(req.id, status);
                     await refreshLists();

@@ -48,6 +48,7 @@ import {
   downloadTimeOffXlsx,
   expandTimeOffToExportRows,
 } from "@/features/time-off/lib/export-time-off-xlsx";
+import { filterTimeOffByCreatedDate } from "@/features/time-off/lib/filter-by-created-date";
 
 const SESSION_OPTIONS: { value: TimeOffSession; label: string }[] = [
   { value: "MORNING", label: "Sáng" },
@@ -143,16 +144,16 @@ function recipientLabel(r: TimeOffRecipient): string {
 function RequestRow({
   req,
   showOwner,
-  canCancel,
+  canDelete,
   canDecide,
-  onCancel,
+  onDelete,
   onDecide,
 }: {
   req: TimeOffRequest;
   showOwner: boolean;
-  canCancel: boolean;
+  canDelete: boolean;
   canDecide: boolean;
-  onCancel: (id: string) => void;
+  onDelete: (id: string) => void;
   onDecide: (id: string, status: "approved" | "rejected") => void;
 }) {
   return (
@@ -223,17 +224,17 @@ function RequestRow({
         <StatusBadge status={req.status} />
       </div>
 
-      {(canCancel || canDecide) && (
+      {(canDelete || canDecide) && (
         <div className="mt-3 flex flex-wrap gap-2 border-t pt-3">
-          {canCancel && req.status === "pending" && (
+          {canDelete && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onCancel(req.id)}
+              onClick={() => onDelete(req.id)}
               className="text-rose-700"
             >
               <Trash2 className="size-4" />
-              Huỷ yêu cầu
+              Xóa
             </Button>
           )}
           {canDecide && req.status === "pending" && (
@@ -282,11 +283,14 @@ export function TimeOffPage() {
     recipientIds: [] as string[],
   });
   const [filterStatus, setFilterStatus] = useState<"all" | TimeOffStatus>("all");
+  const [draftDateFrom, setDraftDateFrom] = useState("");
+  const [draftDateTo, setDraftDateTo] = useState("");
+  const [appliedDateFrom, setAppliedDateFrom] = useState("");
+  const [appliedDateTo, setAppliedDateTo] = useState("");
+  const [filterError, setFilterError] = useState<string | null>(null);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
 
   const [mailSuccess, setMailSuccess] = useState<string | null>(null);
-  const [exportFrom, setExportFrom] = useState(todayIso());
-  const [exportTo, setExportTo] = useState(todayIso());
-  const [exportError, setExportError] = useState<string | null>(null);
   const [isWakingApi, setIsWakingApi] = useState(false);
 
   const recipientQuery = useQuery({
@@ -367,11 +371,70 @@ export function TimeOffPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["time-off"] }),
   });
 
-  const filteredAll = useMemo(() => {
-    const items = allQuery.data ?? [];
-    if (filterStatus === "all") return items;
-    return items.filter((t) => t.status === filterStatus);
-  }, [allQuery.data, filterStatus]);
+  const baseList = useMemo(
+    () => (canViewAll ? (allQuery.data ?? []) : (myQuery.data ?? [])),
+    [canViewAll, allQuery.data, myQuery.data]
+  );
+
+  const displayList = useMemo(() => {
+    let items = baseList;
+    if (filterStatus !== "all") {
+      items = items.filter((t) => t.status === filterStatus);
+    }
+    return filterTimeOffByCreatedDate(items, appliedDateFrom, appliedDateTo);
+  }, [baseList, filterStatus, appliedDateFrom, appliedDateTo]);
+
+  const deletableMine = useMemo(
+    () => displayList.filter((r) => r.userId === user?.id),
+    [displayList, user?.id]
+  );
+
+  const listLoading = canViewAll ? allQuery.isLoading : myQuery.isLoading;
+
+  function handleApplyDateFilter() {
+    setFilterError(null);
+    if (draftDateFrom && draftDateTo && draftDateTo < draftDateFrom) {
+      setFilterError("Đến ngày phải lớn hơn hoặc bằng từ ngày");
+      return;
+    }
+    setAppliedDateFrom(draftDateFrom);
+    setAppliedDateTo(draftDateTo);
+  }
+
+  function handleClearDateFilter() {
+    setDraftDateFrom("");
+    setDraftDateTo("");
+    setAppliedDateFrom("");
+    setAppliedDateTo("");
+    setFilterError(null);
+  }
+
+  function confirmDeleteOne() {
+    return confirm(
+      "Bạn có chắc muốn xóa yêu cầu này?\n\nHành động không thể hoàn tác."
+    );
+  }
+
+  async function handleDeleteAllMine() {
+    const ids = deletableMine.map((r) => r.id);
+    if (ids.length === 0) return;
+    const ok = confirm(
+      `Bạn có chắc muốn xóa ${ids.length} yêu cầu do bạn tạo?\n\nHành động không thể hoàn tác.`
+    );
+    if (!ok) return;
+    setIsDeletingAll(true);
+    setFilterError(null);
+    try {
+      for (const id of ids) {
+        await cancelTimeOff(id);
+      }
+      await queryClient.invalidateQueries({ queryKey: ["time-off"] });
+    } catch (err) {
+      setFilterError(err instanceof Error ? err.message : "Xóa thất bại");
+    } finally {
+      setIsDeletingAll(false);
+    }
+  }
 
   useEffect(() => {
     if (!open || hrRecipientIds.length === 0) return;
@@ -489,22 +552,24 @@ export function TimeOffPage() {
   }
 
   function handleExportXlsx() {
-    setExportError(null);
-    if (!exportFrom || !exportTo) {
-      setExportError("Vui lòng chọn khoảng ngày báo cáo");
+    setFilterError(null);
+    const from = appliedDateFrom || draftDateFrom;
+    const to = appliedDateTo || draftDateTo;
+    if (!from || !to) {
+      setFilterError("Chọn từ ngày và đến ngày trước khi tải Excel");
       return;
     }
-    if (exportTo < exportFrom) {
-      setExportError("Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu");
+    if (to < from) {
+      setFilterError("Đến ngày phải lớn hơn hoặc bằng từ ngày");
       return;
     }
     const items = allQuery.data ?? [];
-    const rows = expandTimeOffToExportRows(items, exportFrom, exportTo);
+    const rows = expandTimeOffToExportRows(items, from, to);
     if (rows.length === 0) {
-      setExportError("Không có yêu cầu nào trong khoảng ngày đã chọn");
+      setFilterError("Không có yêu cầu nào trong khoảng ngày đã chọn");
       return;
     }
-    downloadTimeOffXlsx(rows, exportFrom, exportTo);
+    downloadTimeOffXlsx(rows, from, to);
   }
 
   function selectReason(reason: TimeOffReason) {
@@ -538,6 +603,82 @@ export function TimeOffPage() {
           {open ? "Đóng biểu mẫu" : "Tạo yêu cầu mới"}
         </Button>
       </div>
+
+      <Card className="border-border/80 shadow-sm">
+        <CardContent className="pt-4 pb-4">
+          <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Bộ lọc &amp; báo cáo
+          </p>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="grid flex-1 gap-3 sm:grid-cols-2 lg:max-w-md">
+              <div className="grid gap-1.5">
+                <Label htmlFor="filter-from" className="text-sm">
+                  Từ ngày
+                </Label>
+                <Input
+                  id="filter-from"
+                  type="date"
+                  value={draftDateFrom}
+                  onChange={(e) => setDraftDateFrom(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="filter-to" className="text-sm">
+                  Đến ngày
+                </Label>
+                <Input
+                  id="filter-to"
+                  type="date"
+                  value={draftDateTo}
+                  onChange={(e) => setDraftDateTo(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" size="sm" onClick={handleApplyDateFilter}>
+                Áp dụng
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleClearDateFilter}
+                disabled={!draftDateFrom && !draftDateTo && !appliedDateFrom && !appliedDateTo}
+              >
+                Xóa lọc
+              </Button>
+              {canViewAll && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleExportXlsx}
+                  disabled={allQuery.isLoading}
+                >
+                  <Download className="size-4" />
+                  Tải Excel
+                </Button>
+              )}
+            </div>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Lọc danh sách theo <span className="font-medium">ngày tạo</span> yêu cầu.
+            {canViewAll
+              ? " Excel xuất theo ngày bắt đầu/kết thúc off trong khoảng đã chọn."
+              : ""}
+            {(appliedDateFrom || appliedDateTo) && (
+              <span className="ml-1 text-foreground">
+                Đang lọc: {appliedDateFrom || "…"} → {appliedDateTo || "…"}
+              </span>
+            )}
+          </p>
+          {filterError && (
+            <p className="mt-2 text-sm text-destructive" role="alert">
+              {filterError}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {mailSuccess && (
         <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
@@ -840,144 +981,87 @@ export function TimeOffPage() {
       )}
 
       <Card>
-        <CardHeader>
-          <CardTitle>Yêu cầu của tôi</CardTitle>
-          <CardDescription>
-            {myQuery.data?.length
-              ? `${myQuery.data.length} yêu cầu`
-              : "Bạn chưa có yêu cầu nào."}
-          </CardDescription>
+        <CardHeader className="space-y-3 pb-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 space-y-1">
+              <CardTitle>Danh sách yêu cầu nghỉ phép</CardTitle>
+              <CardDescription>
+                {listLoading
+                  ? "Đang tải..."
+                  : displayList.length > 0
+                    ? `${displayList.length} yêu cầu${
+                        appliedDateFrom || appliedDateTo ? " (đã lọc theo ngày tạo)" : ""
+                      }`
+                    : baseList.length > 0
+                      ? "Không có yêu cầu trong khoảng ngày đã chọn."
+                      : canViewAll
+                        ? "Chưa có yêu cầu nào."
+                        : "Bạn chưa có yêu cầu nào."}
+              </CardDescription>
+            </div>
+            {deletableMine.length > 0 && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="shrink-0 text-rose-700 hover:bg-rose-50"
+                disabled={isDeletingAll || cancelMutation.isPending}
+                onClick={handleDeleteAllMine}
+              >
+                <Trash2 className="size-4" />
+                {isDeletingAll ? "Đang xóa..." : `Xóa tất cả (${deletableMine.length})`}
+              </Button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {(["all", "pending", "approved", "rejected"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setFilterStatus(s)}
+                className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+                  filterStatus === s
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-input bg-background hover:bg-accent"
+                }`}
+              >
+                {s === "all"
+                  ? "Tất cả"
+                  : s === "pending"
+                    ? "Chờ duyệt"
+                    : s === "approved"
+                      ? "Đã duyệt"
+                      : "Từ chối"}
+              </button>
+            ))}
+          </div>
         </CardHeader>
-        <CardContent>
-          {myQuery.isLoading ? (
-            <div className="text-sm text-muted-foreground">Đang tải...</div>
-          ) : (myQuery.data ?? []).length === 0 ? (
-            <div className="text-sm text-muted-foreground">Chưa có yêu cầu nào.</div>
+        <CardContent className="pt-0">
+          {listLoading ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">Đang tải...</div>
+          ) : displayList.length === 0 ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              Không có yêu cầu phù hợp.
+            </div>
           ) : (
             <div className="space-y-2">
-              {(myQuery.data ?? []).map((req) => (
+              {displayList.map((req) => (
                 <RequestRow
                   key={req.id}
                   req={req}
-                  showOwner={false}
-                  canCancel
-                  canDecide={false}
-                  onCancel={(id) => {
-                    if (confirm("Huỷ yêu cầu này?")) cancelMutation.mutate(id);
+                  showOwner={canViewAll}
+                  canDelete={req.userId === user?.id}
+                  canDecide={canViewAll}
+                  onDelete={(id) => {
+                    if (confirmDeleteOne()) cancelMutation.mutate(id);
                   }}
-                  onDecide={() => {}}
+                  onDecide={(id, status) => decideMutation.mutate({ id, status })}
                 />
               ))}
             </div>
           )}
         </CardContent>
       </Card>
-
-      {canViewAll && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Tải báo cáo Excel</CardTitle>
-            <CardDescription>
-              Xuất file .xlsx theo khoảng ngày (lọc theo ngày bắt đầu/kết thúc yêu cầu). Công tác
-              tách từng nhân sự trên mỗi dòng.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="export-from">Từ ngày</Label>
-                <Input
-                  id="export-from"
-                  type="date"
-                  value={exportFrom}
-                  onChange={(e) => setExportFrom(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="export-to">Đến ngày</Label>
-                <Input
-                  id="export-to"
-                  type="date"
-                  value={exportTo}
-                  onChange={(e) => setExportTo(e.target.value)}
-                />
-              </div>
-            </div>
-            {exportError && (
-              <p className="text-sm text-destructive" role="alert">
-                {exportError}
-              </p>
-            )}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleExportXlsx}
-              disabled={allQuery.isLoading}
-            >
-              <Download className="size-4" />
-              Tải xuống .xlsx
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {canViewAll && (
-        <Card>
-          <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle>Tất cả yêu cầu xin off</CardTitle>
-              <CardDescription>
-                {roleLabel === "HR"
-                  ? "HR view: yêu cầu từ toàn bộ nhân viên."
-                  : "Admin view: bao gồm cả yêu cầu của HR."}
-              </CardDescription>
-            </div>
-            <div className="flex flex-wrap gap-1 text-xs">
-              {(["all", "pending", "approved", "rejected"] as const).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setFilterStatus(s)}
-                  className={`rounded-full border px-3 py-1 capitalize transition ${
-                    filterStatus === s
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-input hover:bg-accent"
-                  }`}
-                >
-                  {s === "all"
-                    ? "Tất cả"
-                    : s === "pending"
-                      ? "Chờ duyệt"
-                      : s === "approved"
-                        ? "Đã duyệt"
-                        : "Từ chối"}
-                </button>
-              ))}
-            </div>
-          </CardHeader>
-          <CardContent>
-            {allQuery.isLoading ? (
-              <div className="text-sm text-muted-foreground">Đang tải...</div>
-            ) : filteredAll.length === 0 ? (
-              <div className="text-sm text-muted-foreground">Không có yêu cầu nào.</div>
-            ) : (
-              <div className="space-y-2">
-                {filteredAll.map((req) => (
-                  <RequestRow
-                    key={req.id}
-                    req={req}
-                    showOwner
-                    canCancel={false}
-                    canDecide
-                    onCancel={() => {}}
-                    onDecide={(id, status) => decideMutation.mutate({ id, status })}
-                  />
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
