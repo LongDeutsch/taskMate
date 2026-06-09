@@ -1,8 +1,41 @@
 const MAX_EDGE = 512;
 const JPEG_QUALITY = 0.82;
+export const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
 
-/** Nén ảnh đại diện trước khi upload (giảm dung lượng MongoDB). */
+const ALLOWED_AVATAR_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+]);
+
+/** Kiểm tra file avatar trước khi upload. Trả về thông báo lỗi hoặc null nếu hợp lệ. */
+export function validateAvatarFile(file: File): string | null {
+  if (!ALLOWED_AVATAR_TYPES.has(file.type)) {
+    return "Chỉ chấp nhận JPG, PNG, GIF hoặc WebP";
+  }
+  if (file.size > MAX_AVATAR_SIZE_BYTES) {
+    return file.type === "image/gif"
+      ? "GIF tối đa 5 MB"
+      : "Ảnh tối đa 5 MB";
+  }
+  return null;
+}
+
+/**
+ * Chuẩn bị ảnh đại diện trước khi upload.
+ * GIF giữ nguyên (có animation); ảnh tĩnh nén JPEG để giảm dung lượng DB.
+ */
 export async function compressAvatarFile(file: File): Promise<File> {
+  const validationError = validateAvatarFile(file);
+  if (validationError) {
+    throw new Error(validationError);
+  }
+
+  if (file.type === "image/gif") {
+    return file;
+  }
+
   if (!file.type.startsWith("image/")) return file;
 
   try {

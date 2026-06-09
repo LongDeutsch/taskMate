@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 const UPLOAD_DIR = path.join(__dirname, "..", "..", "uploads", "avatars");
 const ALLOWED_MIMES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-const MAX_SIZE = 3 * 1024 * 1024; // 3MB
+const MAX_SIZE = 5 * 1024 * 1024; // 5MB (GIF động tối đa 5MB)
 
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });

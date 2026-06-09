@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getProfile, updateProfile } from "@/shared/api";
 import { resolveAvatarUrl } from "@/shared/lib/avatar-url";
-import { compressAvatarFile } from "@/shared/lib/compress-avatar";
+import { compressAvatarFile, validateAvatarFile } from "@/shared/lib/compress-avatar";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { setStoredAuthUser } from "@/features/auth/store/auth-store";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ export function ProfilePage() {
   const queryClient = useQueryClient();
   const { user: authUser } = useAuth();
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarFileError, setAvatarFileError] = useState<string | null>(null);
   const [avatarVersion, setAvatarVersion] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -112,6 +113,7 @@ export function ProfilePage() {
       localStorage.setItem("taskmate_avatar_ts", String(Date.now()));
       window.dispatchEvent(new CustomEvent("taskmate-auth-update"));
       setAvatarFile(null);
+      setAvatarFileError(null);
       setWebmailPassword("");
       if (fileInputRef.current) fileInputRef.current.value = "";
     },
@@ -169,7 +171,23 @@ export function ProfilePage() {
                 type="file"
                 accept="image/jpeg,image/png,image/gif,image/webp"
                 className="hidden"
-                onChange={(e) => setAvatarFile(e.target.files?.[0] ?? null)}
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  if (!file) {
+                    setAvatarFile(null);
+                    setAvatarFileError(null);
+                    return;
+                  }
+                  const err = validateAvatarFile(file);
+                  if (err) {
+                    setAvatarFile(null);
+                    setAvatarFileError(err);
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                    return;
+                  }
+                  setAvatarFileError(null);
+                  setAvatarFile(file);
+                }}
               />
               <Button
                 type="button"
@@ -180,8 +198,16 @@ export function ProfilePage() {
                 <Upload className="size-4 mr-1" />
                 {avatarFile ? "Đổi ảnh" : "Tải ảnh lên"}
               </Button>
+              <p className="text-center text-xs text-muted-foreground max-w-[12rem]">
+                JPG, PNG, WebP (tự nén) · GIF động tối đa 5 MB
+              </p>
               {avatarFile && (
                 <span className="text-xs text-muted-foreground">{avatarFile.name}</span>
+              )}
+              {avatarFileError && (
+                <p className="text-xs text-destructive text-center max-w-[12rem]" role="alert">
+                  {avatarFileError}
+                </p>
               )}
             </div>
             <div className="flex-1 grid gap-4 sm:grid-cols-2">
@@ -354,6 +380,7 @@ export function ProfilePage() {
               disabled={
                 updateMutation.isPending ||
                 !!fullNameError ||
+                !!avatarFileError ||
                 (!!form.dateOfBirth && !!dateOfBirthError)
               }
             >

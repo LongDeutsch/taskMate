@@ -18,7 +18,7 @@ export function errorHandler(err, req, res, next) {
   }
   if (err.code === "LIMIT_FILE_SIZE") {
     statusCode = 400;
-    message = "Ảnh tối đa 3MB";
+    message = "Ảnh tối đa 5MB";
   }
 
   const isDev = process.env.NODE_ENV !== "production";
