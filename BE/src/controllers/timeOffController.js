@@ -60,8 +60,10 @@ async function resolveRecipients(requestedRecipientIds, excludeUserId) {
   const requested = Array.isArray(requestedRecipientIds)
     ? requestedRecipientIds.filter((id) => typeof id === "string" && id.trim() !== "")
     : [];
-  const hrIds = await getHrRecipients(excludeUserId);
-  const ids = [...new Set([...hrIds, ...requested])].filter((id) => id !== excludeUserId);
+  // Có chọn cụ thể → chỉ gửi tới HR đã chọn; không chọn → mặc định tất cả HR active.
+  const hrIds =
+    requested.length > 0 ? requested : await getHrRecipients(excludeUserId);
+  const ids = [...new Set(hrIds)].filter((id) => id !== excludeUserId);
   if (ids.length === 0) return { recipientIds: [], recipients: [] };
 
   const users = await User.find({
@@ -183,7 +185,7 @@ export async function create(req, res, next) {
       status: "pending",
     });
 
-    // Notify người nhận (best-effort). HR luôn được include mặc định.
+    // Notify người nhận đã chọn (best-effort).
     await Promise.all(
       resolvedRecipients.recipientIds.map((uid) =>
         createNotification({

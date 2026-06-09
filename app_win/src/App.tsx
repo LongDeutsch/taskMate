@@ -136,6 +136,7 @@ export function App() {
     reasonOther: "",
     details: "",
     businessTripSchedule: [] as BusinessTripScheduleItem[],
+    selectedRecipientIds: [] as string[],
   });
 
   const canViewAll = user ? canViewAllTimeOffs(user) : false;
@@ -149,11 +150,28 @@ export function App() {
     () => filterTimeOffByCreatedDate(allRequests, listCreatedFrom, listCreatedTo),
     [allRequests, listCreatedFrom, listCreatedTo]
   );
-  const hrRecipientIds = useMemo(() => recipients.map((r) => r.id), [recipients]);
-  const hrEmails = useMemo(
-    () => recipients.map((r) => r.email).filter((e): e is string => Boolean(e)),
-    [recipients]
+  const selectedRecipients = useMemo(
+    () => recipients.filter((r) => form.selectedRecipientIds.includes(r.id)),
+    [recipients, form.selectedRecipientIds]
   );
+  const hrRecipientIds = useMemo(
+    () => selectedRecipients.map((r) => r.id),
+    [selectedRecipients]
+  );
+  const hrEmails = useMemo(
+    () => selectedRecipients.map((r) => r.email).filter((e): e is string => Boolean(e)),
+    [selectedRecipients]
+  );
+
+  useEffect(() => {
+    if (recipients.length === 0) return;
+    setForm((f) => {
+      const valid = new Set(recipients.map((r) => r.id));
+      const kept = f.selectedRecipientIds.filter((id) => valid.has(id));
+      if (kept.length > 0) return f;
+      return { ...f, selectedRecipientIds: recipients.map((r) => r.id) };
+    });
+  }, [recipients]);
 
   const loadConfig = useCallback(async () => {
     const cfg = await getDesktopConfig();
@@ -241,11 +259,17 @@ export function App() {
       if (!webmailEmail || !hasWebmailPassword) {
         throw new Error("Cấu hình email và mật khẩu webmail trong Cài đặt");
       }
-      if (hrRecipientIds.length === 0) {
+      if (recipients.length === 0) {
         throw new Error("Chưa có HR active trên TaskMate");
       }
-      if (hrEmails.length === 0) {
-        throw new Error("HR chưa có email trong hồ sơ — không gửi được mail");
+      if (hrRecipientIds.length === 0) {
+        throw new Error("Chọn ít nhất một người nhận HR");
+      }
+      const missingEmail = selectedRecipients.filter((r) => !r.email);
+      if (missingEmail.length > 0) {
+        throw new Error(
+          `HR chưa có email: ${missingEmail.map((r) => r.fullName).join(", ")}`
+        );
       }
       if (form.reason === "OTHER" && !form.reasonOther.trim()) {
         throw new Error('Lý do "Khác" cần nhập nội dung');
@@ -315,6 +339,7 @@ export function App() {
         reasonOther: "",
         details: "",
         businessTripSchedule: [],
+        selectedRecipientIds: recipients.map((r) => r.id),
       });
       await refreshLists();
       setTab("mine");
@@ -671,17 +696,48 @@ export function App() {
             )}
 
             <div className="field" style={{ marginTop: 16 }}>
-              <label>Người nhận HR (tự động)</label>
+              <label>Người nhận HR</label>
+              <p className="muted" style={{ marginTop: 0 }}>
+                Chọn HR sẽ nhận email và thông báo yêu cầu.
+              </p>
               {recipients.length === 0 ? (
                 <p className="muted">Chưa có HR trên TaskMate</p>
               ) : (
                 <div className="hr-list">
-                  {recipients.map((r) => (
-                    <div key={r.id} className="hr-item">
-                      {r.fullName} · {r.email ?? "chưa có email"}
-                    </div>
-                  ))}
+                  {recipients.map((r) => {
+                    const checked = form.selectedRecipientIds.includes(r.id);
+                    return (
+                      <label
+                        key={r.id}
+                        className={`hr-item hr-item-selectable ${checked ? "selected" : ""}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() =>
+                            setForm((f) => {
+                              const next = checked
+                                ? f.selectedRecipientIds.filter((id) => id !== r.id)
+                                : [...f.selectedRecipientIds, r.id];
+                              return { ...f, selectedRecipientIds: next };
+                            })
+                          }
+                        />
+                        <span className="hr-item-body">
+                          <span className="hr-item-name">{r.fullName}</span>
+                          <span className="hr-item-meta muted">
+                            {r.email ?? "chưa có email"}
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
+              )}
+              {selectedRecipients.length > 0 && (
+                <p className="muted">
+                  Sẽ gửi tới: {selectedRecipients.map((r) => r.fullName).join(", ")}
+                </p>
               )}
             </div>
 
