@@ -82,24 +82,16 @@ function registerIpc() {
       tls: { rejectUnauthorized: false },
     });
 
-    const sent = [];
-    const failed = [];
-    for (const recipient of recipients) {
-      try {
-        const info = await transporter.sendMail({ from, to: recipient, subject, text, html });
-        sent.push(recipient);
-        console.info("[local-mail] sent to", recipient, info.messageId);
-      } catch (err) {
-        failed.push(recipient);
-        console.warn("[local-mail] failed", recipient, err?.message);
-      }
+    try {
+      const info = await transporter.sendMail({ from, to: recipients, subject, text, html });
+      console.info("[local-mail] sent to", recipients.join(", "), info.messageId);
+      return { sent: recipients, failed: [] };
+    } catch (err) {
+      console.warn("[local-mail] failed", recipients.join(", "), err?.message);
+      throw new Error(`Gửi mail thất bại: ${err?.message ?? "unknown error"}`);
+    } finally {
+      transporter.close?.();
     }
-    transporter.close?.();
-
-    if (sent.length === 0) {
-      throw new Error(`Gửi mail thất bại: ${failed.join(", ")}`);
-    }
-    return { sent, failed };
   });
 }
 

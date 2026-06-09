@@ -61,45 +61,45 @@ export async function sendTimeOffEmails(user, notifyEmails, request) {
   const transporter = createTransporter(user.smtpHost, auth);
   const { text, html, subject } = buildTimeOffEmailContent(request);
 
-  const sent = [];
-  const failed = [];
-  const sendDetails = [];
+  let sent = [];
+  let failed = [];
+  let sendDetails = [];
 
-  for (const to of emails) {
-    try {
-      const info = await transporter.sendMail({
-        from: user.email,
-        to,
-        subject,
-        text,
-        html,
-      });
-      sent.push(to);
-      sendDetails.push({
-        to,
+  try {
+    const info = await transporter.sendMail({
+      from: user.email,
+      to: emails,
+      subject,
+      text,
+      html,
+    });
+    sent = emails;
+    sendDetails = [
+      {
+        to: emails.join(", "),
         messageId: info.messageId ?? null,
         response: info.response ?? null,
-      });
-      console.info(
-        "[mail] accepted by SMTP",
-        to,
-        `${DEFAULT_SMTP_HOST}:${SMTP_PORT}`,
-        info.messageId ?? "",
-        info.response ?? ""
+      },
+    ];
+    console.info(
+      "[mail] accepted by SMTP",
+      emails.join(", "),
+      `${DEFAULT_SMTP_HOST}:${SMTP_PORT}`,
+      info.messageId ?? "",
+      info.response ?? ""
+    );
+  } catch (err) {
+    failed = emails;
+    const hint = smtpFailureHint(err);
+    console.warn("[mail] send failed to", emails.join(", "), hint);
+    if (isRenderHosted()) {
+      console.warn(
+        "[mail] Render free tier blocks outbound SMTP 465/587 — upgrade to paid or use mail relay. See Render changelog."
       );
-    } catch (err) {
-      failed.push(to);
-      const hint = smtpFailureHint(err);
-      console.warn("[mail] send failed to", to, hint);
-      if (isRenderHosted() && sent.length === 0 && failed.length === 1) {
-        console.warn(
-          "[mail] Render free tier blocks outbound SMTP 465/587 — upgrade to paid or use mail relay. See Render changelog."
-        );
-      }
     }
+  } finally {
+    transporter.close?.();
   }
-
-  transporter.close?.();
 
   const allFailedNote =
     sent.length === 0 && failed.length > 0
