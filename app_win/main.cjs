@@ -12,7 +12,7 @@ let store = null;
 function getStore() {
   if (!store) {
     store = new Store({
-      name: "taskmate-xinoff",
+      name: "taskmate-xinoff-win",
       cwd: path.join(app.getPath("userData")),
       defaults: {
         apiUrl: "https://taskmate-be.onrender.com",

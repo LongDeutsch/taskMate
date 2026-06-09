@@ -1,17 +1,19 @@
 {
-  "name": "taskmate-xinoff",
+  "name": "taskmate-xinoff-win",
   "version": "1.0.0",
-  "description": "TaskMate Xin off — gửi mail local, đồng bộ API",
+  "description": "TaskMate Xin off (Windows) — gửi mail local, đồng bộ API",
   "main": "main.cjs",
   "private": true,
   "scripts": {
-    "kill-port": "lsof -ti:5174 | xargs kill -9 2>/dev/null || true",
+    "kill-port": "npx --yes kill-port 5174",
     "dev": "npm run kill-port && concurrently -k -n vite,electron -c blue,green \"vite\" \"wait-on tcp:127.0.0.1:5174 && npm run dev:electron\"",
     "dev:vite": "vite",
-    "dev:electron": "env -u ELECTRON_RUN_AS_NODE VITE_DEV_SERVER_URL=http://127.0.0.1:5174 node_modules/.bin/electron .",
+    "dev:electron": "cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5174 electron .",
     "build": "tsc -b && vite build",
-    "start": "npm run build && env -u ELECTRON_RUN_AS_NODE node_modules/.bin/electron .",
-    "pack": "npm run build && electron-builder --mac"
+    "start": "npm run build && cross-env electron .",
+    "pack": "npm run build && electron-builder --win",
+    "pack:portable": "npm run build && electron-builder --win portable",
+    "pack:zip": "npm run build && electron-builder --win zip"
   },
   "dependencies": {
     "electron-store": "^8.2.0",
@@ -32,15 +34,25 @@
     "wait-on": "^8.0.2"
   },
   "build": {
-    "appId": "com.cybertech.taskmate.xinoff",
+    "appId": "com.cybertech.taskmate.xinoff.win",
     "productName": "TaskMate Xin off",
     "directories": {
       "output": "release"
     },
-    "mac": {
-      "category": "public.app-category.business",
+    "win": {
       "target": [
-        "dmg"
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     },
     "files": [

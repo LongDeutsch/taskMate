@@ -60,6 +60,8 @@ npm start
 npm run pack
 ```
 
+File output: `release/TaskMate Xin off-<version>-arm64.dmg` (~100 MB). UI build vào `renderer/`, không trùng thư mục `release/`.
+
 ## Luồng sử dụng
 
 1. **Đăng nhập** TaskMate (username/password) — xác định user qua JWT
