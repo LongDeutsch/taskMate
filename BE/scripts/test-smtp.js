@@ -100,6 +100,11 @@ async function testSmtpAuthAndSend() {
 async function main() {
   console.log(`TaskMate — SMTP test port ${port}`);
   console.log(`Host: ${host}:${port}`);
+  if (process.env.RENDER) {
+    console.log(
+      "\n⚠️  Đang chạy trên Render. Free tier chặn SMTP 465/587 — timeout = bình thường nếu chưa upgrade paid.\n"
+    );
+  }
 
   const tcpOk = await testTcp();
   if (!tcpOk) {

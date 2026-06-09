@@ -47,8 +47,6 @@ export function ProfilePage() {
     position: "",
     phone: "",
     email: "",
-    webmailUrl: DEFAULT_WEBMAIL_URL,
-    smtpHost: DEFAULT_SMTP_HOST,
   });
 
   useEffect(() => {
@@ -61,8 +59,6 @@ export function ProfilePage() {
         position: profile.position ?? "",
         phone: profile.phone ?? "",
         email: profile.email ?? "",
-        webmailUrl: profile.webmailUrl ?? DEFAULT_WEBMAIL_URL,
-        smtpHost: profile.smtpHost ?? DEFAULT_SMTP_HOST,
       });
     }
   }, [
@@ -74,8 +70,6 @@ export function ProfilePage() {
     profile?.position,
     profile?.phone,
     profile?.email,
-    profile?.webmailUrl,
-    profile?.smtpHost,
   ]);
 
   const computedAge = calcAgeFromDateOfBirth(form.dateOfBirth || profile?.dateOfBirth);
@@ -101,8 +95,8 @@ export function ProfilePage() {
           position: form.position || null,
           phone: form.phone.trim() || null,
           email: form.email.trim() || null,
-          webmailUrl: form.webmailUrl.trim() || DEFAULT_WEBMAIL_URL,
-          smtpHost: form.smtpHost.trim() || DEFAULT_SMTP_HOST,
+          webmailUrl: DEFAULT_WEBMAIL_URL,
+          smtpHost: DEFAULT_SMTP_HOST,
           webmailPassword: webmailPassword.trim() || undefined,
         },
         file
@@ -308,40 +302,18 @@ export function ProfilePage() {
             <div>
               <h3 className="text-sm font-semibold">Cấu hình Webmail (gửi mail xin off)</h3>
               <p className="text-xs text-muted-foreground mt-1">
-                SMTP port 465 · Webmail{" "}
+                {DEFAULT_SMTP_HOST} · SMTP port 465 ·{" "}
                 <a
-                  href={form.webmailUrl}
+                  href={DEFAULT_WEBMAIL_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary hover:underline"
                 >
-                  mở hộp thư
+                  Mở hộp thư
                 </a>
               </p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2 sm:col-span-2">
-                <Label htmlFor="profile-webmailUrl">Địa chỉ Webmail</Label>
-                <Input
-                  id="profile-webmailUrl"
-                  type="url"
-                  placeholder={DEFAULT_WEBMAIL_URL}
-                  value={form.webmailUrl}
-                  onChange={(e) => setForm((f) => ({ ...f, webmailUrl: e.target.value }))}
-                  className="h-9"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="profile-smtpHost">SMTP Host</Label>
-                <Input
-                  id="profile-smtpHost"
-                  type="text"
-                  placeholder={DEFAULT_SMTP_HOST}
-                  value={form.smtpHost}
-                  onChange={(e) => setForm((f) => ({ ...f, smtpHost: e.target.value }))}
-                  className="h-9"
-                />
-              </div>
+            <div className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="profile-webmail-email">Tài khoản email</Label>
                 <Input
@@ -354,7 +326,7 @@ export function ProfilePage() {
                   autoComplete="email"
                 />
               </div>
-              <div className="grid gap-2 sm:col-span-2">
+              <div className="grid gap-2">
                 <Label htmlFor="profile-webmailPassword">Mật khẩu webmail</Label>
                 <Input
                   id="profile-webmailPassword"

@@ -5,6 +5,7 @@ import {
   DEFAULT_SMTP_PORT,
 } from "../utils/mailCredentials.js";
 import { buildTimeOffEmailContent } from "../utils/timeOffLabels.js";
+import { isRenderHosted, smtpFailureHint } from "../utils/smtpEnvironment.js";
 
 const SMTP_CONNECTION_TIMEOUT_MS = Number(process.env.SMTP_CONNECTION_TIMEOUT_MS || 25_000);
 const SMTP_SOCKET_TIMEOUT_MS = Number(process.env.SMTP_SOCKET_TIMEOUT_MS || 30_000);
@@ -88,11 +89,24 @@ export async function sendTimeOffEmails(user, notifyEmails, request) {
       );
     } catch (err) {
       failed.push(to);
-      console.warn("[mail] send failed to", to, err?.message ?? err);
+      const hint = smtpFailureHint(err);
+      console.warn("[mail] send failed to", to, hint);
+      if (isRenderHosted() && sent.length === 0 && failed.length === 1) {
+        console.warn(
+          "[mail] Render free tier blocks outbound SMTP 465/587 — upgrade to paid or use mail relay. See Render changelog."
+        );
+      }
     }
   }
 
   transporter.close?.();
+
+  const allFailedNote =
+    sent.length === 0 && failed.length > 0
+      ? isRenderHosted()
+        ? "Render free tier chặn SMTP (port 465). Local gửi OK; trên web cần nâng cấp Render paid hoặc relay mail."
+        : "Không gửi được qua SMTP port 465 — kiểm tra firewall/mail server."
+      : null;
 
   return {
     sent,
@@ -101,7 +115,7 @@ export async function sendTimeOffEmails(user, notifyEmails, request) {
     note:
       sent.length > 0
         ? "SMTP đã chấp nhận gửi. Kiểm tra hộp thư đến người nhận (có thể trong Spam)."
-        : "Không gửi được qua SMTP port 465 từ server — có thể mail server chặn IP datacenter Render; nhờ IT whitelist.",
+        : allFailedNote,
   };
 }
 
