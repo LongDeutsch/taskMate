@@ -3,6 +3,8 @@ import { User } from "lucide-react";
 import type { User as AppUser } from "@/shared/types";
 import { formatRoleLabel, getRoleLabel } from "@/shared/types";
 import { UserAvatar } from "@/shared/components/user-avatar";
+import { useAvatarCacheBust } from "@/shared/hooks/use-avatar-cache-bust";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { calcAgeFromDateOfBirth } from "@/shared/lib/birthday";
@@ -37,6 +39,8 @@ type UserProfileViewProps = {
 };
 
 export function UserProfileView({ user, isOwnProfile }: UserProfileViewProps) {
+  const { user: authUser } = useAuth();
+  const avatarTs = useAvatarCacheBust();
   const roleLabel = getRoleLabel(user);
   const age = user.age ?? calcAgeFromDateOfBirth(user.dateOfBirth);
   return (
@@ -56,6 +60,9 @@ export function UserProfileView({ user, isOwnProfile }: UserProfileViewProps) {
           <div className="flex flex-col items-center gap-2">
             <UserAvatar
               avatar={user.avatar}
+              cacheBust={
+                isOwnProfile || user.id === authUser?.id ? avatarTs : undefined
+              }
               className="size-24 border-2 border-border"
               iconClassName="size-12"
             />

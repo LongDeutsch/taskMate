@@ -1,14 +1,22 @@
+import crypto from "crypto";
 import { formatDateOnly } from "./birthday.js";
 
 const PUBLIC_API_URL = (process.env.PUBLIC_API_URL || process.env.RENDER_EXTERNAL_URL || "")
   .replace(/\/$/, "");
 
-/** URL ngắn cho FE — ảnh phục vụ qua GET /api/users/:id/avatar (không cần JWT, dùng được trong <img>). */
+/** Fingerprint ngắn — đổi khi nội dung avatar trong DB đổi. */
+function avatarVersionToken(storedAvatar) {
+  if (!storedAvatar) return null;
+  return crypto.createHash("sha1").update(String(storedAvatar)).digest("hex").slice(0, 12);
+}
+
+/** URL avatar công khai — kèm ?v= để tránh cache ảnh cũ sau khi user đổi profile. */
 export function getPublicAvatarUrl(user) {
-  if (!user?.avatar) return null;
-  const id = user._id ?? user.id;
-  if (!id) return null;
-  const avatarPath = `/api/users/${id}/avatar`;
+  const id = user?._id ?? user?.id;
+  if (!id || !user?.avatar) return null;
+  const token = avatarVersionToken(user.avatar);
+  if (!token) return null;
+  const avatarPath = `/api/users/${id}/avatar?v=${token}`;
   return PUBLIC_API_URL ? `${PUBLIC_API_URL}${avatarPath}` : avatarPath;
 }
 

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Upload, Loader2 } from "lucide-react";
-import { DEFAULT_SMTP_HOST, DEFAULT_WEBMAIL_URL } from "@/shared/types";
+import { DEFAULT_SMTP_HOST, DEFAULT_WEBMAIL_URL, type User as AppUser } from "@/shared/types";
 import {
   calcAgeFromDateOfBirth,
   getProfileAgeError,
@@ -106,6 +106,10 @@ export function ProfilePage() {
     onSuccess: (updated) => {
       setStoredAuthUser(updated);
       queryClient.setQueryData(["profile", authUser?.id], updated);
+      queryClient.setQueryData<AppUser[]>(["users"], (old) =>
+        old?.map((u) => (u.id === updated.id ? { ...u, ...updated } : u)) ?? old
+      );
+      queryClient.setQueryData(["users", updated.id], updated);
       queryClient.invalidateQueries({ queryKey: ["birthdays", "today"] });
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["users", updated.id] });

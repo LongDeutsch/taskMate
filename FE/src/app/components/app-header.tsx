@@ -1,5 +1,4 @@
 // File: src/app/components/app-header.tsx
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/hooks/use-auth";
@@ -7,6 +6,7 @@ import { NotificationBell } from "@/features/notifications/components/notificati
 import { FolderKanban, LogOut, Menu, UserCircle } from "lucide-react";
 import { formatRoleLabel, getRoleLabel } from "@/shared/types";
 import { UserAvatar } from "@/shared/components/user-avatar";
+import { useAvatarCacheBust } from "@/shared/hooks/use-avatar-cache-bust";
 
 type AppHeaderProps = {
   onOpenMenu?: () => void;
@@ -15,17 +15,7 @@ type AppHeaderProps = {
 export function AppHeader({ onOpenMenu }: AppHeaderProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [avatarTs, setAvatarTs] = useState(() =>
-    typeof localStorage !== "undefined"
-      ? localStorage.getItem("taskmate_avatar_ts") ?? "0"
-      : "0"
-  );
-
-  useEffect(() => {
-    const handler = () => setAvatarTs(localStorage.getItem("taskmate_avatar_ts") ?? "0");
-    window.addEventListener("taskmate-auth-update", handler);
-    return () => window.removeEventListener("taskmate-auth-update", handler);
-  }, []);
+  const avatarTs = useAvatarCacheBust();
 
   function handleLogout() {
     logout();

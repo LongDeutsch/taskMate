@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { UserCircle } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { getRoleLabel } from "@/shared/types";
 import { UserAvatar } from "@/shared/components/user-avatar";
+import { useAvatarCacheBust } from "@/shared/hooks/use-avatar-cache-bust";
 import { TodayBirthdaySection } from "@/features/dashboard/components/today-birthday-section";
 import { adminNavItems, getBaseNavItems } from "../config/nav-items";
 
@@ -79,15 +79,4 @@ export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
       </div>
     </nav>
   );
-}
-
-export function useAvatarCacheBust() {
-  const [avatarTs, setAvatarTs] = useState("0");
-  useEffect(() => {
-    const sync = () => setAvatarTs(localStorage.getItem("taskmate_avatar_ts") ?? "0");
-    sync();
-    window.addEventListener("taskmate-auth-update", sync);
-    return () => window.removeEventListener("taskmate-auth-update", sync);
-  }, []);
-  return avatarTs;
 }

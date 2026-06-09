@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { getUsers } from "@/shared/api";
 import { UserAvatar } from "@/shared/components/user-avatar";
+import { useAvatarCacheBust } from "@/shared/hooks/use-avatar-cache-bust";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 import { formatRoleLabel, getRoleLabel } from "@/shared/types";
 import { PageHeader } from "@/app/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,10 +25,21 @@ function roleBadgeClass(roleLabel: ReturnType<typeof getRoleLabel>) {
 }
 
 export function UsersPage() {
+  const queryClient = useQueryClient();
+  const { user: authUser } = useAuth();
+  const avatarTs = useAvatarCacheBust();
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users"],
     queryFn: getUsers,
   });
+
+  useEffect(() => {
+    const refresh = () => {
+      void queryClient.invalidateQueries({ queryKey: ["users"] });
+    };
+    window.addEventListener("taskmate-auth-update", refresh);
+    return () => window.removeEventListener("taskmate-auth-update", refresh);
+  }, [queryClient]);
 
   if (isLoading) {
     return (
@@ -63,6 +77,7 @@ export function UsersPage() {
                   <div className="flex min-w-0 items-center gap-3">
                     <UserAvatar
                       avatar={user.avatar}
+                      cacheBust={user.id === authUser?.id ? avatarTs : undefined}
                       className="size-11 shrink-0 border border-border"
                     />
                     <div className="min-w-0">

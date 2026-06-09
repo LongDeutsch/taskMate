@@ -31,9 +31,7 @@ export async function list(req, res, next) {
       .select("-password")
       .sort({ username: 1 })
       .lean();
-    const result = users.map((u) =>
-      formatPublicUser({ ...u, avatar: u.avatar ? true : null })
-    );
+    const result = users.map((u) => formatPublicUser(u));
     res.json({ success: true, data: result });
   } catch (err) {
     next(err);
