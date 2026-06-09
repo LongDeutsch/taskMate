@@ -106,8 +106,17 @@ function serialize(doc) {
 
 export async function create(req, res, next) {
   try {
-    const { startDate, endDate, session, reason, reasonOther, details, businessTripSchedule, recipientIds } =
-      req.body ?? {};
+    const {
+      startDate,
+      endDate,
+      session,
+      reason,
+      reasonOther,
+      details,
+      businessTripSchedule,
+      recipientIds,
+      skipMail,
+    } = req.body ?? {};
 
     if (!TIME_OFF_SESSIONS.includes(session)) {
       return next(createBadRequestError("session must be MORNING / AFTERNOON / FULL"));
@@ -200,7 +209,12 @@ export async function create(req, res, next) {
     ];
 
     let mailResult = null;
-    if (recipientEmails.length === 0) {
+    if (skipMail === true) {
+      mailResult = {
+        skipped: true,
+        note: "Mail đã gửi từ app local — BE không gửi SMTP.",
+      };
+    } else if (recipientEmails.length === 0) {
       mailResult = {
         skipped: true,
         note: "Người nhận chưa có email trong hồ sơ — không gửi SMTP.",

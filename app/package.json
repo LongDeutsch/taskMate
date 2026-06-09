@@ -1,0 +1,48 @@
+{
+  "name": "taskmate-xinoff",
+  "version": "1.0.0",
+  "description": "TaskMate Xin off — gửi mail local, đồng bộ API",
+  "main": "main.cjs",
+  "private": true,
+  "scripts": {
+    "kill-port": "lsof -ti:5174 | xargs kill -9 2>/dev/null || true",
+    "dev": "npm run kill-port && concurrently -k -n vite,electron -c blue,green \"vite\" \"wait-on tcp:127.0.0.1:5174 && npm run dev:electron\"",
+    "dev:vite": "vite",
+    "dev:electron": "env -u ELECTRON_RUN_AS_NODE VITE_DEV_SERVER_URL=http://127.0.0.1:5174 node_modules/.bin/electron .",
+    "build": "tsc -b && vite build",
+    "start": "npm run build && env -u ELECTRON_RUN_AS_NODE node_modules/.bin/electron .",
+    "pack": "npm run build && electron-builder --mac"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0",
+    "nodemailer": "^6.9.16",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^34.0.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7",
+    "wait-on": "^8.0.2"
+  },
+  "build": {
+    "appId": "com.cybertech.taskmate.xinoff",
+    "productName": "TaskMate Xin off",
+    "mac": {
+      "category": "public.app-category.business",
+      "target": [
+        "dmg"
+      ]
+    },
+    "files": [
+      "dist/**/*",
+      "desktop/**/*"
+    ]
+  }
+}
