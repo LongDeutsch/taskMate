@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { getRoleLabel, type RoleLabel, type User } from "@/shared/types";
 import {
   Bug,
   CalendarOff,
@@ -19,7 +20,18 @@ export type NavItem = {
   hideForHr?: boolean;
 };
 
-export const hrNavPaths = ["/users", "/time-off", "/profile"] as const;
+export const hrNavPaths = ["/time-off", "/users", "/profile"] as const;
+
+/** Trang mặc định sau đăng nhập / truy cập `/`. */
+export function getHomePathForRole(roleLabel: RoleLabel | string): string {
+  if (roleLabel === "HR") return "/time-off";
+  return "/dashboard";
+}
+
+export function getHomePathForUser(user: Pick<User, "role" | "roleLabel"> | null): string {
+  if (!user) return "/login";
+  return getHomePathForRole(getRoleLabel(user));
+}
 
 export const baseNavItems: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },

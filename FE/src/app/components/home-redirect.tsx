@@ -1,10 +1,8 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/hooks/use-auth";
-import { getRoleLabel } from "@/shared/types";
+import { getHomePathForUser } from "../config/nav-items";
 
 export function HomeRedirect() {
   const { user } = useAuth();
-  const roleLabel = user ? getRoleLabel(user) : "STAFF";
-  if (roleLabel === "HR") return <Navigate to="/users" replace />;
-  return <Navigate to="/dashboard" replace />;
+  return <Navigate to={getHomePathForUser(user)} replace />;
 }

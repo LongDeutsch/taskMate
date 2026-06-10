@@ -13,8 +13,8 @@ export function MobileBottomNav() {
   const items =
     roleLabel === "HR"
       ? [
-          { to: "/users", label: "Users", icon: Users },
           { to: "/time-off", label: "Xin off", icon: CalendarOff },
+          { to: "/users", label: "Users", icon: Users },
           { to: "/profile", label: "Profile", icon: UserCircle },
         ]
       : [

@@ -1,11 +1,12 @@
 // File: src/features/dashboard/pages/dashboard-page.tsx
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Task, TaskStatus } from "@/shared/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/hooks/use-auth";
+import { getRoleLabel } from "@/shared/types";
 import {
   deleteBugReport,
   getTasks,
@@ -117,6 +118,10 @@ export function DashboardPage() {
     InProgress: "In Progress",
     Done: "Done",
   };
+
+  if (user && getRoleLabel(user) === "HR") {
+    return <Navigate to="/time-off" replace />;
+  }
 
   if (isLoading || bugsLoading) {
     return (

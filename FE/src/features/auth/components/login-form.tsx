@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getHomePathForUser } from "@/app/config/nav-items";
+import { getStoredAuthUser } from "@/features/auth/store/auth-store";
 import { useAuth } from "../hooks/use-auth";
 import { loginSchema, type LoginFormValues } from "../schemas/login-schema";
 import { isUsingRealApi, apiBaseUrl } from "@/shared/api";
@@ -48,7 +50,7 @@ export function LoginForm() {
     try {
       const ok = await login(result.data.username, result.data.password);
       if (ok) {
-        navigate("/dashboard", { replace: true });
+        navigate(getHomePathForUser(getStoredAuthUser()), { replace: true });
       } else {
         setError("Invalid username or password.");
       }

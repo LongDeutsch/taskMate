@@ -1,5 +1,6 @@
 // File: src/app/components/admin-route.tsx
 import { Navigate } from "react-router-dom";
+import { getHomePathForUser } from "@/app/config/nav-items";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 
 export function AdminRoute({ children }: { children: React.ReactNode }) {
@@ -14,7 +15,7 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user || user.role !== "ADMIN") {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={getHomePathForUser(user)} replace />;
   }
 
   return <>{children}</>;
