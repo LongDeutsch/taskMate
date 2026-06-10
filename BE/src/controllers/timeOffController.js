@@ -22,6 +22,11 @@ function canViewAll(user) {
   return user?.role === "ADMIN" || ["HR", "BODS"].includes(user?.roleLabel);
 }
 
+/** PM (ADMIN) và HR — xóa yêu cầu xin off (từng cái / hàng loạt). */
+function canManageTimeOff(user) {
+  return user?.role === "ADMIN" || roleLabelOf(user) === "HR";
+}
+
 /** User active — `disabled` có thể chưa có trên document cũ. */
 function activeUserFilter() {
   return {
@@ -319,14 +324,14 @@ export async function listAll(req, res, next) {
   }
 }
 
-/** User xóa yêu cầu do chính mình tạo. */
+/** Xóa yêu cầu — chỉ PM (ADMIN) và HR. */
 export async function cancelMine(req, res, next) {
   try {
+    if (!canManageTimeOff(req.user)) {
+      return next(createForbiddenError("Chỉ PM và HR mới được xóa yêu cầu xin off"));
+    }
     const doc = await TimeOffRequest.findById(req.params.id);
     if (!doc) return next(createNotFoundError("Time-off request not found"));
-    if (doc.userId !== req.user.id) {
-      return next(createForbiddenError("Chỉ người tạo yêu cầu mới được xóa"));
-    }
     await doc.deleteOne();
     res.json({ success: true, data: { id: doc._id } });
   } catch (err) {

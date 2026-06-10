@@ -50,6 +50,12 @@ import {
   expandTimeOffToExportRows,
 } from "@/features/time-off/lib/export-time-off-xlsx";
 import { filterTimeOffByCreatedDate } from "@/features/time-off/lib/filter-by-created-date";
+import { ConfirmDialog } from "@/shared/components/confirm-dialog";
+
+type DeleteConfirmState =
+  | { kind: "one"; id: string }
+  | { kind: "all" }
+  | null;
 
 const SESSION_OPTIONS: { value: TimeOffSession; label: string }[] = [
   { value: "MORNING", label: "Sáng" },
@@ -229,6 +235,7 @@ function RequestRow({
         <div className="mt-3 flex flex-wrap gap-2 border-t pt-3">
           {canDelete && (
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={() => onDelete(req.id)}
@@ -290,6 +297,7 @@ export function TimeOffPage() {
   const [appliedDateTo, setAppliedDateTo] = useState("");
   const [filterError, setFilterError] = useState<string | null>(null);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirmState>(null);
 
   const [mailSuccess, setMailSuccess] = useState<string | null>(null);
   const [isWakingApi, setIsWakingApi] = useState(false);
@@ -403,10 +411,12 @@ export function TimeOffPage() {
     return filterTimeOffByCreatedDate(items, appliedDateFrom, appliedDateTo);
   }, [baseList, canViewAll, filterUserId, appliedDateFrom, appliedDateTo]);
 
-  const deletableMine = useMemo(
-    () => displayList.filter((r) => r.userId === user?.id),
-    [displayList, user?.id]
-  );
+  const canManageDeletes = canViewAll;
+
+  const deletableItems = useMemo(() => {
+    if (!canManageDeletes) return [];
+    return displayList;
+  }, [displayList, canManageDeletes]);
 
   const listLoading = canViewAll ? allQuery.isLoading : myQuery.isLoading;
 
@@ -429,26 +439,31 @@ export function TimeOffPage() {
     setFilterError(null);
   }
 
-  function confirmDeleteOne() {
-    return confirm(
-      "Bạn có chắc muốn xóa yêu cầu này?\n\nHành động không thể hoàn tác."
-    );
-  }
-
-  async function handleDeleteAllMine() {
-    const ids = deletableMine.map((r) => r.id);
-    if (ids.length === 0) return;
-    const ok = confirm(
-      `Bạn có chắc muốn xóa ${ids.length} yêu cầu do bạn tạo?\n\nHành động không thể hoàn tác.`
-    );
-    if (!ok) return;
-    setIsDeletingAll(true);
+  async function executeConfirmedDelete() {
+    if (!deleteConfirm) return;
     setFilterError(null);
+    if (deleteConfirm.kind === "one") {
+      try {
+        await cancelMutation.mutateAsync(deleteConfirm.id);
+        setDeleteConfirm(null);
+      } catch (err) {
+        setFilterError(err instanceof Error ? err.message : "Xóa thất bại");
+      }
+      return;
+    }
+
+    const ids = deletableItems.map((r) => r.id);
+    if (ids.length === 0) {
+      setDeleteConfirm(null);
+      return;
+    }
+    setIsDeletingAll(true);
     try {
       for (const id of ids) {
         await cancelTimeOff(id);
       }
       await queryClient.invalidateQueries({ queryKey: ["time-off"] });
+      setDeleteConfirm(null);
     } catch (err) {
       setFilterError(err instanceof Error ? err.message : "Xóa thất bại");
     } finally {
@@ -1060,17 +1075,17 @@ export function TimeOffPage() {
                         : "Bạn chưa có yêu cầu nào."}
               </CardDescription>
             </div>
-            {deletableMine.length > 0 && (
+            {canManageDeletes && deletableItems.length > 0 && (
               <Button
                 type="button"
                 size="sm"
                 variant="outline"
                 className="shrink-0 text-rose-700 hover:bg-rose-50"
                 disabled={isDeletingAll || cancelMutation.isPending}
-                onClick={handleDeleteAllMine}
+                onClick={() => setDeleteConfirm({ kind: "all" })}
               >
                 <Trash2 className="size-4" />
-                {isDeletingAll ? "Đang xóa..." : `Xóa tất cả (${deletableMine.length})`}
+                {isDeletingAll ? "Đang xóa..." : `Xóa tất cả (${deletableItems.length})`}
               </Button>
             )}
           </div>
@@ -1089,11 +1104,9 @@ export function TimeOffPage() {
                   key={req.id}
                   req={req}
                   showOwner={canViewAll}
-                  canDelete={req.userId === user?.id}
+                  canDelete={canManageDeletes}
                   canDecide={canViewAll}
-                  onDelete={(id) => {
-                    if (confirmDeleteOne()) cancelMutation.mutate(id);
-                  }}
+                  onDelete={(id) => setDeleteConfirm({ kind: "one", id })}
                   onDecide={(id, status) => decideMutation.mutate({ id, status })}
                 />
               ))}
@@ -1101,6 +1114,18 @@ export function TimeOffPage() {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={deleteConfirm !== null}
+        message="Bạn có chắc không?"
+        confirmLabel="Xóa"
+        cancelLabel="Hủy"
+        loading={cancelMutation.isPending || isDeletingAll}
+        onCancel={() => {
+          if (!cancelMutation.isPending && !isDeletingAll) setDeleteConfirm(null);
+        }}
+        onConfirm={() => void executeConfirmedDelete()}
+      />
     </div>
   );
 }
