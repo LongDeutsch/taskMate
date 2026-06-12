@@ -1,9 +1,24 @@
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 
+/** Auto-grow without resetting scroll position or caret (height=auto briefly collapses the field). */
 function fitHeight(el: HTMLTextAreaElement, minRows: number) {
+  const scrollTop = el.scrollTop;
+  const selStart = el.selectionStart;
+  const selEnd = el.selectionEnd;
+  const parent = el.parentElement;
+  const parentScrollTop = parent?.scrollTop ?? 0;
+
   el.style.height = "auto";
   const minPx = minRows * 24;
   el.style.height = `${Math.max(minPx, el.scrollHeight)}px`;
+
+  el.scrollTop = scrollTop;
+  if (parent) parent.scrollTop = parentScrollTop;
+  try {
+    el.setSelectionRange(selStart, selEnd);
+  } catch {
+    /* ignore if element not focused */
+  }
 }
 
 type AutoResizeTextareaProps = {
@@ -29,7 +44,7 @@ export function AutoResizeTextarea({
 }: AutoResizeTextareaProps) {
   const ref = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (ref.current) fitHeight(ref.current, minRows);
   }, [value, minRows]);
 
