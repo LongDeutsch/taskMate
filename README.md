@@ -13,7 +13,7 @@ TaskMate là một ứng dụng quản lý công việc/dự án với kiến tr
 - **`FE/`**: Frontend React
   - `src/app` – layout, routes, shell ứng dụng.
   - `src/features/auth` – đăng nhập, quản lý phiên.
-  - `src/features/tasks`, `projects`, `users`, `dashboard`, `automation`, `profile` – trang nghiệp vụ chính.
+  - `src/features/tasks`, `projects`, `users`, `time-off`, `notifications`, `dashboard`, `automation`, `profile`, `bug-reports` – trang nghiệp vụ chính.
   - `src/features/ai/components/ai-chat-widget.tsx` – UI chat với AI agent.
   - `src/shared/api` – client HTTP, mock-client, mock-data, types chia sẻ.
   - `.env.example` – cấu hình `VITE_API_URL` tới BE.
@@ -26,7 +26,8 @@ TaskMate là một ứng dụng quản lý công việc/dự án với kiến tr
     - `/api/tasks` – CRUD task.
     - `/api/users` – quản lý người dùng.
     - `/api/profile` – hồ sơ cá nhân.
-    - `/api/ai` – endpoint nói chuyện với AI agent.
+    - `/api/notifications`, `/api/time-off`, `/api/bug-reports`, `/api/birthdays` – thông báo, xin off, bug, sinh nhật.
+    - `/api/ai` – endpoint nói chuyện với AI agent (nếu bật).
   - `src/routes/aiRoutes.js` – route `/api/ai/chat` bảo vệ bằng `authMiddleware`.
   - `src/controllers/aiController.js` – controller gọi sang AI service qua `AGENT_URL`.
   - `data/` – dữ liệu mẫu (ví dụ `users.json`) cho seeding.
@@ -147,13 +148,218 @@ FE sẽ chạy bằng Vite (mặc định `http://localhost:5173`), giao tiếp 
 
 ---
 
+## Kiến trúc hệ thống
+
+TaskMate là **hệ thống client–server** gồm nhiều thành phần độc lập, giao tiếp qua HTTP/REST:
+
+```mermaid
+flowchart TB
+  subgraph clients [Clients]
+    FE[FE Web — React SPA]
+    APP[app / app_win — Electron desktop]
+  end
+
+  subgraph backend [Backend]
+    BE[BE — Express REST API]
+    DB[(MongoDB)]
+  end
+
+  subgraph ai_svc [AI — tuỳ chọn]
+    AI[FastAPI AI Agent]
+  end
+
+  SMTP[(mail.cybertech.com.vn:465)]
+
+  FE -->|HTTPS JSON + JWT| BE
+  APP -->|HTTPS JSON + JWT| BE
+  APP -->|SMTP local| SMTP
+  BE --> DB
+  BE -->|AGENT_URL| AI
+  AI --> DB
+  BE -.->|SMTP web xin off| SMTP
+```
+
+| Thành phần | Vai trò | Deploy / chạy |
+|------------|---------|----------------|
+| **FE** | Giao diện web (task, project, user, xin off, profile, …) | Vite dev / build static → Vercel |
+| **BE** | REST API, auth, nghiệp vụ, upload, mail (web), scheduler | Node.js → Render |
+| **AI** | Chat agent đọc MongoDB, trả lời admin | Python FastAPI (local hoặc host riêng) |
+| **app / app_win** | Desktop xin off — gửi mail SMTP từ máy user, sync BE (`skipMail`) | Electron `.dmg` / `.exe` |
+
+**Luồng dữ liệu chính:** Browser/Electron → `Authorization: Bearer <JWT>` → BE → Mongoose → MongoDB. Desktop gửi mail **trực tiếp** tới SMTP server, không bắt buộc qua BE.
+
+---
+
+## Frontend (`FE`)
+
+### Ngôn ngữ & runtime
+
+| | |
+|---|---|
+| **Ngôn ngữ** | TypeScript |
+| **Markup / style** | TSX, CSS (Tailwind) |
+| **Runtime** | Browser (SPA) |
+
+### Framework & công cụ build
+
+| | Phiên bản / ghi chú |
+|---|---|
+| **UI framework** | React 19 |
+| **Bundler / dev server** | Vite 7 |
+| **Routing** | React Router 7 |
+| **Type check** | TypeScript 5.9 |
+
+### Thư viện chính
+
+| Nhóm | Thư viện | Mục đích |
+|------|----------|----------|
+| **Data fetching** | TanStack React Query | Cache API, mutation, invalidate |
+| **Validation** | Zod | Schema form (login, task, …) |
+| **Styling** | Tailwind CSS 4, `@tailwindcss/vite`, `tailwindcss-animate` | Utility-first CSS |
+| **UI components** | Radix UI, shadcn-style (`components/ui/`) | Button, Input, Label, Card, … |
+| **Icons** | lucide-react | Icon set |
+| **Utils CSS** | `clsx`, `tailwind-merge`, `class-variance-authority` | Gộp className |
+| **Export** | xlsx | Xuất Excel (xin off, …) |
+
+### Kiến trúc tổ chức code (feature-based)
+
+FE tổ chức theo **vertical slices** — mỗi domain nghiệp vụ nằm trong `features/`, tách khỏi shell ứng dụng:
+
+```
+FE/src/
+├── app/                    # Shell: routes, layout, nav, protected/admin route
+│   ├── routes.tsx
+│   ├── layouts/
+│   ├── components/         # AppHeader, Sidebar, FAB, …
+│   ├── config/             # nav-items, home path theo role
+│   └── providers/          # React Query provider
+├── features/               # Module theo nghiệp vụ
+│   ├── auth/               # login, use-auth, auth-store
+│   ├── tasks/              # pages, hooks, schemas, drawers
+│   ├── projects/
+│   ├── users/
+│   ├── time-off/
+│   ├── notifications/
+│   ├── profile/
+│   ├── dashboard/
+│   ├── automation/
+│   └── bug-reports/
+├── shared/                 # Dùng chung toàn app
+│   ├── api/                # client.ts, mock-client, types
+│   ├── components/
+│   ├── hooks/
+│   ├── lib/
+│   └── types/
+└── components/ui/          # Design system (shadcn)
+```
+
+**Quy ước:**
+
+- **`app/`** — khung app, routing, layout; không chứa logic nghiệp vụ sâu.
+- **`features/<domain>/`** — `pages/`, `components/`, `hooks/`, `schemas/` của từng domain.
+- **`shared/api`** — một lớp HTTP (`client.ts`); có `mock-client` để dev không cần BE.
+- **Auth** — JWT lưu `localStorage` (`taskmate_token`), gửi header `Bearer` mỗi request.
+
+**Pattern:** SPA + protected routes + server state (React Query) + form validation (Zod).
+
+---
+
+## Backend (`BE`)
+
+### Ngôn ngữ & runtime
+
+| | |
+|---|---|
+| **Ngôn ngữ** | JavaScript (ES modules, `"type": "module"`) |
+| **Runtime** | Node.js |
+| **Database** | MongoDB (driver `mongodb` + ODM Mongoose) |
+
+### Framework & middleware
+
+| | Ghi chú |
+|---|---|
+| **HTTP framework** | Express 4 |
+| **CORS** | `cors` — cấu hình trong `config/cors.js` |
+| **Env** | `dotenv` — load `.env` tại `server.js` |
+| **Validation** | `express-validator` — middleware `validate.js` |
+| **Auth** | `jsonwebtoken` (HS256) + `bcrypt` (password user) |
+| **Upload** | `multer` — avatar (`config/upload.js`) |
+| **Email** | `nodemailer` — SMTP xin off trên web (`services/mailService.js`) |
+
+### Kiến trúc tổ chức code (MVC + services)
+
+BE theo **layered MVC** rõ ràng:
+
+```
+BE/src/
+├── server.js               # Entry: connect DB, listen port, scheduler
+├── app.js                  # Express app, mount routes, error handler
+├── config/                 # database, cors, upload
+├── routes/                 # Định tuyến HTTP → controller (+ middleware)
+├── middleware/             # auth (JWT), rbac, validate, errorHandler
+├── controllers/            # Xử lý request/response, gọi model & service
+├── models/                 # Mongoose schema (User, Task, Project, …)
+├── services/               # Logic tái sử dụng (mail, automation scheduler)
+└── utils/                  # Helper thuần (errors, format user, mail crypto, …)
+```
+
+**Luồng một request:**
+
+```
+Route → authMiddleware → requireRole (tuỳ route) → validate → Controller → Model/Service → JSON response
+                                                                    ↓
+                                                          errorHandler (global)
+```
+
+**API REST** dưới prefix `/api/*`:
+
+| Prefix | Chức năng |
+|--------|-----------|
+| `/api/auth` | Login, JWT |
+| `/api/projects`, `/api/tasks` | CRUD dự án & task |
+| `/api/users`, `/api/profile` | User admin & hồ sơ cá nhân |
+| `/api/notifications` | Thông báo in-app |
+| `/api/time-off` | Xin nghỉ / duyệt |
+| `/api/bug-reports`, `/api/birthdays` | Bug report, sinh nhật |
+
+**Auth & phân quyền:**
+
+- JWT access token (một token, `JWT_SECRET`, expire `JWT_EXPIRES`).
+- `authMiddleware` gắn `req.user`; `requireRole("ADMIN")` cho route admin.
+- Mật khẩu webmail (web) mã hóa AES-256-GCM (`MAIL_CREDENTIALS_KEY`), không trả về client.
+
+**Background:** `automationService` — scheduler kiểm tra deadline task (chạy cùng process BE).
+
+---
+
+## AI (`AI`) — tóm tắt
+
+| | |
+|---|---|
+| **Ngôn ngữ** | Python 3.11+ |
+| **Framework** | FastAPI + Uvicorn |
+| **Thư viện** | LangGraph, LangChain OpenAI, RapidFuzz, PyMongo |
+| **Vai trò** | BE proxy `/api/ai/chat` → `AGENT_URL`; chỉ `ADMIN` |
+
+---
+
+## Desktop (`app` / `app_win`) — tóm tắt
+
+| | |
+|---|---|
+| **Stack** | Electron + React + Vite + TypeScript |
+| **Mail** | `nodemailer` trong `main.cjs`; credential `electron-store` + `safeStorage` (Keychain/DPAPI) |
+| **Kiến trúc** | Main process (IPC, SMTP) + renderer (React UI) + preload (`contextBridge`) |
+
+---
+
 ## Tech stack tóm tắt
 
-- **FE**:
-  - React 19, React Router 7, TanStack Query, Tailwind CSS 4, shadcn UI, Zod.
-- **BE**:
-  - Node.js, Express, MongoDB + Mongoose, JWT auth, Multer (upload avatar), Express Validator.
-- **AI**:
-  - Python, FastAPI, Uvicorn, LangGraph, LangChain OpenAI, RapidFuzz, PyMongo.
+| Layer | Stack |
+|-------|--------|
+| **FE** | TypeScript, React 19, Vite 7, React Router 7, TanStack Query, Tailwind 4, shadcn/Radix, Zod, xlsx |
+| **BE** | Node.js, Express 4, Mongoose, MongoDB, JWT, bcrypt, express-validator, Multer, nodemailer |
+| **AI** | Python, FastAPI, LangGraph, LangChain OpenAI, PyMongo |
+| **Desktop** | Electron, React, Vite, nodemailer, electron-store |
 
-README này được viết để mô tả tổng quan kiến trúc và cách chạy 3 services `FE`, `BE`, `AI` của project **TaskMate**.
+README này mô tả tổng quan kiến trúc, tech stack và cách chạy các thành phần của project **TaskMate**.
