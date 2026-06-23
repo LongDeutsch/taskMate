@@ -1,5 +1,5 @@
 // File: src/features/tasks/pages/admin-tasks-page.tsx
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Task, TaskStatus, TaskPriority } from "@/shared/types";
@@ -99,7 +99,7 @@ export function AdminTasksPage() {
 
   const effectiveAssigneeFilter = onlyMyNotes && authUser ? authUser.id : assigneeFilter || undefined;
 
-  const { data: tasks = [], isLoading } = useQuery({
+  const { data: tasks = [], isPending } = useQuery({
     queryKey: [
       "tasks",
       "admin",
@@ -110,7 +110,6 @@ export function AdminTasksPage() {
         projectIdFilter,
         assigneeFilter,
         onlyMyNotes,
-        search,
         me: authUser?.id,
       },
     ],
@@ -121,12 +120,22 @@ export function AdminTasksPage() {
         sortBy,
         projectId: projectIdFilter || undefined,
         assigneeId: effectiveAssigneeFilter,
-        search: search.trim() || undefined,
       }),
   });
 
   const isSelfNote = (task: Task) => !!authUser && task.assigneeId === authUser.id;
-  const visibleTasks = onlyMyNotes ? tasks : tasks.filter((t) => !isSelfNote(t));
+
+  const visibleTasks = useMemo(() => {
+    let list =
+      onlyMyNotes || !authUser
+        ? tasks
+        : tasks.filter((t) => t.assigneeId !== authUser.id);
+    const q = search.trim().toLowerCase();
+    if (q) {
+      list = list.filter((t) => t.title.toLowerCase().includes(q));
+    }
+    return list;
+  }, [tasks, onlyMyNotes, search, authUser]);
 
   const { data: users = [] } = useQuery({
     queryKey: ["users"],
@@ -390,7 +399,7 @@ export function AdminTasksPage() {
       u.id !== form.assigneeId
   );
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="flex items-center justify-center py-16">
         <Loader2 className="size-8 animate-spin text-blue-600" />

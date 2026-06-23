@@ -12,7 +12,6 @@ import { useAuth } from "@/features/auth/hooks/use-auth";
 export function useTasks(filters: {
   status?: TaskStatus;
   priority?: TaskPriority;
-  search?: string;
   projectId?: string;
   sortBy?: "deadline" | "createdAt" | "priority";
 }) {

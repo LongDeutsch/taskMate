@@ -1,5 +1,5 @@
 // File: src/features/tasks/pages/task-list-page.tsx
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   DesktopFilterRow,
   FilterSheet,
@@ -55,13 +55,18 @@ export function TaskListPage() {
     setSortBy("deadline");
   }
 
-  const { data: tasks = [], isLoading, isError } = useTasks({
+  const { data: tasks = [], isPending, isError } = useTasks({
     status: status || undefined,
     priority: priority || undefined,
-    search: search.trim() || undefined,
     projectId: projectId || undefined,
     sortBy,
   });
+
+  const filteredTasks = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return tasks;
+    return tasks.filter((t) => t.title.toLowerCase().includes(q));
+  }, [tasks, search]);
 
   const { data: users = [] } = useQuery({
     queryKey: ["users", "task-list-assignee"],
@@ -84,7 +89,7 @@ export function TaskListPage() {
     return users.find((u) => u.id === task.assigneeId)?.fullName ?? task.assigneeId;
   };
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="flex items-center justify-center py-16">
         <Loader2 className="size-8 animate-spin text-blue-600" />
@@ -104,7 +109,7 @@ export function TaskListPage() {
     <div className={at.page}>
       <PageHeader
         title="My Tasks"
-        subtitle={`Task được giao cho bạn · ${tasks.length} task`}
+        subtitle={`Task được giao cho bạn · ${filteredTasks.length} task`}
         actions={
           isAdmin ? (
             <Button asChild variant="outline" className="h-11 border-gray-200">
@@ -238,7 +243,7 @@ export function TaskListPage() {
         </div>
       </FilterSheet>
 
-      {tasks.length === 0 ? (
+      {filteredTasks.length === 0 ? (
         <div className={`${at.surface} flex flex-col items-center justify-center px-6 py-16 text-center`}>
           <Calendar className="mb-4 size-12 text-gray-300" />
           <p className="font-medium text-gray-900">Không có task</p>
@@ -250,7 +255,7 @@ export function TaskListPage() {
         </div>
       ) : (
         <ul className="space-y-3">
-          {tasks.map((task) => (
+          {filteredTasks.map((task) => (
             <UserTaskCard
               key={task.id}
               task={task}
