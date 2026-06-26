@@ -41,11 +41,11 @@ const priorityOptions: { value: TaskPriority | ""; label: string }[] = [
 
 export function TaskListPage() {
   const { isAdmin, user } = useAuth();
-  const [status, setStatus] = useState<TaskStatus | "">("");
+  const [status, setStatus] = useState<TaskStatus | "">("Todo");
   const [priority, setPriority] = useState<TaskPriority | "">("");
   const [search, setSearch] = useState("");
   const [projectId, setProjectId] = useState<string>("");
-  const [sortBy, setSortBy] = useState<"deadline" | "createdAt" | "priority">("deadline");
+  const [sortBy, setSortBy] = useState<"deadline" | "createdAt" | "priority">("createdAt");
   const [filterOpen, setFilterOpen] = useState(false);
   const activeFilterCount = [status, priority, projectId].filter(Boolean).length;
 
