@@ -176,11 +176,31 @@ export async function runDeadlineAutomationOnce() {
   }
 }
 
+/**
+ * Dọn task đã hết hạn lưu thùng rác. Trước đây chạy ở mỗi request GET /api/tasks
+ * (hot path); chuyển sang chạy nền theo scheduler để list nhanh hơn.
+ */
+async function purgeExpiredTrashedTasks() {
+  try {
+    await Task.deleteMany({
+      deletedAt: { $ne: null },
+      restoreUntil: { $ne: null, $lt: new Date() },
+    });
+  } catch (err) {
+    console.warn("[automation] purge expired tasks failed:", err?.message ?? err);
+  }
+}
+
+async function runSchedulerTick() {
+  await purgeExpiredTrashedTasks();
+  await runDeadlineAutomationOnce();
+}
+
 export function startAutomationScheduler() {
   if (intervalHandle) return intervalHandle;
-  runDeadlineAutomationOnce().catch(() => {});
+  runSchedulerTick().catch(() => {});
   intervalHandle = setInterval(() => {
-    runDeadlineAutomationOnce().catch(() => {});
+    runSchedulerTick().catch(() => {});
   }, POLL_INTERVAL_MS);
   return intervalHandle;
 }

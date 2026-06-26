@@ -18,11 +18,12 @@ import {
   AssigneeTag,
   DeadlineTag,
   ProjectTag,
+  TaskListSkeleton,
   TaskPriorityLabel,
   TaskStatusLabel,
 } from "../components/admin-tasks-ui";
 import { UserResponseEditor } from "../components/user-response-editor";
-import { Calendar, Eye, Loader2, Search, Users } from "lucide-react";
+import { Calendar, Eye, Search, Users } from "lucide-react";
 
 const statusOptions: { value: TaskStatus | ""; label: string }[] = [
   { value: "", label: "Tất cả status" },
@@ -88,14 +89,6 @@ export function TaskListPage() {
     if (task.assigneeId === user?.id) return user.fullName;
     return users.find((u) => u.id === task.assigneeId)?.fullName ?? task.assigneeId;
   };
-
-  if (isPending) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="size-8 animate-spin text-blue-600" />
-      </div>
-    );
-  }
 
   if (isError) {
     return (
@@ -243,7 +236,9 @@ export function TaskListPage() {
         </div>
       </FilterSheet>
 
-      {filteredTasks.length === 0 ? (
+      {isPending ? (
+        <TaskListSkeleton />
+      ) : filteredTasks.length === 0 ? (
         <div className={`${at.surface} flex flex-col items-center justify-center px-6 py-16 text-center`}>
           <Calendar className="mb-4 size-12 text-gray-300" />
           <p className="font-medium text-gray-900">Không có task</p>

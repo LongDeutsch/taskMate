@@ -72,6 +72,26 @@ export function DeadlineTag({ deadline }: { deadline: string }) {
   );
 }
 
+/** Khung chờ dạng skeleton cho danh sách task (dùng khi lần đầu tải dữ liệu). */
+export function TaskListSkeleton({ rows = 5 }: { rows?: number }) {
+  return (
+    <ul className="space-y-3" aria-hidden="true">
+      {Array.from({ length: rows }).map((_, i) => (
+        <li key={i} className={at.taskCard}>
+          <div className="animate-pulse space-y-3">
+            <div className="h-4 w-1/2 rounded bg-gray-200" />
+            <div className="flex flex-wrap gap-2">
+              <div className="h-5 w-16 rounded-md bg-gray-100" />
+              <div className="h-5 w-20 rounded-md bg-gray-100" />
+              <div className="h-5 w-24 rounded-md bg-gray-100" />
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function FilterChip({
   active,
   onClick,

@@ -212,7 +212,8 @@ async function assertAssignableUser(assigneeId, actorId) {
 
 export async function list(req, res, next) {
   try {
-    await purgeExpiredDeletedTasks();
+    // Purge được chạy nền bởi automation scheduler (xem startAutomationScheduler),
+    // không gọi ở đây để tránh thêm 1 lượt deleteMany vào hot path mỗi lần mở Tasks.
     const { projectId, assigneeId, status, priority } = req.query;
     const filter = { deletedAt: null };
     if (projectId) filter.projectId = projectId;

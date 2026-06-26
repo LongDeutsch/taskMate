@@ -1,5 +1,5 @@
 // File: src/features/tasks/hooks/use-tasks.ts
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { TaskPriority, TaskStatus } from "@/shared/types";
 import { getTasks } from "@/shared/api";
 import { useAuth } from "@/features/auth/hooks/use-auth";
@@ -22,5 +22,6 @@ export function useTasks(filters: {
     queryKey: ["tasks", { ...filters, assigneeId }],
     queryFn: () => getTasks({ ...filters, assigneeId }),
     enabled: !!user,
+    placeholderData: keepPreviousData,
   });
 }

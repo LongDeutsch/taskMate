@@ -62,6 +62,12 @@ taskSchema.index({ projectId: 1 });
 taskSchema.index({ assigneeId: 1 });
 taskSchema.index({ status: 1 });
 taskSchema.index({ deadline: 1 });
+// `deletedAt: null` xuất hiện trong mọi truy vấn list → cần index riêng + compound khớp sort.
+taskSchema.index({ deletedAt: 1 });
+taskSchema.index({ deletedAt: 1, deadline: 1, createdAt: -1 });
+taskSchema.index({ deletedAt: 1, assigneeId: 1 });
+// USER role lọc theo collaboratorIds (mảng) → multikey index.
+taskSchema.index({ collaboratorIds: 1 });
 
 taskSchema.set("toJSON", {
   transform: (doc, ret) => {

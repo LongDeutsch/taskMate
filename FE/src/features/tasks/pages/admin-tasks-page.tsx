@@ -1,7 +1,12 @@
 // File: src/features/tasks/pages/admin-tasks-page.tsx
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import type { Task, TaskStatus, TaskPriority } from "@/shared/types";
 import {
   getTasks,
@@ -22,13 +27,13 @@ import {
   FilterChip,
   ProjectTag,
   SelfNoteBadge,
+  TaskListSkeleton,
   TaskPriorityLabel,
   TaskStatusLabel,
 } from "../components/admin-tasks-ui";
 import { AdminTaskFormDrawer } from "../components/admin-task-form-drawer";
 import {
   Eye,
-  Loader2,
   Pencil,
   Plus,
   Search,
@@ -51,7 +56,7 @@ const priorityOptions: TaskPriority[] = ["Low", "Medium", "High"];
 export function AdminTasksPage() {
   const queryClient = useQueryClient();
   const { user: authUser } = useAuth();
-  const [status, setStatus] = useState<TaskStatus | "">("");
+  const [status, setStatus] = useState<TaskStatus | "">("Todo");
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | "">("");
   const [sortBy, setSortBy] = useState<"deadline" | "createdAt" | "priority">("createdAt");
   const [projectIdFilter, setProjectIdFilter] = useState<string>("");
@@ -121,6 +126,7 @@ export function AdminTasksPage() {
         projectId: projectIdFilter || undefined,
         assigneeId: effectiveAssigneeFilter,
       }),
+    placeholderData: keepPreviousData,
   });
 
   const isSelfNote = (task: Task) => !!authUser && task.assigneeId === authUser.id;
@@ -399,14 +405,6 @@ export function AdminTasksPage() {
       u.id !== form.assigneeId
   );
 
-  if (isPending) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="size-8 animate-spin text-blue-600" />
-      </div>
-    );
-  }
-
   const desktopActions = (
     <>
       <Button
@@ -584,7 +582,9 @@ export function AdminTasksPage() {
         {filterFields}
       </FilterSheet>
 
-      {visibleTasks.length === 0 ? (
+      {isPending ? (
+        <TaskListSkeleton />
+      ) : visibleTasks.length === 0 ? (
         <div className={`${at.surface} px-6 py-16 text-center`}>
           <p className="text-sm text-gray-500">
             {onlyMyNotes
