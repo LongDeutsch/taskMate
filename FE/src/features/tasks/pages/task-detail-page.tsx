@@ -1,6 +1,6 @@
 // File: src/features/tasks/pages/task-detail-page.tsx
 import { useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTask } from "../hooks/use-task";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { AdminTaskEditDrawer } from "../components/admin-task-edit-drawer";
 import { FeedbackEditDrawer } from "../components/feedback-edit-drawer";
+import { parseTaskReturnTo } from "../hooks/use-task-list-filters";
 import { LatestFeedbackCard } from "../components/feedback-latest-card";
 import {
   UserResponseEditor,
@@ -35,6 +36,8 @@ import {
 export function TaskDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = parseTaskReturnTo(searchParams.get("returnTo"));
   const queryClient = useQueryClient();
   const { data: task, isLoading, isError } = useTask(id);
   const { user, isAdmin } = useAuth();
@@ -77,6 +80,18 @@ export function TaskDetailPage() {
           ? user?.fullName ?? task.assigneeId
           : users.find((u) => u.id === task.assigneeId)?.fullName ?? task.assigneeId;
 
+  const goBackToTasks = () => {
+    if (returnTo) {
+      navigate(returnTo);
+      return;
+    }
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate(isAdmin ? "/admin/tasks" : "/tasks");
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -90,8 +105,8 @@ export function TaskDetailPage() {
       <Card className="border-destructive">
         <CardContent className="py-8 text-center">
           <p className="text-destructive">Task not found or failed to load.</p>
-          <Button asChild variant="outline" className="mt-4">
-            <Link to="/tasks">Back to tasks</Link>
+          <Button variant="outline" className="mt-4" onClick={goBackToTasks}>
+            Back to tasks
           </Button>
         </CardContent>
       </Card>
@@ -118,10 +133,7 @@ export function TaskDetailPage() {
               variant="ghost"
               size="icon"
               className="mt-0.5 shrink-0 text-[#6B7280] hover:bg-blue-50 hover:text-blue-700"
-              onClick={() => {
-                if (window.history.length > 1) navigate(-1);
-                else navigate("/tasks");
-              }}
+              onClick={goBackToTasks}
             >
               <ArrowLeft className="size-4" />
             </Button>

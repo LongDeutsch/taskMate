@@ -9,6 +9,10 @@ import { PageHeader } from "@/app/components/page-header";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTasks } from "../hooks/use-tasks";
+import {
+  useTaskListFilters,
+  type TaskListFilterValues,
+} from "../hooks/use-task-list-filters";
 import type { Task, TaskPriority, TaskStatus, User } from "@/shared/types";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/hooks/use-auth";
@@ -39,22 +43,37 @@ const priorityOptions: { value: TaskPriority | ""; label: string }[] = [
   { value: "Low", label: "Low" },
 ];
 
+const STAFF_TASK_FILTER_DEFAULTS: TaskListFilterValues = {
+  project: "",
+  assignee: "",
+  status: "Todo",
+  priority: "",
+  sort: "createdAt",
+  search: "",
+  noteOnly: false,
+};
+
 export function TaskListPage() {
   const { isAdmin, user } = useAuth();
-  const [status, setStatus] = useState<TaskStatus | "">("Todo");
-  const [priority, setPriority] = useState<TaskPriority | "">("");
-  const [search, setSearch] = useState("");
-  const [projectId, setProjectId] = useState<string>("");
-  const [sortBy, setSortBy] = useState<"deadline" | "createdAt" | "priority">("createdAt");
+  const {
+    filters,
+    setProject: setProjectId,
+    setStatus,
+    setPriority,
+    setSort: setSortBy,
+    setSearch,
+    resetFilters,
+    taskDetailPath,
+  } = useTaskListFilters({ defaults: STAFF_TASK_FILTER_DEFAULTS });
+  const {
+    project: projectId,
+    status,
+    priority,
+    sort: sortBy,
+    search,
+  } = filters;
   const [filterOpen, setFilterOpen] = useState(false);
   const activeFilterCount = [status, priority, projectId].filter(Boolean).length;
-
-  function resetFilters() {
-    setStatus("");
-    setPriority("");
-    setProjectId("");
-    setSortBy("deadline");
-  }
 
   const { data: tasks = [], isPending, isError } = useTasks({
     status: status || undefined,
@@ -256,6 +275,7 @@ export function TaskListPage() {
               task={task}
               currentUser={user}
               assigneeLabel={getAssigneeName(task)}
+              detailPath={taskDetailPath(task.id)}
             />
           ))}
         </ul>
@@ -268,9 +288,10 @@ interface UserTaskCardProps {
   task: Task;
   currentUser: User | null;
   assigneeLabel: string;
+  detailPath: string;
 }
 
-function UserTaskCard({ task, currentUser, assigneeLabel }: UserTaskCardProps) {
+function UserTaskCard({ task, currentUser, assigneeLabel, detailPath }: UserTaskCardProps) {
   const queryClient = useQueryClient();
   const canEdit =
     !!currentUser &&
@@ -303,7 +324,7 @@ function UserTaskCard({ task, currentUser, assigneeLabel }: UserTaskCardProps) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1 space-y-2">
             <Link
-              to={`/tasks/${task.id}`}
+              to={detailPath}
               className="text-base font-semibold text-gray-900 hover:text-blue-600"
             >
               {task.title}
@@ -351,7 +372,7 @@ function UserTaskCard({ task, currentUser, assigneeLabel }: UserTaskCardProps) {
               asChild
               title="Xem chi tiết"
             >
-              <Link to={`/tasks/${task.id}`} aria-label="Xem chi tiết">
+              <Link to={detailPath} aria-label="Xem chi tiết">
                 <Eye className="size-4" />
               </Link>
             </Button>

@@ -49,20 +49,52 @@ import {
 } from "@/app/components/filter-sheet";
 import { FloatingActionButton } from "@/app/components/floating-action-button";
 import { OverflowActionsMenu } from "@/app/components/overflow-actions-menu";
+import {
+  useTaskListFilters,
+  type TaskListFilterValues,
+} from "../hooks/use-task-list-filters";
 
 const statusOptions: TaskStatus[] = ["Todo", "InProgress", "Done"];
 const priorityOptions: TaskPriority[] = ["Low", "Medium", "High"];
 
+const ADMIN_TASK_FILTER_DEFAULTS: TaskListFilterValues = {
+  project: "",
+  assignee: "",
+  status: "Todo",
+  priority: "",
+  sort: "createdAt",
+  search: "",
+  noteOnly: false,
+};
+
 export function AdminTasksPage() {
   const queryClient = useQueryClient();
   const { user: authUser } = useAuth();
-  const [status, setStatus] = useState<TaskStatus | "">("Todo");
-  const [priorityFilter, setPriorityFilter] = useState<TaskPriority | "">("");
-  const [sortBy, setSortBy] = useState<"deadline" | "createdAt" | "priority">("createdAt");
-  const [projectIdFilter, setProjectIdFilter] = useState<string>("");
-  const [assigneeFilter, setAssigneeFilter] = useState<string>("");
-  const [search, setSearch] = useState("");
-  const [onlyMyNotes, setOnlyMyNotes] = useState(false);
+  const {
+    filters,
+    setProject: setProjectIdFilter,
+    setAssignee: setAssigneeFilter,
+    setStatus,
+    setPriority: setPriorityFilter,
+    setSort: setSortBy,
+    setSearch,
+    setNoteOnly: setOnlyMyNotes,
+    resetFilters,
+    taskDetailPath,
+  } = useTaskListFilters({
+    defaults: ADMIN_TASK_FILTER_DEFAULTS,
+    includeAssignee: true,
+    includeNoteOnly: true,
+  });
+  const {
+    project: projectIdFilter,
+    assignee: assigneeFilter,
+    status,
+    priority: priorityFilter,
+    sort: sortBy,
+    search,
+    noteOnly: onlyMyNotes,
+  } = filters;
   const [editing, setEditing] = useState<Task | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState<TaskFormValues>({
@@ -87,15 +119,6 @@ export function AdminTasksPage() {
     assigneeFilter,
     onlyMyNotes,
   ].filter(Boolean).length;
-
-  function resetFilters() {
-    setStatus("");
-    setPriorityFilter("");
-    setProjectIdFilter("");
-    setAssigneeFilter("");
-    setOnlyMyNotes(false);
-    setSortBy("createdAt");
-  }
 
   const { data: projects = [] } = useQuery({
     queryKey: ["projects"],
@@ -227,7 +250,7 @@ export function AdminTasksPage() {
       </div>
       <FilterChip
         active={onlyMyNotes}
-        onClick={() => setOnlyMyNotes((v) => !v)}
+        onClick={() => setOnlyMyNotes(!onlyMyNotes)}
         className="w-full justify-center"
       >
         <StickyNote className="size-4" />
@@ -566,7 +589,7 @@ export function AdminTasksPage() {
               <option value="deadline">Deadline</option>
               <option value="priority">Priority</option>
             </select>
-            <FilterChip active={onlyMyNotes} onClick={() => setOnlyMyNotes((v) => !v)}>
+            <FilterChip active={onlyMyNotes} onClick={() => setOnlyMyNotes(!onlyMyNotes)}>
               <StickyNote className="size-4" />
               {onlyMyNotes ? "Note của tôi" : "Chỉ note"}
             </FilterChip>
@@ -612,7 +635,7 @@ export function AdminTasksPage() {
                   <div className="min-w-0 flex-1 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <Link
-                        to={`/tasks/${task.id}`}
+                        to={taskDetailPath(task.id)}
                         className="text-base font-semibold text-gray-900 hover:text-blue-600"
                       >
                         {task.title}
@@ -659,7 +682,7 @@ export function AdminTasksPage() {
                       asChild
                       title="Xem chi tiết"
                     >
-                      <Link to={`/tasks/${task.id}`} aria-label="Xem chi tiết">
+                      <Link to={taskDetailPath(task.id)} aria-label="Xem chi tiết">
                         <Eye className="size-4" />
                       </Link>
                     </Button>
