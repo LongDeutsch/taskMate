@@ -49,13 +49,29 @@ import {
 } from "@/app/components/filter-sheet";
 import { FloatingActionButton } from "@/app/components/floating-action-button";
 import { OverflowActionsMenu } from "@/app/components/overflow-actions-menu";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   useTaskListFilters,
   type TaskListFilterValues,
 } from "../hooks/use-task-list-filters";
 
-const statusOptions: TaskStatus[] = ["Todo", "InProgress", "Done"];
-const priorityOptions: TaskPriority[] = ["Low", "Medium", "High"];
+const statusSelectOptions = [
+  { value: "", label: "Tất cả status" },
+  { value: "Todo", label: "Todo" },
+  { value: "InProgress", label: "In Progress" },
+  { value: "Done", label: "Done" },
+];
+const prioritySelectOptions = [
+  { value: "", label: "Tất cả priority" },
+  { value: "Low", label: "Low" },
+  { value: "Medium", label: "Medium" },
+  { value: "High", label: "High" },
+];
+const sortSelectOptions = [
+  { value: "createdAt", label: "Mới nhất" },
+  { value: "deadline", label: "Deadline" },
+  { value: "priority", label: "Priority" },
+];
 
 const ADMIN_TASK_FILTER_DEFAULTS: TaskListFilterValues = {
   project: "",
@@ -171,82 +187,81 @@ export function AdminTasksPage() {
     queryFn: getUsers,
   });
 
+  const projectSelectOptions = useMemo(
+    () => [
+      { value: "", label: "Tất cả project" },
+      ...projects.map((p) => ({ value: p.id, label: p.name })),
+    ],
+    [projects]
+  );
+
+  const assigneeSelectOptions = useMemo(
+    () => [
+      { value: "", label: "Tất cả assignee" },
+      ...users
+        .filter((u) => u.role === "USER" && u.roleLabel !== "HR")
+        .map((u) => ({ value: u.id, label: u.fullName })),
+    ],
+    [users]
+  );
+
   const filterFields = (
     <>
       <div className="space-y-2">
         <label className={at.label}>Project</label>
-        <select
-          className={at.select}
+        <SearchableSelect
+          className="md:w-full"
           value={projectIdFilter}
-          onChange={(e) => setProjectIdFilter(e.target.value)}
-        >
-          <option value="">Tất cả project</option>
-          {projects.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
+          onChange={setProjectIdFilter}
+          options={projectSelectOptions}
+          searchPlaceholder="Tìm project..."
+          ariaLabel="Lọc project"
+        />
       </div>
       <div className="space-y-2">
         <label className={at.label}>Assignee</label>
-        <select
-          className={at.select}
+        <SearchableSelect
+          className="md:w-full"
           value={assigneeFilter}
-          onChange={(e) => setAssigneeFilter(e.target.value)}
+          onChange={setAssigneeFilter}
+          options={assigneeSelectOptions}
+          searchPlaceholder="Tìm assignee..."
+          ariaLabel="Lọc assignee"
           disabled={onlyMyNotes}
-        >
-          <option value="">Tất cả assignee</option>
-          {users
-            .filter((u) => u.role === "USER" && u.roleLabel !== "HR")
-            .map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.fullName}
-              </option>
-            ))}
-        </select>
+        />
       </div>
       <div className="space-y-2">
         <label className={at.label}>Status</label>
-        <select
-          className={at.select}
+        <SearchableSelect
+          className="md:w-full"
+          searchable={false}
           value={status}
-          onChange={(e) => setStatus((e.target.value || "") as TaskStatus | "")}
-        >
-          <option value="">Tất cả status</option>
-          {statusOptions.map((s) => (
-            <option key={s} value={s}>
-              {s === "InProgress" ? "In Progress" : s}
-            </option>
-          ))}
-        </select>
+          onChange={(v) => setStatus(v as TaskStatus | "")}
+          options={statusSelectOptions}
+          ariaLabel="Lọc status"
+        />
       </div>
       <div className="space-y-2">
         <label className={at.label}>Priority</label>
-        <select
-          className={at.select}
+        <SearchableSelect
+          className="md:w-full"
+          searchable={false}
           value={priorityFilter}
-          onChange={(e) => setPriorityFilter((e.target.value || "") as TaskPriority | "")}
-        >
-          <option value="">Tất cả priority</option>
-          {priorityOptions.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
+          onChange={(v) => setPriorityFilter(v as TaskPriority | "")}
+          options={prioritySelectOptions}
+          ariaLabel="Lọc priority"
+        />
       </div>
       <div className="space-y-2">
         <label className={at.label}>Sắp xếp</label>
-        <select
-          className={at.select}
+        <SearchableSelect
+          className="md:w-full"
+          searchable={false}
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as "deadline" | "createdAt" | "priority")}
-        >
-          <option value="createdAt">Mới nhất</option>
-          <option value="deadline">Deadline</option>
-          <option value="priority">Priority</option>
-        </select>
+          onChange={(v) => setSortBy(v as "deadline" | "createdAt" | "priority")}
+          options={sortSelectOptions}
+          ariaLabel="Sắp xếp"
+        />
       </div>
       <FilterChip
         active={onlyMyNotes}
@@ -520,75 +535,42 @@ export function AdminTasksPage() {
             activeCount={activeFilterCount}
           />
           <DesktopFilterRow>
-            <select
-              className={at.select}
+            <SearchableSelect
               value={projectIdFilter}
-              onChange={(e) => setProjectIdFilter(e.target.value)}
-              aria-label="Lọc project"
-            >
-              <option value="">Tất cả project</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-            <select
-              className={at.select}
+              onChange={setProjectIdFilter}
+              options={projectSelectOptions}
+              searchPlaceholder="Tìm project..."
+              ariaLabel="Lọc project"
+            />
+            <SearchableSelect
               value={assigneeFilter}
-              onChange={(e) => setAssigneeFilter(e.target.value)}
-              aria-label="Lọc assignee"
+              onChange={setAssigneeFilter}
+              options={assigneeSelectOptions}
+              searchPlaceholder="Tìm assignee..."
+              ariaLabel="Lọc assignee"
               disabled={onlyMyNotes}
-            >
-              <option value="">Tất cả assignee</option>
-              {users
-                .filter((u) => u.role === "USER" && u.roleLabel !== "HR")
-                .map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.fullName}
-                  </option>
-                ))}
-            </select>
-            <select
-              className={at.select}
+            />
+            <SearchableSelect
+              searchable={false}
               value={status}
-              onChange={(e) => setStatus((e.target.value || "") as TaskStatus | "")}
-              aria-label="Lọc status"
-            >
-              <option value="">Status</option>
-              {statusOptions.map((s) => (
-                <option key={s} value={s}>
-                  {s === "InProgress" ? "In Progress" : s}
-                </option>
-              ))}
-            </select>
-            <select
-              className={at.select}
+              onChange={(v) => setStatus(v as TaskStatus | "")}
+              options={statusSelectOptions}
+              ariaLabel="Lọc status"
+            />
+            <SearchableSelect
+              searchable={false}
               value={priorityFilter}
-              onChange={(e) =>
-                setPriorityFilter((e.target.value || "") as TaskPriority | "")
-              }
-              aria-label="Lọc priority"
-            >
-              <option value="">Priority</option>
-              {priorityOptions.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-            <select
-              className={at.select}
+              onChange={(v) => setPriorityFilter(v as TaskPriority | "")}
+              options={prioritySelectOptions}
+              ariaLabel="Lọc priority"
+            />
+            <SearchableSelect
+              searchable={false}
               value={sortBy}
-              onChange={(e) =>
-                setSortBy(e.target.value as "deadline" | "createdAt" | "priority")
-              }
-              aria-label="Sắp xếp"
-            >
-              <option value="createdAt">Mới nhất</option>
-              <option value="deadline">Deadline</option>
-              <option value="priority">Priority</option>
-            </select>
+              onChange={(v) => setSortBy(v as "deadline" | "createdAt" | "priority")}
+              options={sortSelectOptions}
+              ariaLabel="Sắp xếp"
+            />
             <FilterChip active={onlyMyNotes} onClick={() => setOnlyMyNotes(!onlyMyNotes)}>
               <StickyNote className="size-4" />
               {onlyMyNotes ? "Note của tôi" : "Chỉ note"}

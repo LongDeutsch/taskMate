@@ -27,6 +27,7 @@ import {
   TaskStatusLabel,
 } from "../components/admin-tasks-ui";
 import { UserResponseEditor } from "../components/user-response-editor";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Calendar, Eye, Search, Users } from "lucide-react";
 
 const statusOptions: { value: TaskStatus | ""; label: string }[] = [
@@ -41,6 +42,12 @@ const priorityOptions: { value: TaskPriority | ""; label: string }[] = [
   { value: "High", label: "High" },
   { value: "Medium", label: "Medium" },
   { value: "Low", label: "Low" },
+];
+
+const sortSelectOptions = [
+  { value: "deadline", label: "Deadline" },
+  { value: "createdAt", label: "Mới nhất" },
+  { value: "priority", label: "Priority" },
 ];
 
 const STAFF_TASK_FILTER_DEFAULTS: TaskListFilterValues = {
@@ -94,13 +101,17 @@ export function TaskListPage() {
     enabled: isAdmin,
   });
 
-  const projectOptions = Array.from(
-    new Map(
+  const projectSelectOptions = useMemo(() => {
+    const map = new Map(
       tasks
         .filter((t): t is Task & { projectId: string } => !!t.projectId)
         .map((t) => [t.projectId, t.projectName ?? t.projectId] as const)
-    ).entries()
-  ).map(([id, name]) => ({ id, name }));
+    );
+    return [
+      { value: "", label: "Tất cả project" },
+      ...Array.from(map.entries()).map(([id, name]) => ({ value: id, label: name })),
+    ];
+  }, [tasks]);
 
   const getAssigneeName = (task: Task) => {
     if (!task.assigneeId) return "Chưa gán";
@@ -156,102 +167,72 @@ export function TaskListPage() {
             activeCount={activeFilterCount}
           />
           <DesktopFilterRow>
-            <select
-              className={at.select}
+            <SearchableSelect
               value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
-              aria-label="Lọc project"
-            >
-              <option value="">Tất cả project</option>
-              {projectOptions.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-            <select
-              className={at.select}
+              onChange={setProjectId}
+              options={projectSelectOptions}
+              searchPlaceholder="Tìm project..."
+              ariaLabel="Lọc project"
+            />
+            <SearchableSelect
+              searchable={false}
               value={status}
-              onChange={(e) => setStatus((e.target.value || "") as TaskStatus | "")}
-              aria-label="Lọc status"
-            >
-              {statusOptions.map((o) => (
-                <option key={o.value || "all"} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-            <select
-              className={at.select}
+              onChange={(v) => setStatus(v as TaskStatus | "")}
+              options={statusOptions}
+              ariaLabel="Lọc status"
+            />
+            <SearchableSelect
+              searchable={false}
               value={priority}
-              onChange={(e) => setPriority((e.target.value || "") as TaskPriority | "")}
-              aria-label="Lọc priority"
-            >
-              {priorityOptions.map((o) => (
-                <option key={o.value || "all"} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-            <select
-              className={at.select}
+              onChange={(v) => setPriority(v as TaskPriority | "")}
+              options={priorityOptions}
+              ariaLabel="Lọc priority"
+            />
+            <SearchableSelect
+              searchable={false}
               value={sortBy}
-              onChange={(e) =>
-                setSortBy(e.target.value as "deadline" | "createdAt" | "priority")
-              }
-              aria-label="Sắp xếp"
-            >
-              <option value="deadline">Deadline</option>
-              <option value="createdAt">Mới nhất</option>
-              <option value="priority">Priority</option>
-            </select>
+              onChange={(v) => setSortBy(v as "deadline" | "createdAt" | "priority")}
+              options={sortSelectOptions}
+              ariaLabel="Sắp xếp"
+            />
           </DesktopFilterRow>
         </div>
       </div>
 
       <FilterSheet open={filterOpen} onClose={() => setFilterOpen(false)} onReset={resetFilters}>
         <div className="space-y-4 md:hidden">
-          <select className={at.select} value={projectId} onChange={(e) => setProjectId(e.target.value)}>
-            <option value="">Tất cả project</option>
-            {projectOptions.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-          <select
-            className={at.select}
+          <SearchableSelect
+            className="md:w-full"
+            value={projectId}
+            onChange={setProjectId}
+            options={projectSelectOptions}
+            searchPlaceholder="Tìm project..."
+            ariaLabel="Lọc project"
+          />
+          <SearchableSelect
+            className="md:w-full"
+            searchable={false}
             value={status}
-            onChange={(e) => setStatus((e.target.value || "") as TaskStatus | "")}
-          >
-            {statusOptions.map((o) => (
-              <option key={o.value || "all"} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <select
-            className={at.select}
+            onChange={(v) => setStatus(v as TaskStatus | "")}
+            options={statusOptions}
+            ariaLabel="Lọc status"
+          />
+          <SearchableSelect
+            className="md:w-full"
+            searchable={false}
             value={priority}
-            onChange={(e) => setPriority((e.target.value || "") as TaskPriority | "")}
-          >
-            {priorityOptions.map((o) => (
-              <option key={o.value || "all"} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <select
-            className={at.select}
+            onChange={(v) => setPriority(v as TaskPriority | "")}
+            options={priorityOptions}
+            ariaLabel="Lọc priority"
+          />
+          <SearchableSelect
+            className="md:w-full"
+            searchable={false}
             value={sortBy}
-            onChange={(e) =>
-              setSortBy(e.target.value as "deadline" | "createdAt" | "priority")
-            }
-          >
-            <option value="deadline">Deadline</option>
-            <option value="createdAt">Mới nhất</option>
-            <option value="priority">Priority</option>
-          </select>
+            onChange={(v) => setSortBy(v as "deadline" | "createdAt" | "priority")}
+            options={sortSelectOptions}
+            ariaLabel="Sắp xếp"
+          />
         </div>
       </FilterSheet>
 
