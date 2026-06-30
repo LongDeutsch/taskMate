@@ -540,7 +540,14 @@ export function App() {
               <label>Lý do</label>
               <div className="chip-group">
                 {(
-                  ["ANNUAL_LEAVE", "WFH", "BUSINESS_TRIP", "OTHER"] as TimeOffReason[]
+                  [
+                    "ANNUAL_LEAVE",
+                    "WFH",
+                    "LATE_ARRIVAL",
+                    "EARLY_LEAVE",
+                    "BUSINESS_TRIP",
+                    "OTHER",
+                  ] as TimeOffReason[]
                 ).map((r) => (
                   <button
                     key={r}

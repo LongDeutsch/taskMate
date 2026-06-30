@@ -66,6 +66,8 @@ const SESSION_OPTIONS: { value: TimeOffSession; label: string }[] = [
 const REASON_OPTIONS: { value: TimeOffReason; label: string }[] = [
   { value: "ANNUAL_LEAVE", label: "Nghỉ phép" },
   { value: "WFH", label: "Work from home" },
+  { value: "LATE_ARRIVAL", label: "Xin đi trễ" },
+  { value: "EARLY_LEAVE", label: "Xin về sớm" },
   { value: "BUSINESS_TRIP", label: "Công tác" },
   { value: "OTHER", label: "Khác" },
 ];

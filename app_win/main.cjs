@@ -95,14 +95,74 @@ function registerIpc() {
   });
 }
 
+/** Màn splash hiển thị ngay khi double-click, trong lúc cửa sổ chính tải xong. */
+const SPLASH_HTML = `<!DOCTYPE html>
+<html lang="vi"><head><meta charset="UTF-8" />
+<style>
+  html, body { margin: 0; height: 100%; }
+  body {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 18px; height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f8fafc; color: #0f172a;
+    -webkit-user-select: none; user-select: none;
+  }
+  .spinner {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 4px solid #dbeafe; border-top-color: #2563eb;
+    animation: spin 0.8s linear infinite;
+  }
+  .title { font-size: 1.05rem; font-weight: 600; }
+  .sub { font-size: 0.82rem; color: #64748b; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style></head>
+<body>
+  <div class="spinner"></div>
+  <div class="title">TaskMate Xin off</div>
+  <div class="sub">Đang khởi động…</div>
+</body></html>`;
+
+/** @type {BrowserWindow | null} */
+let splashWin = null;
+
+function createSplash() {
+  splashWin = new BrowserWindow({
+    width: 360,
+    height: 240,
+    frame: false,
+    resizable: false,
+    show: true,
+    center: true,
+    title: "TaskMate Xin off",
+    backgroundColor: "#f8fafc",
+    webPreferences: { contextIsolation: true, nodeIntegration: false },
+  });
+  splashWin.loadURL(
+    "data:text/html;charset=utf-8," + encodeURIComponent(SPLASH_HTML)
+  );
+  splashWin.on("closed", () => {
+    splashWin = null;
+  });
+}
+
+function closeSplash() {
+  if (splashWin && !splashWin.isDestroyed()) {
+    splashWin.close();
+  }
+  splashWin = null;
+}
+
 function createWindow() {
+  const iconPath = path.join(__dirname, "build", "icon.ico");
   const win = new BrowserWindow({
     width: 960,
     height: 720,
     minWidth: 800,
     minHeight: 600,
     title: "TaskMate Xin off",
+    icon: iconPath,
     show: false,
+    backgroundColor: "#f8fafc",
     webPreferences: {
       preload: path.resolve(__dirname, "desktop/preload.cjs"),
       contextIsolation: true,
@@ -112,6 +172,7 @@ function createWindow() {
   });
 
   win.once("ready-to-show", () => {
+    closeSplash();
     win.show();
     win.focus();
   });
@@ -128,6 +189,7 @@ function createWindow() {
 app.whenReady().then(() => {
   console.log("[electron] app ready");
   registerIpc();
+  createSplash();
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

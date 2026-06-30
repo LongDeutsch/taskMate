@@ -1,6 +1,12 @@
 export type RoleLabel = "ADMIN" | "STAFF" | "HR" | "BODS";
 export type TimeOffSession = "MORNING" | "AFTERNOON" | "FULL";
-export type TimeOffReason = "ANNUAL_LEAVE" | "WFH" | "BUSINESS_TRIP" | "OTHER";
+export type TimeOffReason =
+  | "ANNUAL_LEAVE"
+  | "WFH"
+  | "LATE_ARRIVAL"
+  | "EARLY_LEAVE"
+  | "BUSINESS_TRIP"
+  | "OTHER";
 export type TimeOffStatus = "pending" | "approved" | "rejected";
 
 export interface User {
@@ -72,6 +78,8 @@ export function formatTimeOffReason(r: TimeOffReason): string {
   const map: Record<TimeOffReason, string> = {
     ANNUAL_LEAVE: "Nghỉ phép",
     WFH: "Work from home",
+    LATE_ARRIVAL: "Xin đi trễ",
+    EARLY_LEAVE: "Xin về sớm",
     BUSINESS_TRIP: "Công tác",
     OTHER: "Khác",
   };

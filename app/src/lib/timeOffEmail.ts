@@ -14,6 +14,8 @@ export interface EmailRequestShape {
 const REASON_EMAIL_PHRASES: Record<string, string> = {
   ANNUAL_LEAVE: "xin nghỉ phép",
   WFH: "xin làm việc từ xa",
+  LATE_ARRIVAL: "xin đi trễ",
+  EARLY_LEAVE: "xin về sớm",
   BUSINESS_TRIP: "thông báo lịch công tác",
   OTHER: "gửi yêu cầu nghỉ/điều chỉnh lịch làm việc",
 };
@@ -21,6 +23,8 @@ const REASON_EMAIL_PHRASES: Record<string, string> = {
 const REASON_EMAIL_SUBJECTS: Record<string, string> = {
   ANNUAL_LEAVE: "Đơn xin nghỉ phép",
   WFH: "Đề xuất làm việc từ xa",
+  LATE_ARRIVAL: "Đơn xin đi trễ",
+  EARLY_LEAVE: "Đơn xin về sớm",
   BUSINESS_TRIP: "Thông báo lịch công tác",
   OTHER: "Yêu cầu điều chỉnh lịch làm việc",
 };

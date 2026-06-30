@@ -165,7 +165,13 @@ export interface AppNotification {
 }
 
 export type TimeOffSession = "MORNING" | "AFTERNOON" | "FULL";
-export type TimeOffReason = "ANNUAL_LEAVE" | "WFH" | "BUSINESS_TRIP" | "OTHER";
+export type TimeOffReason =
+  | "ANNUAL_LEAVE"
+  | "WFH"
+  | "LATE_ARRIVAL"
+  | "EARLY_LEAVE"
+  | "BUSINESS_TRIP"
+  | "OTHER";
 export type TimeOffStatus = "pending" | "approved" | "rejected";
 
 export interface BusinessTripScheduleItem {
@@ -228,6 +234,10 @@ export function formatTimeOffReason(r: TimeOffReason): string {
       return "Nghỉ phép";
     case "WFH":
       return "Work from home";
+    case "LATE_ARRIVAL":
+      return "Xin đi trễ";
+    case "EARLY_LEAVE":
+      return "Xin về sớm";
     case "BUSINESS_TRIP":
       return "Công tác";
     case "OTHER":

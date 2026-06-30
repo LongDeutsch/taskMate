@@ -42,6 +42,8 @@ File output trong `release/`:
 
 Gửi user file **`.exe` portable** hoặc **`.zip`** là đủ.
 
+Icon app: `build/icon.ico` (256×256, từ `calendar.ico` gốc). File `.exe` và cửa sổ/taskbar Windows sẽ hiển thị icon lịch sau khi `npm run pack`.
+
 ### Lần chạy đầu trên Windows
 
 Windows SmartScreen có thể cảnh báo vì app chưa ký code signing. Chọn **More info → Run anyway**.

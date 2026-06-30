@@ -1,6 +1,13 @@
 import mongoose from "mongoose";
 
-const REASON_ENUM = ["ANNUAL_LEAVE", "WFH", "BUSINESS_TRIP", "OTHER"];
+const REASON_ENUM = [
+  "ANNUAL_LEAVE",
+  "WFH",
+  "LATE_ARRIVAL",
+  "EARLY_LEAVE",
+  "BUSINESS_TRIP",
+  "OTHER",
+];
 const SESSION_ENUM = ["MORNING", "AFTERNOON", "FULL"];
 const STATUS_ENUM = ["pending", "approved", "rejected"];
 
