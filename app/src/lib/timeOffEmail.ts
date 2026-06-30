@@ -11,15 +11,6 @@ export interface EmailRequestShape {
   businessTripSchedule?: BusinessTripScheduleItem[];
 }
 
-const REASON_EMAIL_PHRASES: Record<string, string> = {
-  ANNUAL_LEAVE: "xin nghỉ phép",
-  WFH: "xin làm việc từ xa",
-  LATE_ARRIVAL: "xin đi trễ",
-  EARLY_LEAVE: "xin về sớm",
-  BUSINESS_TRIP: "thông báo lịch công tác",
-  OTHER: "gửi yêu cầu nghỉ/điều chỉnh lịch làm việc",
-};
-
 const REASON_EMAIL_SUBJECTS: Record<string, string> = {
   ANNUAL_LEAVE: "Đơn xin nghỉ phép",
   WFH: "Đề xuất làm việc từ xa",
@@ -27,12 +18,6 @@ const REASON_EMAIL_SUBJECTS: Record<string, string> = {
   EARLY_LEAVE: "Đơn xin về sớm",
   BUSINESS_TRIP: "Thông báo lịch công tác",
   OTHER: "Yêu cầu điều chỉnh lịch làm việc",
-};
-
-const SESSION_EMAIL_PHRASES: Record<string, string> = {
-  MORNING: "trong buổi sáng",
-  AFTERNOON: "trong buổi chiều",
-  FULL: "cả ngày",
 };
 
 function normalizeIsoDate(value: string): string {
@@ -76,16 +61,48 @@ function formatScheduleLineHtml(item: BusinessTripScheduleItem): string {
   return `<li>${escapeHtml(formatScheduleLineText(item).replace(/^\* /, ""))}</li>`;
 }
 
-function formatTimeOffDateEmailPhrase(startDate: string, endDate: string): string {
-  const startVi = formatDateVi(startDate);
-  if (normalizeIsoDate(startDate) === normalizeIsoDate(endDate)) return `trong ngày ${startVi}`;
-  return `từ ngày ${startVi} đến ngày ${formatDateVi(endDate)}`;
-}
-
 function formatEmailDateRangePhrase(startDate: string, endDate: string): string {
   const startVi = formatDateVi(startDate);
   if (normalizeIsoDate(startDate) === normalizeIsoDate(endDate)) return `ngày ${startVi}`;
   return `từ ngày ${startVi} đến ngày ${formatDateVi(endDate)}`;
+}
+
+function sessionWord(session: TimeOffSession): string {
+  if (session === "MORNING") return "buổi sáng";
+  if (session === "AFTERNOON") return "buổi chiều";
+  return "";
+}
+
+/**
+ * Cụm hành động sau "em gửi mail để …", ghép theo lý do + buổi + ngày.
+ * - Nghỉ phép/WFH/khác: "nghỉ trong ngày …" (cả ngày) hoặc "nghỉ buổi sáng/chiều ngày …".
+ * - Đi trễ/về sớm: "xin phép đi trễ/về sớm vào buổi sáng/chiều ngày …".
+ */
+function buildTimeOffActionPhrase(
+  reason: TimeOffReason,
+  session: TimeOffSession,
+  startDate: string,
+  endDate: string
+): string {
+  const datePhrase = formatEmailDateRangePhrase(startDate, endDate);
+  const single = normalizeIsoDate(startDate) === normalizeIsoDate(endDate);
+  const sw = sessionWord(session);
+
+  if (reason === "LATE_ARRIVAL" || reason === "EARLY_LEAVE") {
+    const verb = reason === "LATE_ARRIVAL" ? "xin phép đi trễ" : "xin phép về sớm";
+    return sw ? `${verb} vào ${sw} ${datePhrase}` : `${verb} vào ${datePhrase}`;
+  }
+
+  const verb =
+    reason === "WFH"
+      ? "làm việc từ xa"
+      : reason === "OTHER"
+        ? "điều chỉnh lịch làm việc"
+        : "nghỉ";
+  if (!sw) {
+    return single ? `${verb} trong ${datePhrase}` : `${verb} ${datePhrase}`;
+  }
+  return `${verb} ${sw} ${datePhrase}`;
 }
 
 function getEmailSubject(request: EmailRequestShape): string {
@@ -142,14 +159,17 @@ export function buildTimeOffEmailContent(request: EmailRequestShape) {
     return buildBusinessTripEmail(request, fullName);
   }
 
-  const reasonPhrase = REASON_EMAIL_PHRASES[request.reason] ?? "xin hỗ trợ về lịch làm việc";
-  const datePhrase = formatTimeOffDateEmailPhrase(request.startDate, request.endDate);
-  const sessionPhrase = SESSION_EMAIL_PHRASES[request.session] ?? "cả ngày";
+  const actionPhrase = buildTimeOffActionPhrase(
+    request.reason,
+    request.session,
+    request.startDate,
+    request.endDate
+  );
   const extraDetails = String(request.details ?? "").trim().replace(/[.。\s]+$/u, "");
 
   const mainSentence = extraDetails
-    ? `Em là ${fullName} thuộc phòng RnD, em gửi mail để ${reasonPhrase} ${datePhrase} ${sessionPhrase} vì nguyên nhân sau: ${extraDetails}.`
-    : `Em là ${fullName} thuộc phòng RnD, em gửi mail để ${reasonPhrase} ${datePhrase} ${sessionPhrase}. Kính mong lãnh đạo và nhân sự xem xét hỗ trợ.`;
+    ? `Em là ${fullName} thuộc phòng RnD, em gửi mail để ${actionPhrase} vì nguyên nhân sau: ${extraDetails}.`
+    : `Em là ${fullName} thuộc phòng RnD, em gửi mail để ${actionPhrase}. Kính mong lãnh đạo và nhân sự xem xét hỗ trợ.`;
 
   const text = [
     "Xin chào lãnh đạo và nhân sự CBT,",
@@ -161,8 +181,8 @@ export function buildTimeOffEmailContent(request: EmailRequestShape) {
   ].join("\n");
 
   const htmlMain = extraDetails
-    ? `Em là <strong>${escapeHtml(fullName)}</strong> thuộc phòng RnD, em gửi mail để ${escapeHtml(reasonPhrase)} ${escapeHtml(datePhrase)} ${escapeHtml(sessionPhrase)} vì nguyên nhân sau: ${escapeHtml(extraDetails)}.`
-    : `Em là <strong>${escapeHtml(fullName)}</strong> thuộc phòng RnD, em gửi mail để ${escapeHtml(reasonPhrase)} ${escapeHtml(datePhrase)} ${escapeHtml(sessionPhrase)}. Kính mong lãnh đạo và nhân sự xem xét hỗ trợ.`;
+    ? `Em là <strong>${escapeHtml(fullName)}</strong> thuộc phòng RnD, em gửi mail để ${escapeHtml(actionPhrase)} vì nguyên nhân sau: ${escapeHtml(extraDetails)}.`
+    : `Em là <strong>${escapeHtml(fullName)}</strong> thuộc phòng RnD, em gửi mail để ${escapeHtml(actionPhrase)}. Kính mong lãnh đạo và nhân sự xem xét hỗ trợ.`;
 
   const html = [
     "<p>Xin chào lãnh đạo và nhân sự CBT,</p>",
