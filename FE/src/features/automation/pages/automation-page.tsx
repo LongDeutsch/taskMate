@@ -1,17 +1,27 @@
 // File: src/features/automation/pages/automation-page.tsx
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getHookEvents, type HookEventItem } from "@/shared/api";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { getRoleLabel } from "@/shared/types";
 import { Navigate } from "react-router-dom";
 import { getHomePathForUser } from "@/app/config/nav-items";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Zap, CheckCircle2, XCircle, Loader2, Radio } from "lucide-react";
+import {
+  Zap,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Radio,
+  Eye,
+  X,
+} from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
 function statusMeta(status: string) {
@@ -50,7 +60,100 @@ function formatWhen(iso: string): string {
   return new Date(iso).toLocaleString("vi-VN");
 }
 
-function HookEventCard({ event }: { event: HookEventItem }) {
+function DetailRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className={cn("text-sm text-gray-900 break-words whitespace-pre-wrap", mono && "font-mono text-xs")}>
+        {value || "—"}
+      </p>
+    </div>
+  );
+}
+
+function HookEventDetailModal({
+  event,
+  onClose,
+}: {
+  event: HookEventItem;
+  onClose: () => void;
+}) {
+  const meta = statusMeta(event.status);
+  const Icon = meta.Icon;
+
+  return (
+    <div
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Chi tiết webhook"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sticky top-0 flex items-start justify-between gap-3 border-b border-gray-100 bg-white px-5 py-4">
+          <div className="min-w-0 space-y-2">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
+                meta.className
+              )}
+            >
+              <Icon className={cn("size-3.5", event.status === "running" && "animate-spin")} />
+              {meta.label}
+            </span>
+            <h2 className="text-lg font-semibold text-gray-900">{event.title}</h2>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            onClick={onClose}
+            aria-label="Đóng"
+          >
+            <X className="size-4" />
+          </Button>
+        </div>
+
+        <div className="space-y-4 px-5 py-4">
+          <DetailRow label="Nguồn (source)" value={event.source} />
+          <DetailRow label="Nội dung (message)" value={event.message} />
+          <DetailRow label="Trạng thái" value={event.status} />
+          <DetailRow label="jobId" value={event.jobId} mono />
+          <DetailRow
+            label="Đã gửi thông báo"
+            value={`${event.notifiedCount ?? 0} user có mục Automation`}
+          />
+          <DetailRow
+            label="Thời gian"
+            value={
+              event.createdAt
+                ? `${formatWhen(event.createdAt)} · ${new Date(event.createdAt).toLocaleString("vi-VN")}`
+                : "—"
+            }
+          />
+        </div>
+
+        <div className="border-t border-gray-100 px-5 py-3">
+          <Button type="button" className="w-full" onClick={onClose}>
+            Đóng
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HookEventCard({
+  event,
+  onOpenDetail,
+}: {
+  event: HookEventItem;
+  onOpenDetail: (event: HookEventItem) => void;
+}) {
   const meta = statusMeta(event.status);
   const Icon = meta.Icon;
   return (
@@ -74,7 +177,7 @@ function HookEventCard({ event }: { event: HookEventItem }) {
             </div>
             <p className="font-medium text-gray-900">{event.title}</p>
             {event.message && (
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
+              <p className="line-clamp-2 text-sm text-muted-foreground whitespace-pre-wrap break-words">
                 {event.message}
               </p>
             )}
@@ -85,9 +188,22 @@ function HookEventCard({ event }: { event: HookEventItem }) {
                 : ""}
             </p>
           </div>
-          <time className="shrink-0 text-xs text-muted-foreground sm:pt-1">
-            {formatWhen(event.createdAt)}
-          </time>
+          <div className="flex shrink-0 items-center gap-2 sm:flex-col sm:items-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-9 border-gray-200"
+              title="Xem chi tiết webhook"
+              aria-label="Xem chi tiết webhook"
+              onClick={() => onOpenDetail(event)}
+            >
+              <Eye className="size-4" />
+            </Button>
+            <time className="text-xs text-muted-foreground">
+              {formatWhen(event.createdAt)}
+            </time>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -98,6 +214,7 @@ export function AutomationPage() {
   const { user } = useAuth();
   const roleLabel = user ? getRoleLabel(user) : "STAFF";
   const canAccess = roleLabel !== "HR";
+  const [detail, setDetail] = useState<HookEventItem | null>(null);
 
   const { data: events = [], isLoading, isError } = useQuery({
     queryKey: ["hook-events"],
@@ -146,10 +263,16 @@ export function AutomationPage() {
               </p>
             </div>
           ) : (
-            events.map((event) => <HookEventCard key={event.id} event={event} />)
+            events.map((event) => (
+              <HookEventCard key={event.id} event={event} onOpenDetail={setDetail} />
+            ))
           )}
         </CardContent>
       </Card>
+
+      {detail && (
+        <HookEventDetailModal event={detail} onClose={() => setDetail(null)} />
+      )}
     </div>
   );
 }

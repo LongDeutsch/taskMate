@@ -50,15 +50,14 @@ async function resolveRecipientIds(target) {
   const raw = String(target ?? "automation").trim() || "automation";
 
   if (raw === "automation" || raw === "admins") {
-    // Mặc định: mọi user được thấy mục Automation (không phải HR)
+    // Khớp FE: mọi user active có mục Automation (= không phải HR), kể cả roleLabel null.
     const users = await User.find({
       deletedAt: null,
       disabled: { $ne: true },
-      roleLabel: { $nin: ["HR"] },
     })
-      .select("_id")
+      .select("_id role roleLabel")
       .lean();
-    return users.map((u) => u._id);
+    return users.filter((u) => roleLabelOf(u) !== "HR").map((u) => u._id);
   }
 
   if (raw.startsWith("user:")) {
