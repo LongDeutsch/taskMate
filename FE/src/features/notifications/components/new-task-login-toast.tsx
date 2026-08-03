@@ -54,6 +54,7 @@ export function NewTaskLoginToast() {
   const hasTimeOff = preview.some(
     (n) => n.type === "time_off_submitted" || n.type === "time_off_status_updated"
   );
+  const hasExternalJob = preview.some((n) => n.type === "external_job");
   const headlineSub = hasNewAssignment
     ? "Admin vừa giao việc cho bạn."
     : hasUserUpdate
@@ -62,7 +63,9 @@ export function NewTaskLoginToast() {
         ? "Có task sắp đến hạn hoặc đã quá hạn."
         : hasTimeOff
           ? "Có cập nhật về yêu cầu xin off."
-          : "Có task của bạn vừa được cập nhật.";
+          : hasExternalJob
+            ? "Có thông báo từ job / crawl bên ngoài."
+            : "Có task của bạn vừa được cập nhật.";
 
   function labelForType(type: AppNotification["type"]): string {
     switch (type) {
@@ -84,6 +87,8 @@ export function NewTaskLoginToast() {
         return "đã gửi yêu cầu xin off";
       case "time_off_status_updated":
         return "đã cập nhật trạng thái xin off";
+      case "external_job":
+        return "job / crawl:";
       default:
         return "cập nhật:";
     }
@@ -131,6 +136,10 @@ export function NewTaskLoginToast() {
                   navigate("/time-off");
                   return;
                 }
+                if (n.type === "external_job") {
+                  navigate("/dashboard");
+                  return;
+                }
                 if (n.taskId) navigate(`/tasks/${n.taskId}`);
               }}
               className="flex w-full flex-col items-start gap-0.5 border-l-4 border-l-indigo-500 px-3 py-2 text-left text-sm hover:bg-indigo-100/60 focus:outline-none focus:bg-indigo-100/60"
@@ -168,6 +177,8 @@ export function NewTaskLoginToast() {
                 onlyOne.type === "time_off_status_updated"
               ) {
                 navigate("/time-off");
+              } else if (onlyOne.type === "external_job") {
+                navigate("/dashboard");
               } else if (onlyOne.taskId) {
                 navigate(`/tasks/${onlyOne.taskId}`);
               } else {
@@ -182,7 +193,9 @@ export function NewTaskLoginToast() {
             ? onlyOne.type === "time_off_submitted" ||
               onlyOne.type === "time_off_status_updated"
               ? "Mở Xin off"
-              : "Xem task"
+              : onlyOne.type === "external_job"
+                ? "Mở Dashboard"
+                : "Xem task"
             : "Xem tất cả task"}
         </button>
       </div>

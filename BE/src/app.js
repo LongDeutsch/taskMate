@@ -12,6 +12,7 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import timeOffRoutes from "./routes/timeOffRoutes.js";
 import bugReportRoutes from "./routes/bugReportRoutes.js";
 import birthdayRoutes from "./routes/birthdayRoutes.js";
+import hooksRoutes from "./routes/hooksRoutes.js";
 import * as userController from "./controllers/userController.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { checkDatabase } from "./config/database.js";
@@ -38,6 +39,8 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/time-off", timeOffRoutes);
 app.use("/api/bug-reports", bugReportRoutes);
 app.use("/api/birthdays", birthdayRoutes);
+/** Webhook ngoài (crawl/job) — auth bằng X-Api-Key / HOOKS_API_KEY */
+app.use("/api/hooks", hooksRoutes);
 
 /** Wake Render — path /api/ping tránh ad-blocker chặn /health/live */
 app.get("/api/ping", (req, res) => {

@@ -25,6 +25,8 @@ function labelForType(type: NotificationType): string {
       return "đã gửi yêu cầu xin off";
     case "time_off_status_updated":
       return "đã cập nhật trạng thái yêu cầu xin off";
+    case "external_job":
+      return "báo cáo job / crawl";
     default:
       return "có cập nhật";
   }
@@ -74,6 +76,10 @@ export function NotificationBell() {
     setOpen(false);
     if (n.type === "time_off_submitted" || n.type === "time_off_status_updated") {
       navigate("/time-off");
+      return;
+    }
+    if (n.type === "external_job") {
+      navigate("/dashboard");
       return;
     }
     if (n.taskId) navigate(`/tasks/${n.taskId}`);

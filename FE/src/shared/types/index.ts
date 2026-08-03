@@ -147,7 +147,8 @@ export type NotificationType =
   | "deadline_reminder"
   | "overdue_alert"
   | "time_off_submitted"
-  | "time_off_status_updated";
+  | "time_off_status_updated"
+  | "external_job";
 
 export interface AppNotification {
   id: string;

@@ -16,6 +16,8 @@ const notificationSchema = new mongoose.Schema(
         "overdue_alert",
         "time_off_submitted",
         "time_off_status_updated",
+        /** Job/crawl bên ngoài báo về qua webhook /api/hooks/events */
+        "external_job",
       ],
       required: true,
     },
