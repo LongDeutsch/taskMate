@@ -176,11 +176,6 @@ function HookEventCard({
               )}
             </div>
             <p className="font-medium text-gray-900">{event.title}</p>
-            {event.message && (
-              <p className="line-clamp-2 text-sm text-muted-foreground whitespace-pre-wrap break-words">
-                {event.message}
-              </p>
-            )}
             <p className="text-xs text-muted-foreground">
               jobId: <span className="font-mono">{event.jobId}</span>
               {typeof event.notifiedCount === "number"
