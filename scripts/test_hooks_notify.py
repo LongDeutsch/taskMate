@@ -9,6 +9,17 @@ Cách dùng:
 
   # hoặc truyền thẳng:
   python3 scripts/test_hooks_notify.py --url ... --key ... --status success
+
+  # ví dụ:
+    # Giả sử đã export TASKMATE_API_KEY
+    export TASKMATE_API_KEY="<key trên Render>"
+
+    python3 scripts/test_hooks_notify.py \
+    --title "Crawl HCC xong" \
+    --message "Đã crawl 1250 bản ghi, file data_2026-08-03.csv" \
+    --status success \
+    --source hcc-crawler \
+    --target admins
 """
 
 from __future__ import annotations
@@ -87,7 +98,11 @@ def main() -> int:
         default="success",
     )
     parser.add_argument("--source", default="hcc-crawler-test")
-    parser.add_argument("--target", default="admins")
+    parser.add_argument(
+        "--target",
+        default="automation",
+        help='Người nhận: automation (mặc định, mọi user có mục Automation), admins, user:<id>, username:<name>',
+    )
     parser.add_argument(
         "--job-id",
         default="",

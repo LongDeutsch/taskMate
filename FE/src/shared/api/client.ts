@@ -500,6 +500,26 @@ export async function markAllNotificationsRead(): Promise<number> {
   return json.data?.modified ?? 0;
 }
 
+/** Sự kiện webhook crawl/job — trang Automation */
+export async function getHookEvents(opts?: { limit?: number }): Promise<HookEventItem[]> {
+  const params = new URLSearchParams();
+  if (opts?.limit) params.set("limit", String(opts.limit));
+  const q = params.toString();
+  const json = await request<HookEventItem[]>(`/api/hooks/events${q ? `?${q}` : ""}`);
+  return json.data ?? [];
+}
+
+export interface HookEventItem {
+  id: string;
+  jobId: string;
+  source: string;
+  title: string;
+  message: string;
+  status: "success" | "failed" | "running" | string;
+  notifiedCount: number;
+  createdAt: string;
+}
+
 // --- Time-off requests ---
 export interface CreateTimeOffPayload {
   startDate: string; // YYYY-MM-DD

@@ -137,7 +137,7 @@ export function NewTaskLoginToast() {
                   return;
                 }
                 if (n.type === "external_job") {
-                  navigate("/dashboard");
+                  navigate("/automation");
                   return;
                 }
                 if (n.taskId) navigate(`/tasks/${n.taskId}`);
@@ -178,7 +178,7 @@ export function NewTaskLoginToast() {
               ) {
                 navigate("/time-off");
               } else if (onlyOne.type === "external_job") {
-                navigate("/dashboard");
+                navigate("/automation");
               } else if (onlyOne.taskId) {
                 navigate(`/tasks/${onlyOne.taskId}`);
               } else {
@@ -194,7 +194,7 @@ export function NewTaskLoginToast() {
               onlyOne.type === "time_off_status_updated"
               ? "Mở Xin off"
               : onlyOne.type === "external_job"
-                ? "Mở Dashboard"
+                ? "Mở Automation"
                 : "Xem task"
             : "Xem tất cả task"}
         </button>

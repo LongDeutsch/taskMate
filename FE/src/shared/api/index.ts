@@ -80,6 +80,8 @@ export const markNotificationRead = useRealApi
 export const markAllNotificationsRead = useRealApi
   ? client.markAllNotificationsRead
   : async () => 0;
+export const getHookEvents = useRealApi ? client.getHookEvents : async () => [];
+export type { HookEventItem } from "./client";
 export const clearToken = useRealApi ? client.clearToken : () => {};
 
 export const createTimeOff = useRealApi

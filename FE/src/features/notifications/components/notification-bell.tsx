@@ -79,7 +79,7 @@ export function NotificationBell() {
       return;
     }
     if (n.type === "external_job") {
-      navigate("/dashboard");
+      navigate("/automation");
       return;
     }
     if (n.taskId) navigate(`/tasks/${n.taskId}`);

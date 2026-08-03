@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { User } from "../models/User.js";
 import { HookEvent } from "../models/HookEvent.js";
 import { createNotification } from "./notificationController.js";
-import { createBadRequestError, AppError } from "../utils/errors.js";
+import { createBadRequestError, createForbiddenError, AppError } from "../utils/errors.js";
 
 const ALLOWED_STATUS = new Set(["success", "failed", "running"]);
 const MAX_TITLE = 200;
@@ -30,25 +30,35 @@ function newFallbackJobId() {
   return "job-" + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
 }
 
+function roleLabelOf(user) {
+  return user?.roleLabel ?? (user?.role === "ADMIN" ? "ADMIN" : "STAFF");
+}
+
+/** User có mục Automation trên FE (mọi role trừ HR). */
+export function canAccessAutomation(user) {
+  return !!user && roleLabelOf(user) !== "HR";
+}
+
 /**
  * Resolve danh sách userId nhận notification.
  * target:
- *  - "admins" (mặc định)
+ *  - "automation" | "admins" (mặc định = automation): mọi user có mục Automation (không phải HR)
  *  - "user:<id>"
  *  - "username:<name>"
  */
 async function resolveRecipientIds(target) {
-  const raw = String(target ?? "admins").trim() || "admins";
+  const raw = String(target ?? "automation").trim() || "automation";
 
-  if (raw === "admins") {
-    const admins = await User.find({
-      role: "ADMIN",
+  if (raw === "automation" || raw === "admins") {
+    // Mặc định: mọi user được thấy mục Automation (không phải HR)
+    const users = await User.find({
       deletedAt: null,
       disabled: { $ne: true },
+      roleLabel: { $nin: ["HR"] },
     })
       .select("_id")
       .lean();
-    return admins.map((u) => u._id);
+    return users.map((u) => u._id);
   }
 
   if (raw.startsWith("user:")) {
@@ -74,8 +84,37 @@ async function resolveRecipientIds(target) {
   }
 
   throw createBadRequestError(
-    'target phải là "admins", "user:<id>" hoặc "username:<name>"'
+    'target phải là "automation", "admins", "user:<id>" hoặc "username:<name>"'
   );
+}
+
+/**
+ * GET /api/hooks/events — danh sách webhook cho trang Automation (JWT).
+ */
+export async function listEvents(req, res, next) {
+  try {
+    if (!canAccessAutomation(req.user)) {
+      return next(createForbiddenError("Chỉ user có mục Automation mới xem được"));
+    }
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+    const items = await HookEvent.find({})
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+    const data = items.map((e) => ({
+      id: e._id,
+      jobId: e._id,
+      source: e.source ?? "",
+      title: e.title ?? "",
+      message: e.message ?? "",
+      status: e.status ?? "success",
+      notifiedCount: e.notifiedCount ?? 0,
+      createdAt: e.createdAt?.toISOString?.() ?? e.createdAt,
+    }));
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
 }
 
 /**
@@ -115,6 +154,7 @@ export async function postEvent(req, res, next) {
         _id: jobId,
         source,
         title: title.slice(0, MAX_TITLE),
+        message: message.slice(0, MAX_MESSAGE),
         status: statusRaw,
         notifiedCount: 0,
       });
@@ -161,6 +201,7 @@ export async function postEvent(req, res, next) {
         notified,
         status: statusRaw,
         source,
+        target: String(target ?? "automation").trim() || "automation",
       },
     });
   } catch (err) {
