@@ -3,6 +3,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  Eye,
   History,
   MessageSquareQuote,
   Pencil,
@@ -43,23 +44,57 @@ function FeedbackKindBadge({ kind }: { kind: FeedbackHistoryEntry["kind"] }) {
 }
 
 function FeedbackHistoryList({ history }: { history: FeedbackHistoryEntry[] }) {
+  const [viewEntry, setViewEntry] = useState<FeedbackHistoryEntry | null>(null);
+
   return (
-    <ul className="divide-y divide-violet-100">
-      {[...history].reverse().map((h) => (
-        <li key={h.id} className="px-4 py-3">
-          <div className="flex items-center justify-between gap-2 text-xs">
-            <span className="inline-flex items-center gap-2">
-              <FeedbackKindBadge kind={h.kind} />
-              <span className="font-medium text-gray-900">{h.authorName}</span>
-            </span>
-            <span className="shrink-0 text-[#6B7280]">{formatDateTime(h.createdAt)}</span>
-          </div>
-          <p className="mt-1.5 line-clamp-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-800">
-            {h.content}
-          </p>
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="divide-y divide-violet-100">
+        {[...history].reverse().map((h) => (
+          <li key={h.id} className="px-4 py-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                  <FeedbackKindBadge kind={h.kind} />
+                  <span className="font-medium text-gray-900">{h.authorName}</span>
+                  <span className="text-[#6B7280]">{formatDateTime(h.createdAt)}</span>
+                </div>
+                <p className="mt-1.5 line-clamp-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-800">
+                  {h.content}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-8 shrink-0 text-violet-700 hover:bg-violet-100"
+                aria-label="Xem nội dung feedback"
+                onClick={() => setViewEntry(h)}
+              >
+                <Eye className="size-4" />
+              </Button>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <TaskDetailModal
+        open={viewEntry !== null}
+        onClose={() => setViewEntry(null)}
+        title="Nội dung feedback (lịch sử)"
+        footer={
+          viewEntry ? (
+            <p className="text-xs text-[#6B7280]">
+              <FeedbackKindBadge kind={viewEntry.kind} /> · {viewEntry.authorName} ·{" "}
+              {formatDateTime(viewEntry.createdAt)}
+            </p>
+          ) : undefined
+        }
+      >
+        <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-gray-900">
+          {viewEntry?.content}
+        </p>
+      </TaskDetailModal>
+    </>
   );
 }
 
