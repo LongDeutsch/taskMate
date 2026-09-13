@@ -548,8 +548,23 @@ export function TimeOffPage() {
 
   useEffect(() => {
     if (!open || hrRecipientIds.length === 0) return;
-    setForm((f) => ({ ...f, recipientIds: hrRecipientIds }));
+    // Chỉ prefill tất cả HR lần đầu mở form (khi chưa chọn ai)
+    setForm((f) =>
+      f.recipientIds.length === 0 ? { ...f, recipientIds: hrRecipientIds } : f
+    );
   }, [open, hrRecipientIds]);
+
+  function toggleRecipient(id: string) {
+    setForm((f) => {
+      const has = f.recipientIds.includes(id);
+      if (has) {
+        // Giữ ít nhất 1 người nhận
+        if (f.recipientIds.length <= 1) return f;
+        return { ...f, recipientIds: f.recipientIds.filter((x) => x !== id) };
+      }
+      return { ...f, recipientIds: [...f.recipientIds, id] };
+    });
+  }
 
   const selectedRecipientNames = useMemo(() => {
     const recipients = recipientQuery.data ?? [];
@@ -581,7 +596,7 @@ export function TimeOffPage() {
       setError('Lý do "Khác" cần nhập nội dung');
       return;
     }
-    const recipientIds = hrRecipientIds.length > 0 ? hrRecipientIds : form.recipientIds;
+    const recipientIds = form.recipientIds.length > 0 ? form.recipientIds : hrRecipientIds;
     if (recipientIds.length === 0) {
       setError("Chưa có tài khoản HR active để nhận yêu cầu xin off");
       return;
@@ -1069,7 +1084,7 @@ export function TimeOffPage() {
                 <Label>
                   Người nhận HR{" "}
                   <span className="text-xs font-normal text-muted-foreground">
-                    (tự động gửi tới tất cả HR)
+                    (bấm để chọn / bỏ chọn)
                   </span>
                 </Label>
                 {recipientQuery.isLoading ? (
@@ -1082,28 +1097,39 @@ export function TimeOffPage() {
                   </div>
                 ) : (
                   <div className="grid gap-2 sm:grid-cols-2">
-                    {(recipientQuery.data ?? []).map((recipient) => (
-                      <div
-                        key={recipient.id}
-                        className="relative rounded-lg border border-violet-200 bg-violet-50/60 p-3 text-left"
-                      >
-                        <span className="absolute right-2 top-2 inline-flex size-5 items-center justify-center rounded-full bg-violet-600 text-white">
-                          <Check className="size-3" />
-                        </span>
-                        <div className="pr-6 text-sm font-semibold">{recipient.fullName}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {recipient.username} · HR
-                          {recipient.email ? ` · ${recipient.email}` : " · chưa có email"}
-                        </div>
-                      </div>
-                    ))}
+                    {(recipientQuery.data ?? []).map((recipient) => {
+                      const selected = form.recipientIds.includes(recipient.id);
+                      return (
+                        <button
+                          key={recipient.id}
+                          type="button"
+                          onClick={() => toggleRecipient(recipient.id)}
+                          className={
+                            selected
+                              ? "relative rounded-lg border border-violet-200 bg-violet-50/60 p-3 text-left transition hover:bg-violet-50"
+                              : "relative rounded-lg border border-gray-200 bg-white p-3 text-left transition hover:border-violet-200 hover:bg-violet-50/40"
+                          }
+                        >
+                          {selected && (
+                            <span className="absolute right-2 top-2 inline-flex size-5 items-center justify-center rounded-full bg-violet-600 text-white">
+                              <Check className="size-3" />
+                            </span>
+                          )}
+                          <div className="pr-6 text-sm font-semibold">{recipient.fullName}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {recipient.username} · HR
+                            {recipient.email ? ` · ${recipient.email}` : " · chưa có email"}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">
                   Sẽ gửi thông báo & email tới:{" "}
                   {selectedRecipientNames.length > 0
                     ? selectedRecipientNames.join(", ")
-                    : "chưa có HR"}
+                    : "chưa chọn HR"}
                 </p>
               </div>
 
