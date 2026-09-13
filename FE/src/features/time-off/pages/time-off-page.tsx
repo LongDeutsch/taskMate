@@ -4,7 +4,6 @@ import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CalendarOff,
-  Check,
   CheckCircle2,
   Clock4,
   Download,
@@ -46,7 +45,6 @@ import {
   getRoleLabel,
   type BusinessTripScheduleItem,
   type TimeOffReason,
-  type TimeOffRecipient,
   type TimeOffRequest,
   type TimeOffSession,
   type TimeOffStatus,
@@ -56,13 +54,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   downloadTimeOffXlsx,
   expandTimeOffToExportRows,
@@ -120,24 +111,17 @@ function formatScheduleDateRange(startDate: string, endDate: string) {
 function BusinessTripScheduleList({ items }: { items: BusinessTripScheduleItem[] }) {
   if (!items.length) return null;
   return (
-    <div className="mt-2 space-y-2 rounded-lg border border-amber-200 bg-amber-50/50 p-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
-        Lịch trình công tác
-      </p>
-      <ul className="space-y-2 text-sm">
-        {items.map((row, idx) => (
-          <li key={idx} className="rounded-md border border-amber-100 bg-background p-2">
-            <p className="font-medium text-foreground">{formatScheduleDateRange(row.startDate, row.endDate)}</p>
-            <p className="text-muted-foreground">
-              <span className="text-foreground">{row.staff}</span>
-              {row.location ? ` · tại ${row.location}` : ""}
-            </p>
-            {row.description ? (
-              <p className="mt-1 text-foreground whitespace-pre-wrap">{row.description}</p>
-            ) : null}
-          </li>
-        ))}
-      </ul>
+    <div className="mt-1 space-y-1 rounded border border-amber-200/80 bg-amber-50/40 px-2 py-1.5 text-xs">
+      {items.map((row, idx) => (
+        <p key={idx} className="leading-snug text-muted-foreground">
+          <span className="font-medium text-foreground">
+            {formatScheduleDateRange(row.startDate, row.endDate)}
+          </span>
+          {" · "}
+          {row.staff}
+          {row.location ? ` · ${row.location}` : ""}
+        </p>
+      ))}
     </div>
   );
 }
@@ -164,10 +148,6 @@ function StatusBadge({ status }: { status: TimeOffStatus }) {
   );
 }
 
-function recipientLabel(r: TimeOffRecipient): string {
-  return `${r.fullName} · ${formatRoleLabel(r.roleLabel ?? (r.role === "ADMIN" ? "ADMIN" : "STAFF"))}`;
-}
-
 function RequestRow({
   req,
   showOwner,
@@ -184,20 +164,20 @@ function RequestRow({
   onDecide: (id: string, status: "approved" | "rejected") => void;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-background p-3 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="space-y-1">
+    <div className="rounded-lg border border-border/80 bg-background px-3 py-2.5">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1 space-y-0.5">
           {showOwner && (
-            <div className="flex items-center gap-2">
-              <span className="font-semibold">{req.userName}</span>
+            <div className="flex flex-wrap items-center gap-1.5 text-sm">
+              <span className="font-medium leading-tight">{req.userName}</span>
               {req.userRoleLabel && (
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                <span className="rounded bg-slate-100 px-1.5 py-px text-[10px] font-medium text-slate-600">
                   {formatRoleLabel(req.userRoleLabel)}
                 </span>
               )}
             </div>
           )}
-          <div className="text-sm">
+          <p className="text-sm leading-snug">
             <span className="font-medium">{req.startDate}</span>
             {req.startDate !== req.endDate && (
               <>
@@ -205,86 +185,73 @@ function RequestRow({
                 <span className="font-medium">{req.endDate}</span>
               </>
             )}
-            <span className="ml-2 text-muted-foreground">
-              · Buổi: {formatTimeOffSession(req.session)}
+            <span className="text-muted-foreground">
+              {" "}
+              · {formatTimeOffSession(req.session)} · {formatTimeOffReason(req.reason)}
+              {req.reason === "OTHER" && req.reasonOther ? ` — ${req.reasonOther}` : ""}
             </span>
-          </div>
-          <div className="text-sm text-muted-foreground">
-            Lý do: <span className="text-foreground">{formatTimeOffReason(req.reason)}</span>
-            {req.reason === "OTHER" && req.reasonOther ? ` — ${req.reasonOther}` : ""}
-          </div>
+          </p>
           {req.reason === "BUSINESS_TRIP" && req.businessTripSchedule?.length ? (
             <BusinessTripScheduleList items={req.businessTripSchedule} />
           ) : null}
           {req.details ? (
-            <div className="text-sm text-muted-foreground">
-              Chi tiết: <span className="text-foreground whitespace-pre-wrap">{req.details}</span>
-            </div>
+            <p className="line-clamp-2 text-xs text-muted-foreground whitespace-pre-wrap">
+              {req.details}
+            </p>
           ) : null}
-          <div className="text-xs text-muted-foreground">
-            Tạo lúc {new Date(req.createdAt).toLocaleString("vi-VN")}
-          </div>
-          {req.recipients && req.recipients.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-              <span>Người nhận:</span>
-              {req.recipients.map((r) => (
-                <span
-                  key={r.id}
-                  className="rounded-full bg-indigo-50 px-2 py-0.5 font-medium text-indigo-700 ring-1 ring-indigo-100"
-                >
-                  {recipientLabel(r)}
-                </span>
-              ))}
-            </div>
-          )}
-          {req.status !== "pending" && req.decidedByName && (
-            <div className="text-xs text-muted-foreground">
-              {req.status === "approved" ? "Duyệt bởi" : "Từ chối bởi"}{" "}
-              <span className="text-foreground">{req.decidedByName}</span>
-              {req.decidedAt && ` · ${new Date(req.decidedAt).toLocaleString("vi-VN")}`}
-              {req.decisionNote && (
-                <div className="mt-1 italic">"{req.decisionNote}"</div>
-              )}
-            </div>
-          )}
+          <p className="text-[11px] text-muted-foreground">
+            {new Date(req.createdAt).toLocaleString("vi-VN")}
+            {req.recipients && req.recipients.length > 0 && (
+              <>
+                {" · "}
+                {req.recipients.map((r) => r.fullName).join(", ")}
+              </>
+            )}
+            {req.status !== "pending" && req.decidedByName && (
+              <>
+                {" · "}
+                {req.status === "approved" ? "Duyệt" : "Từ chối"}: {req.decidedByName}
+              </>
+            )}
+          </p>
         </div>
         <StatusBadge status={req.status} />
       </div>
 
-      {(canDelete || canDecide) && (
-        <div className="mt-3 flex flex-wrap gap-2 border-t pt-3">
-          {canDelete && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onDelete(req.id)}
-              className="text-rose-700"
-            >
-              <Trash2 className="size-4" />
-              Xóa
-            </Button>
-          )}
+      {(canDelete || (canDecide && req.status === "pending")) && (
+        <div className="mt-2 flex flex-wrap gap-1.5 border-t border-border/60 pt-2">
           {canDecide && req.status === "pending" && (
             <>
               <Button
                 size="sm"
-                className="bg-emerald-600 text-white hover:bg-emerald-700"
+                className="h-8 bg-emerald-600 px-2.5 text-white hover:bg-emerald-700"
                 onClick={() => onDecide(req.id, "approved")}
               >
-                <CheckCircle2 className="size-4" />
+                <CheckCircle2 className="size-3.5" />
                 Duyệt
               </Button>
               <Button
                 size="sm"
-                variant="outline"
-                className="border-rose-300 text-rose-700 hover:bg-rose-50"
+                variant="ghost"
+                className="h-8 px-2.5 text-rose-700 hover:bg-rose-50"
                 onClick={() => onDecide(req.id, "rejected")}
               >
-                <XCircle className="size-4" />
+                <XCircle className="size-3.5" />
                 Từ chối
               </Button>
             </>
+          )}
+          {canDelete && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onDelete(req.id)}
+              className="h-8 px-2.5 text-muted-foreground hover:text-rose-700"
+            >
+              <Trash2 className="size-3.5" />
+              Xóa
+            </Button>
           )}
         </div>
       )}
@@ -338,6 +305,7 @@ export function TimeOffPage() {
   const [tplDraft, setTplDraft] = useState<MailTemplateConfig>({ ...DEFAULT_MAIL_TEMPLATE });
   const [tplSaving, setTplSaving] = useState(false);
   const [tplError, setTplError] = useState<string | null>(null);
+  const [draftExpanded, setDraftExpanded] = useState(false);
 
   const recipientQuery = useQuery({
     queryKey: ["time-off", "recipients"],
@@ -444,9 +412,10 @@ export function TimeOffPage() {
       if (job.status === "sent") {
         setOpen(false);
         setError(null);
+        setDraftExpanded(false);
         setMailSuccess(
-          `Đã gửi mail qua máy trạm tới: ${(job.sentTo ?? job.mail?.to ?? []).join(", ") || "HR"}.` +
-            (job.timeOffId ? ` Yêu cầu #${job.timeOffId} đã tạo.` : "")
+          `Đã gửi mail tới ${(job.sentTo ?? job.mail?.to ?? []).join(", ") || "HR"}` +
+            (job.timeOffId ? ` · #${job.timeOffId}` : "")
         );
         setForm({
           startDate: todayIso(),
@@ -580,6 +549,12 @@ export function TimeOffPage() {
   }
 
   useEffect(() => {
+    if (!mailSuccess) return;
+    const t = window.setTimeout(() => setMailSuccess(null), 4500);
+    return () => window.clearTimeout(t);
+  }, [mailSuccess]);
+
+  useEffect(() => {
     if (!open || hrRecipientIds.length === 0) return;
     // Chỉ prefill tất cả HR lần đầu mở form (khi chưa chọn ai)
     setForm((f) =>
@@ -598,15 +573,6 @@ export function TimeOffPage() {
       return { ...f, recipientIds: [...f.recipientIds, id] };
     });
   }
-
-  const selectedRecipientNames = useMemo(() => {
-    const recipients = recipientQuery.data ?? [];
-    const map = new Map(recipients.map((r) => [r.id, r]));
-    return form.recipientIds
-      .map((id) => map.get(id))
-      .filter((r): r is TimeOffRecipient => Boolean(r))
-      .map(recipientLabel);
-  }, [form.recipientIds, recipientQuery.data]);
 
   const regenerateDraft = useMemo(() => {
     return () => {
@@ -841,530 +807,559 @@ export function TimeOffPage() {
   }
 
   return (
-    <div className="w-full min-w-0 space-y-6 pb-28 md:pb-0">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="w-full min-w-0 space-y-4 pb-24 md:pb-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
-          <h1 className="flex flex-wrap items-center gap-2 text-xl font-bold sm:text-2xl">
-            <CalendarOff className="size-6 text-primary" /> Xin off
+          <h1 className="flex items-center gap-2 text-lg font-semibold sm:text-xl">
+            <CalendarOff className="size-5 text-primary" /> Xin off
           </h1>
-          <p className="text-muted-foreground">
-            {canViewAll
-              ? "Quản lý yêu cầu xin off của bản thân và toàn bộ nhân viên."
-              : "Gửi yêu cầu xin off của bạn tới HR."}
+          <p className="text-xs text-muted-foreground sm:text-sm">
+            {canViewAll ? "Quản lý yêu cầu xin off toàn công ty." : "Gửi yêu cầu xin off tới HR."}
           </p>
         </div>
         <Button
+          size="sm"
+          className="shrink-0"
           onClick={() =>
             setOpen((v) => {
               const next = !v;
-              if (next) setDraftDirty(false);
+              if (next) {
+                setDraftDirty(false);
+                setDraftExpanded(false);
+              }
               return next;
             })
           }
         >
-          <Plus className="size-4" />
-          {open ? "Đóng biểu mẫu" : "Tạo yêu cầu mới"}
+          {open ? (
+            <>
+              <X className="size-4" /> Đóng form
+            </>
+          ) : (
+            <>
+              <Plus className="size-4" /> Tạo yêu cầu mới
+            </>
+          )}
         </Button>
       </div>
 
-      <Card className="border-border/80 shadow-sm">
-        <CardContent className="pt-4 pb-4">
-          <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Bộ lọc &amp; báo cáo
-          </p>
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div
-              className={`grid flex-1 gap-3 sm:grid-cols-2 ${canViewAll ? "lg:grid-cols-3 lg:max-w-3xl" : "lg:max-w-md"}`}
-            >
-              <div className="grid gap-1.5">
-                <Label htmlFor="filter-from" className="text-sm">
-                  Từ ngày
-                </Label>
-                <Input
-                  id="filter-from"
-                  type="date"
-                  value={draftDateFrom}
-                  onChange={(e) => setDraftDateFrom(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="filter-to" className="text-sm">
-                  Đến ngày
-                </Label>
-                <Input
-                  id="filter-to"
-                  type="date"
-                  value={draftDateTo}
-                  onChange={(e) => setDraftDateTo(e.target.value)}
-                />
-              </div>
-              {canViewAll && (
-                <div className="grid gap-1.5 sm:col-span-2 lg:col-span-1">
-                  <Label htmlFor="filter-user" className="text-sm">
-                    Nhân viên
-                  </Label>
-                  <select
-                    id="filter-user"
-                    value={filterUserId}
-                    onChange={(e) => setFilterUserId(e.target.value)}
-                    disabled={usersQuery.isLoading}
-                    className="border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                  >
-                    <option value="">Tất cả nhân viên</option>
-                    {userFilterOptions.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+      <section className="rounded-lg border border-border/80 bg-card px-3 py-2.5">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Bộ lọc
+        </p>
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+          <div
+            className={`grid flex-1 gap-2 sm:grid-cols-2 ${canViewAll ? "lg:grid-cols-3 lg:max-w-2xl" : "lg:max-w-sm"}`}
+          >
+            <div className="grid gap-1">
+              <Label htmlFor="filter-from" className="text-xs">
+                Từ ngày
+              </Label>
+              <Input
+                id="filter-from"
+                type="date"
+                className="h-8"
+                value={draftDateFrom}
+                onChange={(e) => setDraftDateFrom(e.target.value)}
+              />
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button type="button" size="sm" onClick={handleApplyDateFilter}>
-                Áp dụng
-              </Button>
+            <div className="grid gap-1">
+              <Label htmlFor="filter-to" className="text-xs">
+                Đến ngày
+              </Label>
+              <Input
+                id="filter-to"
+                type="date"
+                className="h-8"
+                value={draftDateTo}
+                onChange={(e) => setDraftDateTo(e.target.value)}
+              />
+            </div>
+            {canViewAll && (
+              <div className="grid gap-1 sm:col-span-2 lg:col-span-1">
+                <Label htmlFor="filter-user" className="text-xs">
+                  Nhân viên
+                </Label>
+                <select
+                  id="filter-user"
+                  value={filterUserId}
+                  onChange={(e) => setFilterUserId(e.target.value)}
+                  disabled={usersQuery.isLoading}
+                  className="border-input h-8 w-full min-w-0 rounded-md border bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50"
+                >
+                  <option value="">Tất cả</option>
+                  {userFilterOptions.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            <Button type="button" size="sm" className="h-8" onClick={handleApplyDateFilter}>
+              Áp dụng
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-8"
+              onClick={handleClearDateFilter}
+              disabled={
+                !draftDateFrom &&
+                !draftDateTo &&
+                !appliedDateFrom &&
+                !appliedDateTo &&
+                !filterUserId
+              }
+            >
+              Xóa lọc
+            </Button>
+            {canViewAll && (
               <Button
                 type="button"
                 size="sm"
-                variant="outline"
-                onClick={handleClearDateFilter}
-                disabled={
-                  !draftDateFrom &&
-                  !draftDateTo &&
-                  !appliedDateFrom &&
-                  !appliedDateTo &&
-                  !filterUserId
-                }
+                variant="ghost"
+                className="h-8"
+                onClick={handleExportXlsx}
+                disabled={allQuery.isLoading}
               >
-                Xóa lọc
+                <Download className="size-3.5" />
+                Excel
               </Button>
-              {canViewAll && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={handleExportXlsx}
-                  disabled={allQuery.isLoading}
-                >
-                  <Download className="size-4" />
-                  Tải Excel
-                </Button>
-              )}
-            </div>
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Lọc danh sách theo <span className="font-medium">ngày tạo</span> yêu cầu.
-            {canViewAll
-              ? " Excel xuất theo ngày bắt đầu/kết thúc off trong khoảng đã chọn."
-              : ""}
-            {(appliedDateFrom || appliedDateTo || filterUserId) && (
-              <span className="ml-1 text-foreground">
-                Đang lọc:
-                {(appliedDateFrom || appliedDateTo) && (
-                  <span>
-                    {" "}
-                    ngày tạo {appliedDateFrom || "…"} → {appliedDateTo || "…"}
-                  </span>
-                )}
-                {filterUserId && (
-                  <span>
-                    {(appliedDateFrom || appliedDateTo) ? " ·" : ""} nhân viên:{" "}
-                    {filterUserName ?? "…"}
-                  </span>
-                )}
-              </span>
             )}
+          </div>
+        </div>
+        {(appliedDateFrom || appliedDateTo || filterUserId) && (
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
+            Đang lọc
+            {(appliedDateFrom || appliedDateTo) &&
+              `: ${appliedDateFrom || "…"} → ${appliedDateTo || "…"}`}
+            {filterUserId && ` · ${filterUserName ?? "…"}`}
           </p>
-          {filterError && (
-            <p className="mt-2 text-sm text-destructive" role="alert">
-              {filterError}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {mailSuccess && (
-        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          {mailSuccess}
-        </p>
-      )}
+        )}
+        {filterError && (
+          <p className="mt-1.5 text-xs text-destructive" role="alert">
+            {filterError}
+          </p>
+        )}
+      </section>
 
       {open && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Biểu mẫu xin off</CardTitle>
-            <CardDescription>HR sẽ nhận thông báo ngay khi bạn gửi yêu cầu.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <p className="rounded-md bg-rose-50 p-2 text-sm text-rose-700">{error}</p>
-              )}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="grid gap-2">
-                  <Label htmlFor="startDate">Ngày bắt đầu</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={form.startDate}
-                    onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="endDate">Ngày kết thúc</Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={form.endDate}
-                    onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
-                  />
-                </div>
-              </div>
+        <section className="rounded-lg border border-border/80 bg-card">
+          <div className="border-b border-border/60 px-3 py-2">
+            <h2 className="text-sm font-semibold">Tạo yêu cầu</h2>
+            <p className="text-[11px] text-muted-foreground">
+              Mail qua máy trạm · yêu cầu tạo sau khi gửi thành công
+            </p>
+          </div>
+          <form onSubmit={handleSubmit} className="space-y-3 px-3 py-3">
+            {error && (
+              <p className="rounded-md bg-rose-50 px-2.5 py-1.5 text-xs text-rose-700">{error}</p>
+            )}
 
-              <div className="grid gap-2">
-                <Label>
-                  Buổi nghỉ{" "}
-                  <span className="text-xs font-normal text-muted-foreground">
-                    (đang chọn: {formatTimeOffSession(form.session)})
-                  </span>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid gap-1">
+                <Label htmlFor="startDate" className="text-xs">
+                  Ngày bắt đầu
                 </Label>
-                <div role="radiogroup" aria-label="Buổi nghỉ" className="grid grid-cols-3 gap-2">
-                  {SESSION_OPTIONS.map((opt) => {
-                    const active = form.session === opt.value;
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={active}
-                        onClick={() => setForm((f) => ({ ...f, session: opt.value }))}
-                        className={`relative rounded-lg border p-2 text-sm font-semibold transition ${
-                          active
-                            ? "border-indigo-600 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-600"
-                            : "border-slate-200 bg-background hover:bg-accent"
-                        }`}
-                      >
-                        {active && (
-                          <span className="absolute right-1.5 top-1.5 inline-flex size-4 items-center justify-center rounded-full bg-indigo-600 text-white">
-                            <Check className="size-2.5" />
-                          </span>
-                        )}
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
+                <Input
+                  id="startDate"
+                  type="date"
+                  className="h-8"
+                  value={form.startDate}
+                  onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
+                />
               </div>
-
-              <div className="grid gap-2">
-                <Label>
-                  Lý do{" "}
-                  <span className="text-xs font-normal text-muted-foreground">
-                    (đang chọn: {formatTimeOffReason(form.reason)})
-                  </span>
+              <div className="grid gap-1">
+                <Label htmlFor="endDate" className="text-xs">
+                  Ngày kết thúc
                 </Label>
-                <div role="radiogroup" aria-label="Lý do" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {REASON_OPTIONS.map((opt) => {
-                    const active = form.reason === opt.value;
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={active}
-                        onClick={() => selectReason(opt.value)}
-                        className={`relative rounded-lg border p-2 text-sm font-semibold transition ${
-                          active
-                            ? "border-emerald-600 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-600"
-                            : "border-slate-200 bg-background hover:bg-accent"
-                        }`}
-                      >
-                        {active && (
-                          <span className="absolute right-1.5 top-1.5 inline-flex size-4 items-center justify-center rounded-full bg-emerald-600 text-white">
-                            <Check className="size-2.5" />
-                          </span>
-                        )}
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
+                <Input
+                  id="endDate"
+                  type="date"
+                  className="h-8"
+                  value={form.endDate}
+                  onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
+                />
               </div>
+            </div>
 
-              {form.reason === "BUSINESS_TRIP" && (
-                <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50/40 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <Label className="text-base font-semibold">Lịch trình công tác</Label>
-                    <Button type="button" variant="outline" size="sm" onClick={addScheduleRow}>
-                      <Plus className="size-4" />
-                      Thêm lịch trình
-                    </Button>
-                  </div>
-                  {form.businessTripSchedule.length === 0 ? (
-                    <p className="text-sm text-amber-800">Cần ít nhất 1 dòng lịch trình.</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {form.businessTripSchedule.map((row, index) => (
-                        <div
-                          key={index}
-                          className="space-y-3 rounded-lg border border-border bg-background p-3"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-sm font-medium">Dòng {index + 1}</span>
-                            {form.businessTripSchedule.length > 1 && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="text-rose-700"
-                                onClick={() => removeScheduleRow(index)}
-                              >
-                                <Trash2 className="size-4" />
-                                Xóa
-                              </Button>
-                            )}
-                          </div>
-                          <div className="grid gap-3 sm:grid-cols-2">
-                            <div className="grid gap-2">
-                              <Label htmlFor={`trip-start-${index}`}>Ngày bắt đầu</Label>
-                              <Input
-                                id={`trip-start-${index}`}
-                                type="date"
-                                value={row.startDate}
-                                onChange={(e) =>
-                                  updateScheduleRow(index, { startDate: e.target.value })
-                                }
-                              />
-                            </div>
-                            <div className="grid gap-2">
-                              <Label htmlFor={`trip-end-${index}`}>Ngày kết thúc</Label>
-                              <Input
-                                id={`trip-end-${index}`}
-                                type="date"
-                                value={row.endDate}
-                                onChange={(e) =>
-                                  updateScheduleRow(index, { endDate: e.target.value })
-                                }
-                              />
-                            </div>
-                            <div className="grid gap-2 sm:col-span-2">
-                              <Label htmlFor={`trip-staff-${index}`}>Nhân sự công tác</Label>
-                              <Input
-                                id={`trip-staff-${index}`}
-                                value={row.staff}
-                                onChange={(e) => updateScheduleRow(index, { staff: e.target.value })}
-                                placeholder="Ví dụ: Anh A, chị B"
-                              />
-                            </div>
-                            <div className="grid gap-2 sm:col-span-2">
-                              <Label htmlFor={`trip-location-${index}`}>Địa điểm công tác</Label>
-                              <Input
-                                id={`trip-location-${index}`}
-                                value={row.location}
-                                onChange={(e) =>
-                                  updateScheduleRow(index, { location: e.target.value })
-                                }
-                                placeholder="Ví dụ: Hà Nội, TP.HCM"
-                              />
-                            </div>
-                            <div className="grid gap-2 sm:col-span-2">
-                              <Label htmlFor={`trip-desc-${index}`}>Nội dung công tác</Label>
-                              <Textarea
-                                id={`trip-desc-${index}`}
-                                value={row.description}
-                                onChange={(e) =>
-                                  updateScheduleRow(index, { description: e.target.value })
-                                }
-                                placeholder="Mục đích, công việc cụ thể..."
-                                rows={2}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+            <div className="grid gap-1">
+              <Label className="text-xs">Buổi</Label>
+              <div role="radiogroup" className="flex flex-wrap gap-1.5">
+                {SESSION_OPTIONS.map((opt) => {
+                  const active = form.session === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => setForm((f) => ({ ...f, session: opt.value }))}
+                      className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                        active
+                          ? "border-indigo-600 bg-indigo-50 text-indigo-700"
+                          : "border-border bg-background text-muted-foreground hover:bg-accent"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="grid gap-1">
+              <Label className="text-xs">Lý do</Label>
+              <div role="radiogroup" className="flex flex-wrap gap-1.5">
+                {REASON_OPTIONS.map((opt) => {
+                  const active = form.reason === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => selectReason(opt.value)}
+                      className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                        active
+                          ? "border-emerald-600 bg-emerald-50 text-emerald-800"
+                          : "border-border bg-background text-muted-foreground hover:bg-accent"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {form.reason === "BUSINESS_TRIP" && (
+              <div className="space-y-2 rounded-md border border-amber-200/80 bg-amber-50/30 p-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs font-semibold">Lịch trình công tác</Label>
+                  <Button type="button" variant="ghost" size="sm" className="h-7" onClick={addScheduleRow}>
+                    <Plus className="size-3.5" /> Thêm
+                  </Button>
                 </div>
-              )}
-
-              {form.reason !== "BUSINESS_TRIP" && (
-                <div className="grid gap-2">
-                  <Label htmlFor="timeoff-details">Thông tin thêm (tùy chọn)</Label>
-                  <Textarea
-                    id="timeoff-details"
-                    value={form.details}
-                    onChange={(e) => setForm((f) => ({ ...f, details: e.target.value }))}
-                    placeholder="Ghi chú cụ thể: lý do chi tiết, công việc bàn giao, liên hệ khẩn..."
-                    rows={3}
-                  />
-                </div>
-              )}
-
-              {form.reason === "OTHER" && (
-                <div className="grid gap-2">
-                  <Label htmlFor="reasonOther">Mô tả lý do</Label>
-                  <Textarea
-                    id="reasonOther"
-                    value={form.reasonOther}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, reasonOther: e.target.value }))
-                    }
-                    placeholder="Nhập lý do cụ thể"
-                    rows={3}
-                  />
-                </div>
-              )}
-
-              <div className="grid gap-2">
-                <Label>
-                  Người nhận HR{" "}
-                  <span className="text-xs font-normal text-muted-foreground">
-                    (bấm để chọn / bỏ chọn)
-                  </span>
-                </Label>
-                {recipientQuery.isLoading ? (
-                  <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-                    Đang tải danh sách HR...
-                  </div>
-                ) : (recipientQuery.data ?? []).length === 0 ? (
-                  <div className="rounded-lg border border-dashed p-3 text-sm text-amber-700">
-                    Chưa có tài khoản HR active. Tạo user HR (có email) trong mục Users.
-                  </div>
+                {form.businessTripSchedule.length === 0 ? (
+                  <p className="text-xs text-amber-800">Cần ít nhất 1 dòng.</p>
                 ) : (
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {(recipientQuery.data ?? []).map((recipient) => {
-                      const selected = form.recipientIds.includes(recipient.id);
-                      return (
-                        <button
-                          key={recipient.id}
-                          type="button"
-                          onClick={() => toggleRecipient(recipient.id)}
-                          className={
-                            selected
-                              ? "relative rounded-lg border border-violet-200 bg-violet-50/60 p-3 text-left transition hover:bg-violet-50"
-                              : "relative rounded-lg border border-gray-200 bg-white p-3 text-left transition hover:border-violet-200 hover:bg-violet-50/40"
-                          }
-                        >
-                          {selected && (
-                            <span className="absolute right-2 top-2 inline-flex size-5 items-center justify-center rounded-full bg-violet-600 text-white">
-                              <Check className="size-3" />
-                            </span>
+                  <div className="space-y-2">
+                    {form.businessTripSchedule.map((row, index) => (
+                      <div key={index} className="space-y-2 rounded-md border bg-background p-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-medium text-muted-foreground">
+                            Dòng {index + 1}
+                          </span>
+                          {form.businessTripSchedule.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-rose-700"
+                              onClick={() => removeScheduleRow(index)}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
                           )}
-                          <div className="pr-6 text-sm font-semibold">{recipient.fullName}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {recipient.username} · HR
-                            {recipient.email ? ` · ${recipient.email}` : " · chưa có email"}
-                          </div>
-                        </button>
-                      );
-                    })}
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <Input
+                            type="date"
+                            className="h-8"
+                            value={row.startDate}
+                            onChange={(e) => updateScheduleRow(index, { startDate: e.target.value })}
+                          />
+                          <Input
+                            type="date"
+                            className="h-8"
+                            value={row.endDate}
+                            onChange={(e) => updateScheduleRow(index, { endDate: e.target.value })}
+                          />
+                          <Input
+                            className="h-8 sm:col-span-2"
+                            value={row.staff}
+                            onChange={(e) => updateScheduleRow(index, { staff: e.target.value })}
+                            placeholder="Nhân sự"
+                          />
+                          <Input
+                            className="h-8 sm:col-span-2"
+                            value={row.location}
+                            onChange={(e) => updateScheduleRow(index, { location: e.target.value })}
+                            placeholder="Địa điểm"
+                          />
+                          <Textarea
+                            className="sm:col-span-2"
+                            rows={2}
+                            value={row.description}
+                            onChange={(e) =>
+                              updateScheduleRow(index, { description: e.target.value })
+                            }
+                            placeholder="Nội dung công tác"
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
-                <p className="text-xs text-muted-foreground">
-                  Sẽ gửi thông báo & email tới:{" "}
-                  {selectedRecipientNames.length > 0
-                    ? selectedRecipientNames.join(", ")
-                    : "chưa chọn HR"}
-                </p>
               </div>
+            )}
 
-              <div className="relative z-10 space-y-3 rounded-xl border border-sky-200 bg-sky-50/40 p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-semibold text-sky-950">
-                      Bản nháp email (xem trước khi gửi)
-                    </h3>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      Tự cập nhật theo form + mẫu của bạn. Có thể sửa tay trước khi gửi.
-                      {draftDirty ? " (đang giữ bản chỉnh sửa)" : ""}
-                    </p>
-                  </div>
-                  <div className="relative z-20 flex shrink-0 flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="pointer-events-auto bg-white"
-                      onClick={openTemplateModal}
-                    >
-                      <Pencil className="size-3.5" />
-                      Chỉnh mẫu
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="pointer-events-auto bg-white"
-                      onClick={handleRegenerateFromTemplate}
-                    >
-                      <RefreshCw className="size-3.5" />
-                      Tạo lại từ mẫu
-                    </Button>
-                  </div>
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="draft-subject">Tiêu đề</Label>
-                  <Input
-                    id="draft-subject"
-                    value={draftSubject}
-                    onChange={(e) => {
-                      setDraftDirty(true);
-                      setDraftSubject(e.target.value);
-                    }}
-                  />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="draft-body">Nội dung</Label>
-                  <Textarea
-                    id="draft-body"
-                    rows={8}
-                    className="font-mono text-sm leading-relaxed"
-                    value={draftText}
-                    onChange={(e) => {
-                      setDraftDirty(true);
-                      setDraftText(e.target.value);
-                    }}
-                  />
-                </div>
+            {form.reason !== "BUSINESS_TRIP" && (
+              <div className="grid gap-1">
+                <Label htmlFor="timeoff-details" className="text-xs">
+                  Thông tin thêm
+                </Label>
+                <Textarea
+                  id="timeoff-details"
+                  value={form.details}
+                  onChange={(e) => setForm((f) => ({ ...f, details: e.target.value }))}
+                  placeholder="Ghi chú (tuỳ chọn)"
+                  rows={2}
+                />
               </div>
+            )}
 
-              <p className="text-xs text-muted-foreground rounded-md border border-dashed px-3 py-2">
-                Mail được gửi qua <strong>máy trạm</strong> (SMTP local). Yêu cầu xin off chỉ tạo
-                trên TaskMate sau khi gửi mail thành công. Lần đầu máy trạm chưa có account của bạn
-                sẽ hỏi email/mật khẩu webmail.
-              </p>
+            {form.reason === "OTHER" && (
+              <div className="grid gap-1">
+                <Label htmlFor="reasonOther" className="text-xs">
+                  Mô tả lý do
+                </Label>
+                <Textarea
+                  id="reasonOther"
+                  value={form.reasonOther}
+                  onChange={(e) => setForm((f) => ({ ...f, reasonOther: e.target.value }))}
+                  placeholder="Nhập lý do cụ thể"
+                  rows={2}
+                />
+              </div>
+            )}
 
-              {jobStatusLabel && (
-                <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">
-                  {jobStatusLabel}
-                </p>
+            <div className="grid gap-1.5">
+              <Label className="text-xs">
+                Người nhận HR{" "}
+                <span className="font-normal text-muted-foreground">
+                  ({form.recipientIds.length} đã chọn)
+                </span>
+              </Label>
+              {recipientQuery.isLoading ? (
+                <p className="text-xs text-muted-foreground">Đang tải HR…</p>
+              ) : (recipientQuery.data ?? []).length === 0 ? (
+                <p className="text-xs text-amber-700">Chưa có HR active.</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {(recipientQuery.data ?? []).map((recipient) => {
+                    const selected = form.recipientIds.includes(recipient.id);
+                    return (
+                      <label
+                        key={recipient.id}
+                        className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition ${
+                          selected
+                            ? "border-violet-500 bg-violet-50 text-violet-900"
+                            : "border-border bg-background text-muted-foreground hover:bg-accent"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="size-3.5 accent-violet-600"
+                          checked={selected}
+                          onChange={() => toggleRecipient(recipient.id)}
+                        />
+                        <span className="font-medium">{recipient.fullName}</span>
+                      </label>
+                    );
+                  })}
+                </div>
               )}
+            </div>
 
-              <div className="flex gap-2">
-                <Button
-                  type="submit"
-                  disabled={createMutation.isPending || isWakingApi || isSubmittingMailJob}
-                >
-                  {isWakingApi
-                    ? "Đang kết nối server..."
-                    : createMutation.isPending || isSubmittingMailJob
-                      ? "Đang gửi qua máy trạm..."
-                      : "Gửi yêu cầu"}
-                </Button>
-                <Button
+            <div className="rounded-md border border-sky-200/80 bg-sky-50/30">
+              <div className="flex flex-wrap items-center justify-between gap-2 px-2.5 py-2">
+                <button
                   type="button"
-                  variant="ghost"
-                  onClick={() => setOpen(false)}
-                  disabled={createMutation.isPending || isWakingApi || isSubmittingMailJob}
+                  className="min-w-0 flex-1 text-left"
+                  onClick={() => setDraftExpanded((v) => !v)}
                 >
-                  Huỷ
-                </Button>
+                  <p className="text-xs font-semibold text-sky-950">Bản nháp email</p>
+                  <p className="truncate text-[11px] text-muted-foreground">
+                    {draftSubject || "Chưa có tiêu đề"}
+                    {draftDirty ? " · đã sửa" : ""}
+                  </p>
+                </button>
+                <div className="flex shrink-0 gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2"
+                    onClick={openTemplateModal}
+                  >
+                    <Pencil className="size-3.5" />
+                    Mẫu
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2"
+                    onClick={handleRegenerateFromTemplate}
+                  >
+                    <RefreshCw className="size-3.5" />
+                    Tạo lại
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2"
+                    onClick={() => setDraftExpanded((v) => !v)}
+                  >
+                    {draftExpanded ? "Thu gọn" : "Sửa"}
+                  </Button>
+                </div>
               </div>
-            </form>
-          </CardContent>
-        </Card>
+              {draftExpanded && (
+                <div className="space-y-2 border-t border-sky-100 px-2.5 py-2">
+                  <div className="grid gap-1">
+                    <Label htmlFor="draft-subject" className="text-xs">
+                      Tiêu đề
+                    </Label>
+                    <Input
+                      id="draft-subject"
+                      className="h-8"
+                      value={draftSubject}
+                      onChange={(e) => {
+                        setDraftDirty(true);
+                        setDraftSubject(e.target.value);
+                      }}
+                    />
+                  </div>
+                  <div className="grid gap-1">
+                    <Label htmlFor="draft-body" className="text-xs">
+                      Nội dung
+                    </Label>
+                    <Textarea
+                      id="draft-body"
+                      rows={5}
+                      className="font-mono text-xs leading-relaxed"
+                      value={draftText}
+                      onChange={(e) => {
+                        setDraftDirty(true);
+                        setDraftText(e.target.value);
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {jobStatusLabel && (
+              <p className="rounded-md border border-sky-100 bg-sky-50/80 px-2.5 py-1.5 text-xs text-sky-900">
+                {jobStatusLabel}
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <Button
+                type="submit"
+                className="min-w-[9rem]"
+                disabled={createMutation.isPending || isWakingApi || isSubmittingMailJob}
+              >
+                {isWakingApi
+                  ? "Đang kết nối…"
+                  : createMutation.isPending || isSubmittingMailJob
+                    ? "Đang gửi…"
+                    : "Gửi yêu cầu"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setOpen(false)}
+                disabled={createMutation.isPending || isWakingApi || isSubmittingMailJob}
+              >
+                Huỷ
+              </Button>
+            </div>
+          </form>
+        </section>
       )}
+
+      <section className="rounded-lg border border-border/80 bg-card">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 px-3 py-2">
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold">Danh sách yêu cầu</h2>
+            <p className="text-[11px] text-muted-foreground">
+              {listLoading
+                ? "Đang tải…"
+                : displayList.length > 0
+                  ? `${displayList.length} yêu cầu`
+                  : baseList.length > 0
+                    ? "Không có yêu cầu trong bộ lọc."
+                    : canViewAll
+                      ? "Chưa có yêu cầu."
+                      : "Bạn chưa có yêu cầu."}
+            </p>
+          </div>
+          {canManageDeletes && deletableItems.length > 0 && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-8 shrink-0 text-rose-700 hover:bg-rose-50"
+              disabled={isDeletingAll || cancelMutation.isPending}
+              onClick={() => setDeleteConfirm({ kind: "all" })}
+            >
+              <Trash2 className="size-3.5" />
+              {isDeletingAll ? "Đang xóa…" : `Xóa tất cả (${deletableItems.length})`}
+            </Button>
+          )}
+        </div>
+        <div className="space-y-2 p-2.5">
+          {listLoading ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">Đang tải…</p>
+          ) : displayList.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">Không có yêu cầu.</p>
+          ) : (
+            displayList.map((req) => (
+              <RequestRow
+                key={req.id}
+                req={req}
+                showOwner={canViewAll}
+                canDelete={canManageDeletes}
+                canDecide={canViewAll}
+                onDelete={(id) => setDeleteConfirm({ kind: "one", id })}
+                onDecide={(id, status) => decideMutation.mutate({ id, status })}
+              />
+            ))
+          )}
+        </div>
+      </section>
+
+      {mailSuccess &&
+        createPortal(
+          <div
+            role="status"
+            className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-3 right-3 z-[120] mx-auto max-w-md md:bottom-4 md:left-auto md:right-4"
+          >
+            <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-white px-3 py-2.5 text-emerald-900 shadow-lg ring-1 ring-emerald-100">
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+              <p className="min-w-0 flex-1 text-xs sm:text-sm">{mailSuccess}</p>
+              <button
+                type="button"
+                className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                onClick={() => setMailSuccess(null)}
+                aria-label="Đóng"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
 
       {credentialsJobId &&
         createPortal(
@@ -1494,16 +1489,16 @@ export function TimeOffPage() {
               role="dialog"
               aria-modal="true"
               aria-labelledby="tpl-modal-title"
-              className="relative z-[111] flex max-h-[min(92vh,900px)] w-full max-w-[560px] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+              className="relative z-[111] flex max-h-[min(90vh,720px)] w-full max-w-[520px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl"
             >
-              <div className="flex shrink-0 items-start justify-between gap-3 border-b border-gray-100 px-5 py-4 sm:px-6">
-                <div className="min-w-0 space-y-1">
-                  <h2 id="tpl-modal-title" className="text-lg font-semibold text-gray-900">
+              <div className="flex shrink-0 items-start justify-between gap-3 border-b border-gray-100 px-4 py-3">
+                <div className="min-w-0 space-y-0.5">
+                  <h2 id="tpl-modal-title" className="text-base font-semibold text-gray-900">
                     Chỉnh mẫu email
                   </h2>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-[11px] leading-snug text-muted-foreground">
                     Placeholder:{" "}
-                    <code className="text-[11px]">
+                    <code className="text-[10px]">
                       {"{{fullName}} {{department}} {{actionPhrase}} {{detailsClause}} {{datePhrase}} {{scheduleBlock}}"}
                     </code>
                   </p>
@@ -1518,81 +1513,98 @@ export function TimeOffPage() {
                 </Button>
               </div>
 
-              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4 sm:px-6">
+              <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-4 py-3">
                 {tplError && (
-                  <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{tplError}</p>
+                  <p className="rounded-md bg-rose-50 px-2.5 py-1.5 text-xs text-rose-700">{tplError}</p>
                 )}
-                <div className="grid gap-1.5">
-                  <Label htmlFor="tpl-department">Phòng ban ({"{{department}}"})</Label>
+                <div className="grid gap-1">
+                  <Label htmlFor="tpl-department" className="text-xs">
+                    Phòng ban ({"{{department}}"})
+                  </Label>
                   <Input
                     id="tpl-department"
+                    className="h-8"
                     value={tplDraft.department}
                     onChange={(e) => setTplDraft((t) => ({ ...t, department: e.target.value }))}
                   />
                 </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="tpl-greeting">Lời chào</Label>
+                <div className="grid gap-1">
+                  <Label htmlFor="tpl-greeting" className="text-xs">
+                    Lời chào
+                  </Label>
                   <Input
                     id="tpl-greeting"
+                    className="h-8"
                     value={tplDraft.greeting}
                     onChange={(e) => setTplDraft((t) => ({ ...t, greeting: e.target.value }))}
                   />
                 </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="tpl-body">Thân mail (nghỉ / WFH / đi trễ…)</Label>
+                <div className="grid gap-1">
+                  <Label htmlFor="tpl-body" className="text-xs">
+                    Thân mail (nghỉ / WFH / đi trễ…)
+                  </Label>
                   <Textarea
                     id="tpl-body"
-                    rows={4}
-                    className="font-mono text-sm"
+                    rows={3}
+                    className="font-mono text-xs"
                     value={tplDraft.bodyTemplate}
                     onChange={(e) => setTplDraft((t) => ({ ...t, bodyTemplate: e.target.value }))}
                   />
                 </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="tpl-biz-greeting">Lời chào (công tác)</Label>
+                <div className="grid gap-1">
+                  <Label htmlFor="tpl-biz-greeting" className="text-xs">
+                    Lời chào (công tác)
+                  </Label>
                   <Input
                     id="tpl-biz-greeting"
+                    className="h-8"
                     value={tplDraft.businessGreeting}
                     onChange={(e) =>
                       setTplDraft((t) => ({ ...t, businessGreeting: e.target.value }))
                     }
                   />
                 </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="tpl-biz-body">Thân mail (công tác)</Label>
+                <div className="grid gap-1">
+                  <Label htmlFor="tpl-biz-body" className="text-xs">
+                    Thân mail (công tác)
+                  </Label>
                   <Textarea
                     id="tpl-biz-body"
-                    rows={4}
-                    className="font-mono text-sm"
+                    rows={3}
+                    className="font-mono text-xs"
                     value={tplDraft.businessBodyTemplate}
                     onChange={(e) =>
                       setTplDraft((t) => ({ ...t, businessBodyTemplate: e.target.value }))
                     }
                   />
                 </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="tpl-closing">Chữ ký / kết</Label>
+                <div className="grid gap-1">
+                  <Label htmlFor="tpl-closing" className="text-xs">
+                    Chữ ký / kết
+                  </Label>
                   <Input
                     id="tpl-closing"
+                    className="h-8"
                     value={tplDraft.closing}
                     onChange={(e) => setTplDraft((t) => ({ ...t, closing: e.target.value }))}
                   />
                 </div>
               </div>
 
-              <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <Button
                   type="button"
                   variant="ghost"
+                  size="sm"
                   onClick={() => setTplDraft({ ...DEFAULT_MAIL_TEMPLATE })}
                 >
                   Khôi phục mặc định
                 </Button>
                 <div className="flex flex-col-reverse gap-2 sm:flex-row">
-                  <Button type="button" variant="outline" onClick={() => setTplModalOpen(false)}>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setTplModalOpen(false)}>
                     Hủy
                   </Button>
-                  <Button type="button" disabled={tplSaving} onClick={() => void saveTemplateAndApply()}>
+                  <Button type="button" size="sm" disabled={tplSaving} onClick={() => void saveTemplateAndApply()}>
                     {tplSaving ? "Đang lưu…" : "Lưu mẫu & cập nhật nháp"}
                   </Button>
                 </div>
@@ -1601,65 +1613,6 @@ export function TimeOffPage() {
           </div>,
           document.body
         )}
-
-      <Card>
-        <CardHeader className="space-y-3 pb-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0 space-y-1">
-              <CardTitle>Danh sách yêu cầu nghỉ phép</CardTitle>
-              <CardDescription>
-                {listLoading
-                  ? "Đang tải..."
-                  : displayList.length > 0
-                    ? `${displayList.length} yêu cầu${
-                        appliedDateFrom || appliedDateTo || filterUserId ? " (đã lọc)" : ""
-                      }`
-                    : baseList.length > 0
-                      ? "Không có yêu cầu trong khoảng ngày đã chọn."
-                      : canViewAll
-                        ? "Chưa có yêu cầu nào."
-                        : "Bạn chưa có yêu cầu nào."}
-              </CardDescription>
-            </div>
-            {canManageDeletes && deletableItems.length > 0 && (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="shrink-0 text-rose-700 hover:bg-rose-50"
-                disabled={isDeletingAll || cancelMutation.isPending}
-                onClick={() => setDeleteConfirm({ kind: "all" })}
-              >
-                <Trash2 className="size-4" />
-                {isDeletingAll ? "Đang xóa..." : `Xóa tất cả (${deletableItems.length})`}
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          {listLoading ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">Đang tải...</div>
-          ) : displayList.length === 0 ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              Không có yêu cầu phù hợp.
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {displayList.map((req) => (
-                <RequestRow
-                  key={req.id}
-                  req={req}
-                  showOwner={canViewAll}
-                  canDelete={canManageDeletes}
-                  canDecide={canViewAll}
-                  onDelete={(id) => setDeleteConfirm({ kind: "one", id })}
-                  onDecide={(id, status) => decideMutation.mutate({ id, status })}
-                />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       <ConfirmDialog
         open={deleteConfirm !== null}
