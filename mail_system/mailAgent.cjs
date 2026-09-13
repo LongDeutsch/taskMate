@@ -158,25 +158,46 @@ async function sendSmtp({ from, password, to, subject, text, html }) {
   }
 }
 
-/** Kiểm tra đăng nhập SMTP trước khi ghi đè accounts.json (hard-timeout tránh treo khi sai mật khẩu). */
-async function verifySmtp(email, password) {
-  const transporter = nodemailer.createTransport({
+function normalizeSmtpEmail(email) {
+  const s = String(email ?? "").trim();
+  const i = s.lastIndexOf("@");
+  if (i <= 0) return s.toLowerCase();
+  // Giữ nguyên local-part, chỉ lower domain (một số server phân biệt hoa/thường local)
+  return `${s.slice(0, i)}@${s.slice(i + 1).toLowerCase()}`;
+}
+
+function smtpAuthUsers(email) {
+  const full = normalizeSmtpEmail(email);
+  const local = full.includes("@") ? full.split("@")[0] : full;
+  const users = [full];
+  if (local && local !== full) users.push(local);
+  return [...new Set(users.filter(Boolean))];
+}
+
+function createSmtpTransport(user, pass, { port = SMTP_PORT, secure = true } = {}) {
+  return nodemailer.createTransport({
     host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: true,
-    auth: { user: email, pass: password },
+    port,
+    secure,
+    requireTLS: !secure,
+    auth: { user, pass },
+    authMethod: "LOGIN",
     connectionTimeout: 12_000,
     greetingTimeout: 12_000,
     socketTimeout: 15_000,
     tls: { rejectUnauthorized: false },
   });
+}
+
+async function tryVerifyOnce(user, pass, transportOpts) {
+  const transporter = createSmtpTransport(user, pass, transportOpts);
   let timer;
   try {
     await Promise.race([
       transporter.verify(),
       new Promise((_, reject) => {
         timer = setTimeout(
-          () => reject(new Error("Timeout xác thực SMTP (sai mật khẩu hoặc máy chủ không phản hồi)")),
+          () => reject(new Error("Timeout xác thực SMTP")),
           18_000
         );
       }),
@@ -188,8 +209,61 @@ async function verifySmtp(email, password) {
   }
 }
 
+/**
+ * Xác thực SMTP trước khi ghi accounts.json.
+ * Thử full email / local-part, password as-is / trim; port 587 chỉ khi không phải lỗi auth.
+ */
+async function verifySmtp(email, password) {
+  const rawPass = String(password ?? "");
+  const passwords = [...new Set([rawPass, rawPass.trim()].filter((p) => p.length > 0))];
+  const users = smtpAuthUsers(email);
+  const port465 = { port: SMTP_PORT || 465, secure: (SMTP_PORT || 465) === 465 };
+
+  let lastErr = null;
+  let authRejected = false;
+
+  for (const user of users) {
+    for (const pass of passwords) {
+      try {
+        await tryVerifyOnce(user, pass, port465);
+        console.info(
+          "[mail_system] SMTP ok",
+          `user=${user}`,
+          `port=${port465.port}`,
+          `passLen=${pass.length}`
+        );
+        return { email: normalizeSmtpEmail(email), password: pass, authUser: user };
+      } catch (err) {
+        lastErr = err;
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn("[mail_system] SMTP try failed", `user=${user}`, `port=${port465.port}`, msg);
+        if (isSmtpAuthError(err)) authRejected = true;
+      }
+    }
+  }
+
+  // Lỗi auth rõ ràng → khỏi thử 587 (cùng mật khẩu cũng fail)
+  if (!authRejected) {
+    for (const user of users) {
+      for (const pass of passwords) {
+        try {
+          await tryVerifyOnce(user, pass, { port: 587, secure: false });
+          console.info("[mail_system] SMTP ok", `user=${user}`, "port=587", `passLen=${pass.length}`);
+          return { email: normalizeSmtpEmail(email), password: pass, authUser: user };
+        } catch (err) {
+          lastErr = err;
+          const msg = err instanceof Error ? err.message : String(err);
+          console.warn("[mail_system] SMTP try failed", `user=${user}`, "port=587", msg);
+        }
+      }
+    }
+  }
+
+  throw lastErr || new Error("SMTP auth failed");
+}
+
 async function processStationAccountUpdate(item) {
-  const email = String(item.email ?? "").trim().toLowerCase();
+  const email = normalizeSmtpEmail(item.email);
   const password = String(item.password ?? "");
   const userId = item.userId;
   if (!email || !password || !userId) {
@@ -200,25 +274,38 @@ async function processStationAccountUpdate(item) {
     return;
   }
 
-  console.info("[mail_system] station-account update", item.id, "user=", userId, email);
+  console.info(
+    "[mail_system] station-account update",
+    item.id,
+    "user=",
+    userId,
+    email,
+    `passLen=${password.length}`
+  );
+
+  // Luôn ghi đè accounts.json theo yêu cầu user (đây là mục đích nút Cập nhật).
+  upsertAccount(userId, email, password);
+  console.info("[mail_system] station-account overwritten", userId, email);
+
   try {
     await verifySmtp(email, password);
-    upsertAccount(userId, email, password);
     await api(`/api/mail-jobs/agent/station-accounts/${item.id}`, {
       method: "PATCH",
       body: { status: "applied" },
     });
-    console.info("[mail_system] station-account applied", userId, email);
+    console.info("[mail_system] station-account applied + SMTP ok", userId, email);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.warn("[mail_system] station-account failed", item.id, msg);
+    const response = err && typeof err === "object" ? err.response : "";
+    console.warn("[mail_system] station-account written but SMTP verify failed", item.id, msg);
+    // Vẫn coi là applied vì đã ghi đè file; kèm cảnh báo để user biết SMTP có thể chưa dùng được.
     await api(`/api/mail-jobs/agent/station-accounts/${item.id}`, {
       method: "PATCH",
       body: {
-        status: "failed",
+        status: "applied",
         error: isSmtpAuthError(err)
-          ? "Email/mật khẩu không đúng (SMTP auth failed)"
-          : msg,
+          ? `Đã ghi đè accounts.json nhưng SMTP chưa xác thực được: ${response || msg}`
+          : `Đã ghi đè accounts.json nhưng verify lỗi: ${msg}`,
       },
     });
   }

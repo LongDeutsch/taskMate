@@ -615,33 +615,44 @@ export async function claimStationAccountUpdate(req, res, next) {
     await failStaleStationAccountUpdates();
     const agentId = req.agentId || "default-agent";
     const now = new Date();
+
+    // Bước 1: claim (giữ passwordEnc để đọc)
     const doc = await MailStationAccount.findOneAndUpdate(
       { status: "pending", passwordEnc: { $ne: "" } },
       {
         $set: {
           status: "processing",
           claimedBy: agentId,
-          passwordEnc: "",
           updatedAt: now,
         },
       },
-      { sort: { createdAt: 1 }, new: false }
+      { sort: { createdAt: 1 }, new: true }
     );
 
     if (!doc) {
       return res.status(204).end();
     }
 
-    // Secrets lấy từ bản trước khi clear passwordEnc
-    const data = serializeStationAccount(
-      {
-        ...doc.toObject(),
-        status: "processing",
-        claimedBy: agentId,
-        updatedAt: now,
-      },
-      { includeSecrets: true }
-    );
+    const password = decryptWebmailPassword(doc.passwordEnc) || "";
+    const data = {
+      ...serializeStationAccount(doc),
+      password,
+    };
+
+    // Bước 2: xóa secret trên BE sau khi đã gắn vào response
+    doc.passwordEnc = "";
+    doc.updatedAt = new Date();
+    await doc.save();
+
+    if (!password) {
+      doc.status = "failed";
+      doc.error = "Không giải mã được mật khẩu — kiểm tra MAIL_CREDENTIALS_KEY trên Render";
+      await doc.save();
+      return res.status(500).json({
+        success: false,
+        message: doc.error,
+      });
+    }
 
     res.json({ success: true, data });
   } catch (err) {
@@ -649,7 +660,7 @@ export async function claimStationAccountUpdate(req, res, next) {
   }
 }
 
-/** Agent — báo applied / failed sau khi verify SMTP + ghi accounts.json */
+/** Agent — báo applied / failed sau khi ghi accounts.json (+ verify SMTP tùy chọn) */
 export async function reportStationAccountUpdate(req, res, next) {
   try {
     const agentId = req.agentId || "default-agent";
@@ -667,7 +678,8 @@ export async function reportStationAccountUpdate(req, res, next) {
     }
 
     doc.status = status;
-    doc.error = status === "failed" ? error || "Cập nhật thất bại" : "";
+    // applied vẫn có thể kèm warning (đã ghi đè nhưng SMTP verify fail)
+    doc.error = error;
     doc.passwordEnc = "";
     doc.updatedAt = new Date();
     await doc.save();

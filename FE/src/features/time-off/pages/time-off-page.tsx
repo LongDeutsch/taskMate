@@ -682,7 +682,12 @@ export function TimeOffPage() {
       if (result.status === "applied") {
         setStationModalOpen(false);
         setStationPassword("");
-        setMailSuccess(`Đã cập nhật mail máy trạm: ${result.email}`);
+        const warn = result.error?.trim();
+        setMailSuccess(
+          warn
+            ? `Đã ghi đè mail máy trạm (${result.email}). Lưu ý: ${warn}`
+            : `Đã cập nhật mail máy trạm: ${result.email}`
+        );
       } else {
         setStationError(result.error || "Cập nhật thất bại trên máy trạm");
         setStationStatus(null);
@@ -1709,9 +1714,9 @@ export function TimeOffPage() {
                   Cập nhật mail máy trạm
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  Ghi đè email/mật khẩu SMTP trên máy trạm (
-                  <code className="text-[10px]">accounts.json</code>). Máy trạm sẽ xác thực SMTP
-                  trước khi lưu.
+                  Ghi đè ngay email/mật khẩu trên máy trạm (
+                  <code className="text-[10px]">accounts.json</code>). Dùng mật khẩu SMTP/webmail
+                  (không phải mật khẩu TaskMate). Lần gửi Xin off sau sẽ dùng account mới.
                 </p>
               </div>
               <form onSubmit={handleSaveStationAccount} className="space-y-3 px-4 py-3">

@@ -69,3 +69,18 @@ Console sẽ in:
 ```
 
 Khi có job: `[mail_system] claimed mj-...`
+
+## Lỗi "Invalid login" dù nhớ đúng mật khẩu
+
+1. Phải là mật khẩu **webmail** (`https://mail.cybertech.com.vn`), **không** phải mật khẩu đăng nhập TaskMate.
+2. Tắt autofill trình duyệt / gõ tay lại (tránh dán nhầm mật khẩu khác).
+3. Test thẳng trên máy trạm:
+
+```bat
+set SMTP_EMAIL=long_pip@cybertech.com.vn
+set SMTP_PASSWORD=mat-khau-webmail
+npm run test:smtp
+```
+
+- `OK` → mật khẩu đúng, cập nhật lại trên web.
+- `FAIL` / Invalid login → mật khẩu SMTP chưa đúng hoặc tài khoản bị khóa tạm sau nhiều lần sai; đợi vài phút rồi thử lại trên webmail trước.

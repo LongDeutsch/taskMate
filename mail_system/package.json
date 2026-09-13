@@ -6,7 +6,8 @@
   "main": "mailAgent.cjs",
   "scripts": {
     "start": "node mailAgent.cjs",
-    "agent": "node mailAgent.cjs"
+    "agent": "node mailAgent.cjs",
+    "test:smtp": "node test-smtp.cjs"
   },
   "engines": {
     "node": ">=18"
