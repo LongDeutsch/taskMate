@@ -12,7 +12,7 @@ const mailStationAccountSchema = new mongoose.Schema(
     passwordEnc: { type: String, default: "" },
     status: {
       type: String,
-      enum: ["pending", "applied", "failed"],
+      enum: ["pending", "processing", "applied", "failed"],
       default: "pending",
       index: true,
     },

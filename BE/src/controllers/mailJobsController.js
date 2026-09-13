@@ -534,9 +534,9 @@ export async function requestStationAccountUpdate(req, res, next) {
       return next(createBadRequestError("Mật khẩu webmail bắt buộc"));
     }
 
-    // Hủy các pending cũ của cùng user (chỉ giữ bản mới nhất)
+    // Hủy các pending/processing cũ của cùng user (chỉ giữ bản mới nhất)
     await MailStationAccount.updateMany(
-      { userId: req.user.id, status: "pending" },
+      { userId: req.user.id, status: { $in: ["pending", "processing"] } },
       {
         $set: {
           status: "failed",
@@ -572,6 +572,7 @@ export async function requestStationAccountUpdate(req, res, next) {
 /** User JWT — xem trạng thái yêu cầu cập nhật account */
 export async function getStationAccountUpdate(req, res, next) {
   try {
+    await failStaleStationAccountUpdates();
     const doc = await MailStationAccount.findById(req.params.id).lean();
     if (!doc) return next(createNotFoundError("Station account update not found"));
     if (doc.userId !== req.user.id && req.user.role !== "ADMIN") {
@@ -583,32 +584,63 @@ export async function getStationAccountUpdate(req, res, next) {
   }
 }
 
+const STATION_ACCOUNT_STALE_MS = 45_000;
+
+/** Đánh failed các yêu cầu agent đã claim nhưng không báo kết quả (SMTP treo / agent crash). */
+async function failStaleStationAccountUpdates() {
+  const staleBefore = new Date(Date.now() - STATION_ACCOUNT_STALE_MS);
+  await MailStationAccount.updateMany(
+    {
+      status: { $in: ["pending", "processing"] },
+      claimedBy: { $ne: "" },
+      passwordEnc: "",
+      updatedAt: { $lt: staleBefore },
+    },
+    {
+      $set: {
+        status: "failed",
+        error: "Timeout xác thực SMTP trên máy trạm — thử lại với mật khẩu đúng",
+        updatedAt: new Date(),
+      },
+    }
+  );
+}
+
 /**
  * Agent — lấy 1 yêu cầu cập nhật account pending.
  * Trả secrets một lần rồi xóa passwordEnc trên BE.
  */
 export async function claimStationAccountUpdate(req, res, next) {
   try {
+    await failStaleStationAccountUpdates();
     const agentId = req.agentId || "default-agent";
+    const now = new Date();
     const doc = await MailStationAccount.findOneAndUpdate(
       { status: "pending", passwordEnc: { $ne: "" } },
       {
         $set: {
+          status: "processing",
           claimedBy: agentId,
-          updatedAt: new Date(),
+          passwordEnc: "",
+          updatedAt: now,
         },
       },
-      { sort: { createdAt: 1 }, new: true }
+      { sort: { createdAt: 1 }, new: false }
     );
 
     if (!doc) {
       return res.status(204).end();
     }
 
-    const data = serializeStationAccount(doc, { includeSecrets: true });
-    await MailStationAccount.updateOne(
-      { _id: doc._id },
-      { $set: { passwordEnc: "", updatedAt: new Date() } }
+    // Secrets lấy từ bản trước khi clear passwordEnc
+    const data = serializeStationAccount(
+      {
+        ...doc.toObject(),
+        status: "processing",
+        claimedBy: agentId,
+        updatedAt: now,
+      },
+      { includeSecrets: true }
     );
 
     res.json({ success: true, data });

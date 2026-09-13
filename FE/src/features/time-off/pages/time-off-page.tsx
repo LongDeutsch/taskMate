@@ -673,7 +673,8 @@ export function TimeOffPage() {
       setStationStatus("Chờ máy trạm xác thực SMTP…");
       const result = await waitForStationAccountUpdate(item.id, {
         onUpdate: (u) => {
-          if (u.status === "pending") setStationStatus("Máy trạm đang kiểm tra đăng nhập…");
+          if (u.status === "pending") setStationStatus("Chờ máy trạm nhận yêu cầu…");
+          if (u.status === "processing") setStationStatus("Máy trạm đang kiểm tra đăng nhập…");
           if (u.status === "applied") setStationStatus("Đã ghi đè account trên máy trạm");
           if (u.status === "failed") setStationStatus("Cập nhật thất bại");
         },

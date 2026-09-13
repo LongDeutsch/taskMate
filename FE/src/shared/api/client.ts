@@ -741,7 +741,7 @@ export async function waitForMailJob(
   throw new Error("Hết thời gian chờ máy trạm — kiểm tra agent có đang chạy không");
 }
 
-export type StationAccountUpdateStatus = "pending" | "applied" | "failed";
+export type StationAccountUpdateStatus = "pending" | "processing" | "applied" | "failed";
 
 export interface StationAccountUpdateItem {
   id: string;
@@ -780,8 +780,8 @@ export async function waitForStationAccountUpdate(
     onUpdate?: (item: StationAccountUpdateItem) => void;
   }
 ): Promise<StationAccountUpdateItem> {
-  const intervalMs = opts?.intervalMs ?? 2000;
-  const timeoutMs = opts?.timeoutMs ?? 90_000;
+  const intervalMs = opts?.intervalMs ?? 1500;
+  const timeoutMs = opts?.timeoutMs ?? 50_000;
   const started = Date.now();
   let last: StationAccountUpdateItem | null = null;
   while (Date.now() - started < timeoutMs) {
@@ -790,7 +790,10 @@ export async function waitForStationAccountUpdate(
     if (last.status === "applied" || last.status === "failed") return last;
     await new Promise((r) => setTimeout(r, intervalMs));
   }
-  if (last) return last;
-  throw new Error("Hết thời gian chờ máy trạm cập nhật account");
+  if (last?.status === "applied" || last?.status === "failed") return last;
+  throw new Error(
+    last?.error ||
+      "Hết thời gian chờ máy trạm — kiểm tra agent đang chạy, hoặc mật khẩu SMTP sai"
+  );
 }
 

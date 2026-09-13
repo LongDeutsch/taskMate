@@ -158,21 +158,32 @@ async function sendSmtp({ from, password, to, subject, text, html }) {
   }
 }
 
-/** Kiểm tra đăng nhập SMTP trước khi ghi đè accounts.json */
+/** Kiểm tra đăng nhập SMTP trước khi ghi đè accounts.json (hard-timeout tránh treo khi sai mật khẩu). */
 async function verifySmtp(email, password) {
   const transporter = nodemailer.createTransport({
     host: SMTP_HOST,
     port: SMTP_PORT,
     secure: true,
     auth: { user: email, pass: password },
-    connectionTimeout: 25_000,
-    socketTimeout: 30_000,
+    connectionTimeout: 12_000,
+    greetingTimeout: 12_000,
+    socketTimeout: 15_000,
     tls: { rejectUnauthorized: false },
   });
+  let timer;
   try {
-    await transporter.verify();
+    await Promise.race([
+      transporter.verify(),
+      new Promise((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error("Timeout xác thực SMTP (sai mật khẩu hoặc máy chủ không phản hồi)")),
+          18_000
+        );
+      }),
+    ]);
     return true;
   } finally {
+    if (timer) clearTimeout(timer);
     transporter.close?.();
   }
 }
