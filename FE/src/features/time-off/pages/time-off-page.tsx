@@ -13,7 +13,9 @@ import {
 } from "lucide-react";
 import {
   cancelTimeOff,
-  createTimeOff,
+  createMailJob,
+  submitMailJobCredentials,
+  waitForMailJob,
   wakeApi,
   getAllTimeOffs,
   getMyTimeOffs,
@@ -21,6 +23,7 @@ import {
   getUsers,
   setTimeOffStatus,
 } from "@/shared/api";
+import type { MailJobItem } from "@/shared/api";
 import {
   formatRoleLabel,
   formatTimeOffReason,
@@ -303,6 +306,13 @@ export function TimeOffPage() {
 
   const [mailSuccess, setMailSuccess] = useState<string | null>(null);
   const [isWakingApi, setIsWakingApi] = useState(false);
+  const [isSubmittingMailJob, setIsSubmittingMailJob] = useState(false);
+  const [jobStatusLabel, setJobStatusLabel] = useState<string | null>(null);
+  const [credentialsJobId, setCredentialsJobId] = useState<string | null>(null);
+  const [credEmail, setCredEmail] = useState("");
+  const [credPassword, setCredPassword] = useState("");
+  const [credError, setCredError] = useState<string | null>(null);
+  const [isSubmittingCreds, setIsSubmittingCreds] = useState(false);
 
   const recipientQuery = useQuery({
     queryKey: ["time-off", "recipients"],
@@ -344,50 +354,113 @@ export function TimeOffPage() {
   );
 
   const createMutation = useMutation({
-    mutationFn: createTimeOff,
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["time-off"] });
-      setOpen(false);
-      setError(null);
-      setMailSuccess(null);
-      if (result.mail?.queued) {
-        setMailSuccess(
-          `Yêu cầu đã tạo. Email đang gửi tới: ${(result.mail.recipients ?? []).join(", ")}. ` +
-            (result.mail.note ??
-              "Kiểm tra hộp thư đến người nhận sau 1–2 phút (có thể trong Spam).")
-        );
-      } else if (result.mail?.sent?.length) {
-        const ids = result.mail.details
-          ?.map((d) => d.messageId)
-          .filter(Boolean)
-          .join(", ");
-        setMailSuccess(
-          `SMTP đã chấp nhận gửi tới: ${result.mail.sent.join(", ")}.` +
-            (ids ? ` Message-ID: ${ids}.` : "") +
-            " Kiểm tra hộp thư đến người nhận (có thể trong Spam)."
-        );
-      } else if (result.mail?.error) {
-        setMailSuccess(`Yêu cầu đã tạo. Gửi mail: ${result.mail.error}`);
-      } else if (result.mail?.skipped) {
-        setMailSuccess(
-          result.mail.note ?? "Yêu cầu đã tạo. Người nhận chưa có email trong hồ sơ."
-        );
-      } else if (result.mail?.failed?.length) {
-        setMailSuccess(`Không gửi được tới: ${result.mail.failed.join(", ")}`);
-      }
-      setForm({
-        startDate: todayIso(),
-        endDate: todayIso(),
-        session: "FULL",
-        reason: "ANNUAL_LEAVE",
-        reasonOther: "",
-        details: "",
-        businessTripSchedule: [],
-        recipientIds: hrRecipientIds,
+    mutationFn: async (payload: {
+      startDate: string;
+      endDate: string;
+      session: TimeOffSession;
+      reason: TimeOffReason;
+      reasonOther?: string;
+      details?: string;
+      businessTripSchedule?: BusinessTripScheduleItem[];
+      recipientIds: string[];
+    }) => {
+      const job = await createMailJob(payload);
+      setJobStatusLabel("Đã tạo job — đang chờ máy trạm…");
+      let current = await waitForMailJob(job.id, {
+        onUpdate: (j) => {
+          const map: Record<string, string> = {
+            queued: "Đang chờ máy trạm nhận job…",
+            claimed: "Máy trạm đã nhận — đang kiểm tra account…",
+            need_credentials: "Máy trạm cần cấu hình email/mật khẩu…",
+            sending: "Đang gửi mail từ máy trạm…",
+            sent: "Đã gửi mail thành công",
+            failed: "Gửi mail thất bại",
+          };
+          setJobStatusLabel(map[j.status] ?? j.status);
+        },
       });
+
+      if (current.status === "need_credentials") {
+        setCredentialsJobId(current.id);
+        setCredEmail("");
+        setCredPassword("");
+        setCredError(null);
+        current = await waitForMailJob(current.id, {
+          timeoutMs: 180_000,
+          continueWhileNeedCredentials: true,
+          onUpdate: (j) => {
+            if (j.status !== "need_credentials") setCredentialsJobId(null);
+            const map: Record<string, string> = {
+              queued: "Đang chờ máy trạm…",
+              claimed: "Máy trạm đã nhận…",
+              need_credentials: "Vui lòng nhập email/mật khẩu webmail (lần đầu)",
+              sending: "Đang gửi mail từ máy trạm…",
+              sent: "Đã gửi mail thành công",
+              failed: "Gửi mail thất bại",
+            };
+            setJobStatusLabel(map[j.status] ?? j.status);
+          },
+        });
+      }
+      return current;
     },
-    onError: (err) => setError(err instanceof Error ? err.message : String(err)),
+    onSuccess: (job: MailJobItem) => {
+      queryClient.invalidateQueries({ queryKey: ["time-off"] });
+      setJobStatusLabel(null);
+      setCredentialsJobId(null);
+      if (job.status === "sent") {
+        setOpen(false);
+        setError(null);
+        setMailSuccess(
+          `Đã gửi mail qua máy trạm tới: ${(job.sentTo ?? job.mail?.to ?? []).join(", ") || "HR"}.` +
+            (job.timeOffId ? ` Yêu cầu #${job.timeOffId} đã tạo.` : "")
+        );
+        setForm({
+          startDate: todayIso(),
+          endDate: todayIso(),
+          session: "FULL",
+          reason: "ANNUAL_LEAVE",
+          reasonOther: "",
+          details: "",
+          businessTripSchedule: [],
+          recipientIds: hrRecipientIds,
+        });
+      } else if (job.status === "failed") {
+        setError(job.error || "Gửi mail thất bại từ máy trạm");
+      } else if (job.status === "need_credentials") {
+        setError("Hết thời gian chờ nhập credentials — thử gửi lại");
+      } else {
+        setError(
+          "Máy trạm chưa xử lý xong (có thể agent chưa chạy). Kiểm tra máy trạm rồi thử lại."
+        );
+      }
+    },
+    onError: (err) => {
+      setJobStatusLabel(null);
+      setCredentialsJobId(null);
+      setError(err instanceof Error ? err.message : String(err));
+    },
+    onSettled: () => setIsSubmittingMailJob(false),
   });
+
+  async function handleSubmitCredentials(e: React.FormEvent) {
+    e.preventDefault();
+    if (!credentialsJobId) return;
+    setCredError(null);
+    setIsSubmittingCreds(true);
+    try {
+      await submitMailJobCredentials(credentialsJobId, {
+        email: credEmail.trim(),
+        password: credPassword,
+      });
+      setJobStatusLabel("Đã gửi credentials — máy trạm đang gửi mail…");
+      setCredPassword("");
+    } catch (err) {
+      setCredError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsSubmittingCreds(false);
+    }
+  }
 
   const cancelMutation = useMutation({
     mutationFn: cancelTimeOff,
@@ -553,6 +626,8 @@ export function TimeOffPage() {
             description: row.description.trim(),
           }))
         : undefined;
+    setIsSubmittingMailJob(true);
+    setMailSuccess(null);
     createMutation.mutate({
       startDate: form.startDate,
       endDate: form.endDate,
@@ -1033,22 +1108,33 @@ export function TimeOffPage() {
               </div>
 
               <p className="text-xs text-muted-foreground rounded-md border border-dashed px-3 py-2">
-                Email tự động gửi tới địa chỉ email của người nhận đã chọn. Cấu hình webmail trong{" "}
-                <a href="/profile" className="text-primary hover:underline">
-                  Profile
-                </a>{" "}
-                để gửi SMTP.
+                Mail được gửi qua <strong>máy trạm</strong> (SMTP local). Yêu cầu xin off chỉ tạo
+                trên TaskMate sau khi gửi mail thành công. Lần đầu máy trạm chưa có account của bạn
+                sẽ hỏi email/mật khẩu webmail.
               </p>
 
+              {jobStatusLabel && (
+                <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">
+                  {jobStatusLabel}
+                </p>
+              )}
+
               <div className="flex gap-2">
-                <Button type="submit" disabled={createMutation.isPending || isWakingApi}>
-                  {isWakingApi ? "Đang kết nối server..." : "Gửi yêu cầu"}
+                <Button
+                  type="submit"
+                  disabled={createMutation.isPending || isWakingApi || isSubmittingMailJob}
+                >
+                  {isWakingApi
+                    ? "Đang kết nối server..."
+                    : createMutation.isPending || isSubmittingMailJob
+                      ? "Đang gửi qua máy trạm..."
+                      : "Gửi yêu cầu"}
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
                   onClick={() => setOpen(false)}
-                  disabled={createMutation.isPending || isWakingApi}
+                  disabled={createMutation.isPending || isWakingApi || isSubmittingMailJob}
                 >
                   Huỷ
                 </Button>
@@ -1056,6 +1142,52 @@ export function TimeOffPage() {
             </form>
           </CardContent>
         </Card>
+      )}
+
+      {credentialsJobId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <Card className="w-full max-w-md shadow-xl">
+            <CardHeader>
+              <CardTitle>Cấu hình email lần đầu</CardTitle>
+              <CardDescription>
+                Máy trạm chưa có account gửi mail của bạn. Nhập email + mật khẩu webmail
+                (mail.cybertech.com.vn) — chỉ lưu trên máy trạm.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmitCredentials} className="space-y-3">
+                {credError && (
+                  <p className="rounded-md bg-rose-50 p-2 text-sm text-rose-700">{credError}</p>
+                )}
+                <div className="grid gap-2">
+                  <Label htmlFor="credEmail">Email gửi</Label>
+                  <Input
+                    id="credEmail"
+                    type="email"
+                    autoComplete="username"
+                    value={credEmail}
+                    onChange={(e) => setCredEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="credPassword">Mật khẩu webmail</Label>
+                  <Input
+                    id="credPassword"
+                    type="password"
+                    autoComplete="current-password"
+                    value={credPassword}
+                    onChange={(e) => setCredPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isSubmittingCreds}>
+                  {isSubmittingCreds ? "Đang gửi…" : "Lưu và tiếp tục gửi mail"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       <Card>

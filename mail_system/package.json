@@ -1,0 +1,17 @@
+{
+  "name": "taskmate-mail-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Máy trạm gửi mail Xin off cho TaskMate (HTTP poll outbound + SMTP local)",
+  "main": "mailAgent.cjs",
+  "scripts": {
+    "start": "node mailAgent.cjs",
+    "agent": "node mailAgent.cjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.16"
+  }
+}

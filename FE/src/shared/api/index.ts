@@ -89,6 +89,27 @@ export const createTimeOff = useRealApi
   : async () => {
       throw new Error("Time-off không khả dụng ở chế độ mock");
     };
+export const createMailJob = useRealApi
+  ? client.createMailJob
+  : async () => {
+      throw new Error("Mail job không khả dụng ở chế độ mock");
+    };
+export const getMailJob = useRealApi
+  ? client.getMailJob
+  : async () => {
+      throw new Error("Mail job không khả dụng ở chế độ mock");
+    };
+export const submitMailJobCredentials = useRealApi
+  ? client.submitMailJobCredentials
+  : async () => {
+      throw new Error("Mail job không khả dụng ở chế độ mock");
+    };
+export const waitForMailJob = useRealApi
+  ? client.waitForMailJob
+  : async () => {
+      throw new Error("Mail job không khả dụng ở chế độ mock");
+    };
+export type { MailJobItem, MailJobStatus } from "./client";
 export const getTimeOffRecipients = useRealApi ? client.getTimeOffRecipients : async () => [];
 export const getMyTimeOffs = useRealApi ? client.getMyTimeOffs : async () => [];
 export const getAllTimeOffs = useRealApi ? client.getAllTimeOffs : async () => [];

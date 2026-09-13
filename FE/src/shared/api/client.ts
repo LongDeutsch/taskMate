@@ -647,3 +647,84 @@ export async function deleteBugReport(id: string): Promise<boolean> {
   await request(`/api/bug-reports/${id}`, { method: "DELETE" });
   return true;
 }
+
+// --- Mail jobs (Xin off → máy trạm) ---
+export type MailJobStatus =
+  | "queued"
+  | "claimed"
+  | "need_credentials"
+  | "sending"
+  | "sent"
+  | "failed";
+
+export interface MailJobItem {
+  id: string;
+  status: MailJobStatus;
+  userId: string;
+  userName: string;
+  mail: { to: string[]; subject: string; text: string; html: string };
+  error?: string;
+  sentTo?: string[];
+  timeOffId?: string | null;
+  hasCredentialsPending?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export async function createMailJob(payload: CreateTimeOffPayload): Promise<MailJobItem> {
+  const json = await request<MailJobItem>("/api/mail-jobs", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!json.data) throw new Error("Tạo job gửi mail thất bại");
+  return json.data;
+}
+
+export async function getMailJob(id: string): Promise<MailJobItem> {
+  const json = await request<MailJobItem>(`/api/mail-jobs/${id}`);
+  if (!json.data) throw new Error("Không lấy được trạng thái job");
+  return json.data;
+}
+
+export async function submitMailJobCredentials(
+  id: string,
+  payload: { email: string; password: string }
+): Promise<MailJobItem> {
+  const json = await request<MailJobItem>(`/api/mail-jobs/${id}/credentials`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!json.data) throw new Error("Gửi credentials thất bại");
+  return json.data;
+}
+
+/** Poll job đến khi terminal / need_credentials / timeout */
+export async function waitForMailJob(
+  id: string,
+  opts?: {
+    intervalMs?: number;
+    timeoutMs?: number;
+    /** Nếu true, status need_credentials không dừng poll (chờ user nộp form xong) */
+    continueWhileNeedCredentials?: boolean;
+    onUpdate?: (job: MailJobItem) => void;
+  }
+): Promise<MailJobItem> {
+  const intervalMs = opts?.intervalMs ?? 2000;
+  const timeoutMs = opts?.timeoutMs ?? 120_000;
+  const started = Date.now();
+  let last: MailJobItem | null = null;
+  while (Date.now() - started < timeoutMs) {
+    last = await getMailJob(id);
+    opts?.onUpdate?.(last);
+    if (last.status === "sent" || last.status === "failed") {
+      return last;
+    }
+    if (last.status === "need_credentials" && !opts?.continueWhileNeedCredentials) {
+      return last;
+    }
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+  if (last) return last;
+  throw new Error("Hết thời gian chờ máy trạm — kiểm tra agent có đang chạy không");
+}
+
