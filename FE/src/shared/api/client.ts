@@ -741,3 +741,56 @@ export async function waitForMailJob(
   throw new Error("Hết thời gian chờ máy trạm — kiểm tra agent có đang chạy không");
 }
 
+export type StationAccountUpdateStatus = "pending" | "applied" | "failed";
+
+export interface StationAccountUpdateItem {
+  id: string;
+  userId: string;
+  email: string;
+  status: StationAccountUpdateStatus;
+  error?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Xếp hàng cập nhật email/mật khẩu ghi đè trên máy trạm */
+export async function requestStationAccountUpdate(payload: {
+  email: string;
+  password: string;
+}): Promise<StationAccountUpdateItem> {
+  const json = await request<StationAccountUpdateItem>("/api/mail-jobs/station-account", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!json.data) throw new Error("Gửi yêu cầu cập nhật account thất bại");
+  return json.data;
+}
+
+export async function getStationAccountUpdate(id: string): Promise<StationAccountUpdateItem> {
+  const json = await request<StationAccountUpdateItem>(`/api/mail-jobs/station-account/${id}`);
+  if (!json.data) throw new Error("Không lấy được trạng thái cập nhật account");
+  return json.data;
+}
+
+export async function waitForStationAccountUpdate(
+  id: string,
+  opts?: {
+    intervalMs?: number;
+    timeoutMs?: number;
+    onUpdate?: (item: StationAccountUpdateItem) => void;
+  }
+): Promise<StationAccountUpdateItem> {
+  const intervalMs = opts?.intervalMs ?? 2000;
+  const timeoutMs = opts?.timeoutMs ?? 90_000;
+  const started = Date.now();
+  let last: StationAccountUpdateItem | null = null;
+  while (Date.now() - started < timeoutMs) {
+    last = await getStationAccountUpdate(id);
+    opts?.onUpdate?.(last);
+    if (last.status === "applied" || last.status === "failed") return last;
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+  if (last) return last;
+  throw new Error("Hết thời gian chờ máy trạm cập nhật account");
+}
+

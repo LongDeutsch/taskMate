@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { MailJob } from "../models/MailJob.js";
+import { MailStationAccount } from "../models/MailStationAccount.js";
 import { User } from "../models/User.js";
 import { TimeOffRequest, TIME_OFF_REASONS, TIME_OFF_SESSIONS } from "../models/TimeOffRequest.js";
 import {
@@ -30,6 +31,10 @@ function newJobId() {
 
 function newTimeOffId() {
   return "to-" + crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+}
+
+function newStationAccountId() {
+  return "msa-" + crypto.randomUUID().replace(/-/g, "").slice(0, 12);
 }
 
 function roleLabelOf(user) {
@@ -447,7 +452,10 @@ export async function agentUpdate(req, res, next) {
     if (status === "need_credentials") {
       job.status = "need_credentials";
       job.claimedBy = agentId;
-      job.error = "";
+      job.error = error || "";
+      job.credentialsEmail = "";
+      job.credentialsPasswordEnc = "";
+      job.credentialsReadyAt = null;
       job.updatedAt = new Date();
       await job.save();
       return res.json({ success: true, data: serializeJob(job) });
@@ -489,6 +497,150 @@ export async function agentUpdate(req, res, next) {
       data: serializeJob(job),
       message: "Mail sent — time-off created",
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+function serializeStationAccount(doc, { includeSecrets = false } = {}) {
+  if (!doc) return null;
+  const d = typeof doc.toObject === "function" ? doc.toObject() : { ...doc };
+  const out = {
+    id: d._id,
+    userId: d.userId,
+    email: d.email,
+    status: d.status,
+    error: d.error || "",
+    createdAt: d.createdAt instanceof Date ? d.createdAt.toISOString() : d.createdAt,
+    updatedAt: d.updatedAt instanceof Date ? d.updatedAt.toISOString() : d.updatedAt,
+  };
+  if (includeSecrets && d.passwordEnc) {
+    out.password = decryptWebmailPassword(d.passwordEnc) || "";
+  }
+  return out;
+}
+
+/**
+ * User JWT — xếp hàng cập nhật email/mật khẩu trên máy trạm (ghi đè accounts.json).
+ */
+export async function requestStationAccountUpdate(req, res, next) {
+  try {
+    const email = String(req.body?.email ?? "").trim().toLowerCase();
+    const password = String(req.body?.password ?? "");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return next(createBadRequestError("Email không hợp lệ"));
+    }
+    if (!password || password.length < 3) {
+      return next(createBadRequestError("Mật khẩu webmail bắt buộc"));
+    }
+
+    // Hủy các pending cũ của cùng user (chỉ giữ bản mới nhất)
+    await MailStationAccount.updateMany(
+      { userId: req.user.id, status: "pending" },
+      {
+        $set: {
+          status: "failed",
+          error: "Đã bị thay bởi yêu cầu cập nhật mới hơn",
+          passwordEnc: "",
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    const id = newStationAccountId();
+    const now = new Date();
+    const doc = await MailStationAccount.create({
+      _id: id,
+      userId: req.user.id,
+      email,
+      passwordEnc: encryptWebmailPassword(password),
+      status: "pending",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: serializeStationAccount(doc),
+      message: "Đã gửi yêu cầu cập nhật — chờ máy trạm xác thực SMTP và ghi đè",
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** User JWT — xem trạng thái yêu cầu cập nhật account */
+export async function getStationAccountUpdate(req, res, next) {
+  try {
+    const doc = await MailStationAccount.findById(req.params.id).lean();
+    if (!doc) return next(createNotFoundError("Station account update not found"));
+    if (doc.userId !== req.user.id && req.user.role !== "ADMIN") {
+      return next(createForbiddenError("Không có quyền xem yêu cầu này"));
+    }
+    res.json({ success: true, data: serializeStationAccount(doc) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Agent — lấy 1 yêu cầu cập nhật account pending.
+ * Trả secrets một lần rồi xóa passwordEnc trên BE.
+ */
+export async function claimStationAccountUpdate(req, res, next) {
+  try {
+    const agentId = req.agentId || "default-agent";
+    const doc = await MailStationAccount.findOneAndUpdate(
+      { status: "pending", passwordEnc: { $ne: "" } },
+      {
+        $set: {
+          claimedBy: agentId,
+          updatedAt: new Date(),
+        },
+      },
+      { sort: { createdAt: 1 }, new: true }
+    );
+
+    if (!doc) {
+      return res.status(204).end();
+    }
+
+    const data = serializeStationAccount(doc, { includeSecrets: true });
+    await MailStationAccount.updateOne(
+      { _id: doc._id },
+      { $set: { passwordEnc: "", updatedAt: new Date() } }
+    );
+
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** Agent — báo applied / failed sau khi verify SMTP + ghi accounts.json */
+export async function reportStationAccountUpdate(req, res, next) {
+  try {
+    const agentId = req.agentId || "default-agent";
+    const status = String(req.body?.status ?? "").trim().toLowerCase();
+    const error = String(req.body?.error ?? "").trim();
+
+    if (!["applied", "failed"].includes(status)) {
+      return next(createBadRequestError("status phải là applied | failed"));
+    }
+
+    const doc = await MailStationAccount.findById(req.params.id);
+    if (!doc) return next(createNotFoundError("Station account update not found"));
+    if (doc.claimedBy && doc.claimedBy !== agentId) {
+      return next(createForbiddenError("Update đang được agent khác xử lý"));
+    }
+
+    doc.status = status;
+    doc.error = status === "failed" ? error || "Cập nhật thất bại" : "";
+    doc.passwordEnc = "";
+    doc.updatedAt = new Date();
+    await doc.save();
+
+    res.json({ success: true, data: serializeStationAccount(doc) });
   } catch (err) {
     next(err);
   }

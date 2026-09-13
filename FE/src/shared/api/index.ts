@@ -109,7 +109,22 @@ export const waitForMailJob = useRealApi
   : async () => {
       throw new Error("Mail job không khả dụng ở chế độ mock");
     };
-export type { MailJobItem, MailJobStatus } from "./client";
+export const requestStationAccountUpdate = useRealApi
+  ? client.requestStationAccountUpdate
+  : async () => {
+      throw new Error("Station account không khả dụng ở chế độ mock");
+    };
+export const getStationAccountUpdate = useRealApi
+  ? client.getStationAccountUpdate
+  : async () => {
+      throw new Error("Station account không khả dụng ở chế độ mock");
+    };
+export const waitForStationAccountUpdate = useRealApi
+  ? client.waitForStationAccountUpdate
+  : async () => {
+      throw new Error("Station account không khả dụng ở chế độ mock");
+    };
+export type { MailJobItem, MailJobStatus, StationAccountUpdateItem } from "./client";
 export const getTimeOffRecipients = useRealApi ? client.getTimeOffRecipients : async () => [];
 export const getMyTimeOffs = useRealApi ? client.getMyTimeOffs : async () => [];
 export const getAllTimeOffs = useRealApi ? client.getAllTimeOffs : async () => [];

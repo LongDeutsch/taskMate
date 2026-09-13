@@ -9,6 +9,7 @@ import {
   Download,
   Eye,
   EyeOff,
+  KeyRound,
   Pencil,
   Plus,
   RefreshCw,
@@ -23,6 +24,8 @@ import {
   updateProfile,
   submitMailJobCredentials,
   waitForMailJob,
+  requestStationAccountUpdate,
+  waitForStationAccountUpdate,
   wakeApi,
   getAllTimeOffs,
   getMyTimeOffs,
@@ -307,6 +310,14 @@ export function TimeOffPage() {
   const [tplError, setTplError] = useState<string | null>(null);
   const [draftExpanded, setDraftExpanded] = useState(false);
 
+  const [stationModalOpen, setStationModalOpen] = useState(false);
+  const [stationEmail, setStationEmail] = useState("");
+  const [stationPassword, setStationPassword] = useState("");
+  const [showStationPassword, setShowStationPassword] = useState(false);
+  const [stationError, setStationError] = useState<string | null>(null);
+  const [stationStatus, setStationStatus] = useState<string | null>(null);
+  const [stationSaving, setStationSaving] = useState(false);
+
   const recipientQuery = useQuery({
     queryKey: ["time-off", "recipients"],
     queryFn: getTimeOffRecipients,
@@ -385,16 +396,26 @@ export function TimeOffPage() {
         setCredEmail("");
         setCredPassword("");
         setShowCredPassword(false);
-        setCredError(null);
+        setCredError(current.error || null);
         current = await waitForMailJob(current.id, {
           timeoutMs: 180_000,
           continueWhileNeedCredentials: true,
           onUpdate: (j) => {
-            if (j.status !== "need_credentials") setCredentialsJobId(null);
+            if (j.status === "need_credentials") {
+              setCredentialsJobId(j.id);
+              if (j.error) setCredError(j.error);
+            } else if (j.status === "sending") {
+              setCredentialsJobId(null);
+              setCredError(null);
+            } else if (j.status === "sent" || j.status === "failed") {
+              setCredentialsJobId(null);
+            }
             const map: Record<string, string> = {
               queued: "Đang chờ máy trạm…",
               claimed: "Máy trạm đã nhận…",
-              need_credentials: "Vui lòng nhập email/mật khẩu webmail (lần đầu)",
+              need_credentials: j.error
+                ? "Sai email/mật khẩu — vui lòng nhập lại"
+                : "Vui lòng nhập email/mật khẩu webmail",
               sending: "Đang gửi mail từ máy trạm…",
               sent: "Đã gửi mail thành công",
               failed: "Gửi mail thất bại",
@@ -629,6 +650,50 @@ export function TimeOffPage() {
     setTplModalOpen(true);
   }
 
+  function openStationAccountModal() {
+    setStationEmail(user?.email ?? profileQuery.data?.email ?? "");
+    setStationPassword("");
+    setShowStationPassword(false);
+    setStationError(null);
+    setStationStatus(null);
+    setStationModalOpen(true);
+  }
+
+  async function handleSaveStationAccount(e: React.FormEvent) {
+    e.preventDefault();
+    setStationError(null);
+    setStationSaving(true);
+    setStationStatus("Đang gửi yêu cầu lên server…");
+    try {
+      await wakeApi();
+      const item = await requestStationAccountUpdate({
+        email: stationEmail.trim(),
+        password: stationPassword,
+      });
+      setStationStatus("Chờ máy trạm xác thực SMTP…");
+      const result = await waitForStationAccountUpdate(item.id, {
+        onUpdate: (u) => {
+          if (u.status === "pending") setStationStatus("Máy trạm đang kiểm tra đăng nhập…");
+          if (u.status === "applied") setStationStatus("Đã ghi đè account trên máy trạm");
+          if (u.status === "failed") setStationStatus("Cập nhật thất bại");
+        },
+      });
+      if (result.status === "applied") {
+        setStationModalOpen(false);
+        setStationPassword("");
+        setMailSuccess(`Đã cập nhật mail máy trạm: ${result.email}`);
+      } else {
+        setStationError(result.error || "Cập nhật thất bại trên máy trạm");
+        setStationStatus(null);
+      }
+    } catch (err) {
+      setStationError(err instanceof Error ? err.message : String(err));
+      setStationStatus(null);
+    } finally {
+      setStationSaving(false);
+    }
+  }
+
   async function saveTemplateAndApply() {
     setTplSaving(true);
     setTplError(null);
@@ -817,30 +882,36 @@ export function TimeOffPage() {
             {canViewAll ? "Quản lý yêu cầu xin off toàn công ty." : "Gửi yêu cầu xin off tới HR."}
           </p>
         </div>
-        <Button
-          size="sm"
-          className="shrink-0"
-          onClick={() =>
-            setOpen((v) => {
-              const next = !v;
-              if (next) {
-                setDraftDirty(false);
-                setDraftExpanded(false);
-              }
-              return next;
-            })
-          }
-        >
-          {open ? (
-            <>
-              <X className="size-4" /> Đóng form
-            </>
-          ) : (
-            <>
-              <Plus className="size-4" /> Tạo yêu cầu mới
-            </>
-          )}
-        </Button>
+        <div className="flex shrink-0 flex-wrap gap-1.5">
+          <Button type="button" size="sm" variant="outline" className="h-8" onClick={openStationAccountModal}>
+            <KeyRound className="size-3.5" />
+            Cập nhật mail máy trạm
+          </Button>
+          <Button
+            size="sm"
+            className="shrink-0"
+            onClick={() =>
+              setOpen((v) => {
+                const next = !v;
+                if (next) {
+                  setDraftDirty(false);
+                  setDraftExpanded(false);
+                }
+                return next;
+              })
+            }
+          >
+            {open ? (
+              <>
+                <X className="size-4" /> Đóng form
+              </>
+            ) : (
+              <>
+                <Plus className="size-4" /> Tạo yêu cầu mới
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       <section className="rounded-lg border border-border/80 bg-card px-3 py-2.5">
@@ -1609,6 +1680,110 @@ export function TimeOffPage() {
                   </Button>
                 </div>
               </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {stationModalOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[115] flex items-center justify-center p-4 sm:p-6"
+            role="presentation"
+          >
+            <button
+              type="button"
+              className="absolute inset-0 bg-black/50"
+              aria-label="Đóng"
+              onClick={() => !stationSaving && setStationModalOpen(false)}
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="station-modal-title"
+              className="relative z-[116] flex w-full max-w-[480px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl"
+            >
+              <div className="space-y-1 border-b border-gray-100 px-4 py-3">
+                <h2 id="station-modal-title" className="text-base font-semibold text-gray-900">
+                  Cập nhật mail máy trạm
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Ghi đè email/mật khẩu SMTP trên máy trạm (
+                  <code className="text-[10px]">accounts.json</code>). Máy trạm sẽ xác thực SMTP
+                  trước khi lưu.
+                </p>
+              </div>
+              <form onSubmit={handleSaveStationAccount} className="space-y-3 px-4 py-3">
+                {stationError && (
+                  <p className="rounded-md bg-rose-50 px-2.5 py-1.5 text-xs text-rose-700">
+                    {stationError}
+                  </p>
+                )}
+                {stationStatus && !stationError && (
+                  <p className="rounded-md border border-sky-100 bg-sky-50 px-2.5 py-1.5 text-xs text-sky-900">
+                    {stationStatus}
+                  </p>
+                )}
+                <div className="grid gap-1">
+                  <Label htmlFor="station-email" className="text-xs">
+                    Email gửi
+                  </Label>
+                  <Input
+                    id="station-email"
+                    type="email"
+                    className="h-8"
+                    required
+                    value={stationEmail}
+                    onChange={(e) => setStationEmail(e.target.value)}
+                    disabled={stationSaving}
+                    placeholder="ban@cybertech.com.vn"
+                  />
+                </div>
+                <div className="grid gap-1">
+                  <Label htmlFor="station-password" className="text-xs">
+                    Mật khẩu webmail
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="station-password"
+                      type={showStationPassword ? "text" : "password"}
+                      className="h-8 pr-10"
+                      required
+                      value={stationPassword}
+                      onChange={(e) => setStationPassword(e.target.value)}
+                      disabled={stationSaving}
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowStationPassword((v) => !v)}
+                      aria-label={showStationPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    >
+                      {showStationPassword ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={stationSaving}
+                    onClick={() => setStationModalOpen(false)}
+                  >
+                    Hủy
+                  </Button>
+                  <Button type="submit" size="sm" disabled={stationSaving}>
+                    {stationSaving ? "Đang cập nhật…" : "Lưu & ghi đè máy trạm"}
+                  </Button>
+                </div>
+              </form>
             </div>
           </div>,
           document.body

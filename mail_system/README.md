@@ -44,9 +44,18 @@ Hoặc double-click **`start.bat`**.
 
 ## Lần đầu gửi mail
 
-User Xin off trên web TaskMate → nếu máy trạm chưa có account của user đó → web hỏi email/mật khẩu webmail → agent lưu local và gửi SMTP.
+Lần đầu / cập nhật mail: user nhập trên web → agent **verify SMTP** rồi mới ghi `accounts.json`.
+Sai mật khẩu → không lưu / hỏi nhập lại.
 
-Account lưu tại: `%USERPROFILE%\.taskmate-mail-agent\accounts.json`
+Trên web Xin off: nút **Cập nhật mail máy trạm** → ghi đè account theo user đang đăng nhập.
+
+Account: `%USERPROFILE%\.taskmate-mail-agent\accounts.json`
+
+Xóa account lỗi (nếu đã lưu sai trước đây):
+
+```bat
+del "%USERPROFILE%\.taskmate-mail-agent\accounts.json"
+```
 
 ## Kiểm tra agent sống
 

@@ -88,6 +88,26 @@ function upsertAccount(userId, email, password) {
   saveAccounts(accounts);
 }
 
+function deleteAccount(userId) {
+  const accounts = loadAccounts();
+  if (!accounts[userId]) return;
+  delete accounts[userId];
+  saveAccounts(accounts);
+  console.info("[mail_system] removed bad account for user", userId);
+}
+
+function isSmtpAuthError(err) {
+  const msg = String(err?.message ?? err ?? "").toLowerCase();
+  const code = String(err?.responseCode ?? err?.code ?? "");
+  return (
+    code === "535" ||
+    msg.includes("invalid login") ||
+    msg.includes("authentication failed") ||
+    msg.includes("535 5.7.8") ||
+    (msg.includes("auth") && msg.includes("fail"))
+  );
+}
+
 async function api(pathname, { method = "GET", body } = {}) {
   const res = await fetch(`${API_URL}${pathname}`, {
     method,
@@ -138,6 +158,61 @@ async function sendSmtp({ from, password, to, subject, text, html }) {
   }
 }
 
+/** Kiểm tra đăng nhập SMTP trước khi ghi đè accounts.json */
+async function verifySmtp(email, password) {
+  const transporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: true,
+    auth: { user: email, pass: password },
+    connectionTimeout: 25_000,
+    socketTimeout: 30_000,
+    tls: { rejectUnauthorized: false },
+  });
+  try {
+    await transporter.verify();
+    return true;
+  } finally {
+    transporter.close?.();
+  }
+}
+
+async function processStationAccountUpdate(item) {
+  const email = String(item.email ?? "").trim().toLowerCase();
+  const password = String(item.password ?? "");
+  const userId = item.userId;
+  if (!email || !password || !userId) {
+    await api(`/api/mail-jobs/agent/station-accounts/${item.id}`, {
+      method: "PATCH",
+      body: { status: "failed", error: "Thiếu email/password/userId" },
+    });
+    return;
+  }
+
+  console.info("[mail_system] station-account update", item.id, "user=", userId, email);
+  try {
+    await verifySmtp(email, password);
+    upsertAccount(userId, email, password);
+    await api(`/api/mail-jobs/agent/station-accounts/${item.id}`, {
+      method: "PATCH",
+      body: { status: "applied" },
+    });
+    console.info("[mail_system] station-account applied", userId, email);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn("[mail_system] station-account failed", item.id, msg);
+    await api(`/api/mail-jobs/agent/station-accounts/${item.id}`, {
+      method: "PATCH",
+      body: {
+        status: "failed",
+        error: isSmtpAuthError(err)
+          ? "Email/mật khẩu không đúng (SMTP auth failed)"
+          : msg,
+      },
+    });
+  }
+}
+
 async function processJob(job) {
   const userId = job.userId;
   const to = Array.isArray(job.mail?.to) ? job.mail.to.filter(Boolean) : [];
@@ -150,14 +225,16 @@ async function processJob(job) {
   }
 
   let account = getAccount(userId);
+  /** Credentials mới từ FE — chỉ lưu sau khi SMTP thành công */
+  let pendingCreds = null;
 
   if (job.credentials?.email && job.credentials?.password) {
-    upsertAccount(userId, job.credentials.email, job.credentials.password);
-    account = {
-      email: job.credentials.email,
-      password: job.credentials.password,
+    pendingCreds = {
+      email: String(job.credentials.email).trim().toLowerCase(),
+      password: String(job.credentials.password),
     };
-    console.info("[mail_system] saved account for user", userId, account.email);
+    account = pendingCreds;
+    console.info("[mail_system] trying credentials for", userId, account.email);
   }
 
   if (!account) {
@@ -183,6 +260,9 @@ async function processJob(job) {
       text: job.mail.text || "",
       html: job.mail.html || "",
     });
+    // Chỉ lưu khi gửi thành công
+    upsertAccount(userId, account.email, account.password);
+    console.info("[mail_system] saved account for user", userId, account.email);
     await api(`/api/mail-jobs/agent/${job.id}`, {
       method: "PATCH",
       body: { status: "sent", sentTo: result.sent },
@@ -191,6 +271,21 @@ async function processJob(job) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn("[mail_system] SMTP failed", job.id, msg);
+
+    if (isSmtpAuthError(err) || pendingCreds) {
+      deleteAccount(userId);
+      await api(`/api/mail-jobs/agent/${job.id}`, {
+        method: "PATCH",
+        body: {
+          status: "need_credentials",
+          error:
+            "Email/mật khẩu webmail không đúng hoặc bị từ chối SMTP. Vui lòng nhập lại.",
+        },
+      });
+      console.info("[mail_system] auth failed → ask credentials again", job.id);
+      return;
+    }
+
     await api(`/api/mail-jobs/agent/${job.id}`, {
       method: "PATCH",
       body: { status: "failed", error: msg },
@@ -207,6 +302,12 @@ async function wake() {
 }
 
 async function tick() {
+  // Ưu tiên cập nhật account (ghi đè) rồi mới gửi mail job
+  const accountRes = await api("/api/mail-jobs/agent/station-accounts/next");
+  if (accountRes.status !== 204 && accountRes.data) {
+    await processStationAccountUpdate(accountRes.data);
+  }
+
   const { status, data } = await api("/api/mail-jobs/agent/next");
   if (status === 204 || !data) return;
   console.info("[mail_system] claimed", data.id, data.status, "user=", data.userId);
