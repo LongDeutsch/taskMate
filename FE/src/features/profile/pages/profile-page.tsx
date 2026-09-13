@@ -10,13 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Upload, Loader2 } from "lucide-react";
-import { DEFAULT_SMTP_HOST, DEFAULT_WEBMAIL_URL, type User as AppUser } from "@/shared/types";
-import {
-  DEFAULT_MAIL_TEMPLATE,
-  mergeMailTemplate,
-  type MailTemplateConfig,
-} from "@/features/time-off/lib/time-off-email";
-import { Textarea } from "@/components/ui/textarea";
+import type { User as AppUser } from "@/shared/types";
 import {
   calcAgeFromDateOfBirth,
   getProfileAgeError,
@@ -44,8 +38,6 @@ export function ProfilePage() {
     enabled: !!authUser,
   });
 
-  const [webmailPassword, setWebmailPassword] = useState("");
-
   const [form, setForm] = useState({
     fullName: "",
     dateOfBirth: "",
@@ -55,8 +47,6 @@ export function ProfilePage() {
     phone: "",
     email: "",
   });
-
-  const [mailTpl, setMailTpl] = useState<MailTemplateConfig>({ ...DEFAULT_MAIL_TEMPLATE });
 
   useEffect(() => {
     if (profile) {
@@ -69,7 +59,6 @@ export function ProfilePage() {
         phone: profile.phone ?? "",
         email: profile.email ?? "",
       });
-      setMailTpl(mergeMailTemplate(profile.mailTemplate));
     }
   }, [
     profile?.id,
@@ -80,7 +69,6 @@ export function ProfilePage() {
     profile?.position,
     profile?.phone,
     profile?.email,
-    profile?.mailTemplate,
   ]);
 
   const computedAge = calcAgeFromDateOfBirth(form.dateOfBirth || profile?.dateOfBirth);
@@ -106,10 +94,6 @@ export function ProfilePage() {
           position: form.position || null,
           phone: form.phone.trim() || null,
           email: form.email.trim() || null,
-          webmailUrl: DEFAULT_WEBMAIL_URL,
-          smtpHost: DEFAULT_SMTP_HOST,
-          webmailPassword: webmailPassword.trim() || undefined,
-          mailTemplate: mailTpl,
         },
         file
       );
@@ -129,7 +113,6 @@ export function ProfilePage() {
       window.dispatchEvent(new CustomEvent("taskmate-auth-update"));
       setAvatarFile(null);
       setAvatarFileError(null);
-      setWebmailPassword("");
       if (fileInputRef.current) fileInputRef.current.value = "";
     },
   });
@@ -307,6 +290,18 @@ export function ProfilePage() {
                 </select>
               </div>
               <div className="grid gap-2 sm:col-span-2">
+                <Label htmlFor="profile-email">Email</Label>
+                <Input
+                  id="profile-email"
+                  type="email"
+                  placeholder="Ví dụ: name@cybertech.com.vn"
+                  value={form.email}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  className="h-9"
+                  autoComplete="email"
+                />
+              </div>
+              <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="profile-phone">Số điện thoại</Label>
                 <Input
                   id="profile-phone"
@@ -334,138 +329,6 @@ export function ProfilePage() {
                   placeholder="Ví dụ: Developer, PM, Designer"
                   value={form.position}
                   onChange={(e) => setForm((f) => ({ ...f, position: e.target.value }))}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4 space-y-4">
-            <div>
-              <h3 className="text-sm font-semibold">Cấu hình Webmail (gửi mail xin off)</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                {DEFAULT_SMTP_HOST} · SMTP port 465 ·{" "}
-                <a
-                  href={DEFAULT_WEBMAIL_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  Mở hộp thư
-                </a>
-              </p>
-            </div>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="profile-webmail-email">Tài khoản email</Label>
-                <Input
-                  id="profile-webmail-email"
-                  type="email"
-                  placeholder="long.nguyen@cybertech.com.vn"
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  className="h-9"
-                  autoComplete="email"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="profile-webmailPassword">Mật khẩu webmail</Label>
-                <Input
-                  id="profile-webmailPassword"
-                  type="password"
-                  placeholder={
-                    profile?.hasWebmailPassword
-                      ? "Để trống nếu không đổi mật khẩu"
-                      : "Nhập mật khẩu đăng nhập webmail"
-                  }
-                  value={webmailPassword}
-                  onChange={(e) => setWebmailPassword(e.target.value)}
-                  className="h-9"
-                  autoComplete="new-password"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Mật khẩu được hash (bcrypt) và mã hóa trước khi lưu DB — không hiển thị lại.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4 space-y-4">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div>
-                <h3 className="text-sm font-semibold">Mẫu email Xin off</h3>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Placeholder:{" "}
-                  <code className="text-[11px]">
-                    {"{{fullName}} {{department}} {{actionPhrase}} {{detailsClause}} {{datePhrase}} {{scheduleBlock}}"}
-                  </code>
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setMailTpl({ ...DEFAULT_MAIL_TEMPLATE })}
-              >
-                Khôi phục mặc định
-              </Button>
-            </div>
-            <div className="grid gap-3">
-              <div className="grid gap-2">
-                <Label htmlFor="mail-department">Phòng ban ({"{{department}}"})</Label>
-                <Input
-                  id="mail-department"
-                  value={mailTpl.department}
-                  onChange={(e) => setMailTpl((t) => ({ ...t, department: e.target.value }))}
-                  className="h-9"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="mail-greeting">Lời chào</Label>
-                <Input
-                  id="mail-greeting"
-                  value={mailTpl.greeting}
-                  onChange={(e) => setMailTpl((t) => ({ ...t, greeting: e.target.value }))}
-                  className="h-9"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="mail-body">Thân mail (nghỉ / WFH / đi trễ…)</Label>
-                <Textarea
-                  id="mail-body"
-                  rows={4}
-                  value={mailTpl.bodyTemplate}
-                  onChange={(e) => setMailTpl((t) => ({ ...t, bodyTemplate: e.target.value }))}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="mail-biz-greeting">Lời chào (công tác)</Label>
-                <Input
-                  id="mail-biz-greeting"
-                  value={mailTpl.businessGreeting}
-                  onChange={(e) =>
-                    setMailTpl((t) => ({ ...t, businessGreeting: e.target.value }))
-                  }
-                  className="h-9"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="mail-biz-body">Thân mail (công tác)</Label>
-                <Textarea
-                  id="mail-biz-body"
-                  rows={4}
-                  value={mailTpl.businessBodyTemplate}
-                  onChange={(e) =>
-                    setMailTpl((t) => ({ ...t, businessBodyTemplate: e.target.value }))
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="mail-closing">Chữ ký / kết</Label>
-                <Input
-                  id="mail-closing"
-                  value={mailTpl.closing}
-                  onChange={(e) => setMailTpl((t) => ({ ...t, closing: e.target.value }))}
-                  className="h-9"
                 />
               </div>
             </div>
