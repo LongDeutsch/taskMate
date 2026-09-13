@@ -44,10 +44,8 @@ Hoặc double-click **`start.bat`**.
 
 ## Lần đầu gửi mail
 
-Lần đầu / cập nhật mail: user nhập trên web → agent **verify SMTP** rồi mới ghi `accounts.json`.
+Lần đầu / cập nhật mail: user nhập trên web khi gửi Xin off → agent **verify SMTP** rồi mới ghi `accounts.json`.
 Sai mật khẩu → không lưu / hỏi nhập lại.
-
-Trên web Xin off: nút **Cập nhật mail máy trạm** → ghi đè account theo user đang đăng nhập.
 
 Account: `%USERPROFILE%\.taskmate-mail-agent\accounts.json`
 
