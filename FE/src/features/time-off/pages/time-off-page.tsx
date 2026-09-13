@@ -17,6 +17,7 @@ import {
 import {
   cancelTimeOff,
   createMailJob,
+  getProfile,
   submitMailJobCredentials,
   waitForMailJob,
   wakeApi,
@@ -27,6 +28,10 @@ import {
   setTimeOffStatus,
 } from "@/shared/api";
 import type { MailJobItem } from "@/shared/api";
+import {
+  buildMailDraftFromForm,
+  textToSimpleHtml,
+} from "@/features/time-off/lib/time-off-email";
 import {
   formatRoleLabel,
   formatTimeOffReason,
@@ -318,9 +323,19 @@ export function TimeOffPage() {
   const [credError, setCredError] = useState<string | null>(null);
   const [isSubmittingCreds, setIsSubmittingCreds] = useState(false);
 
+  const [draftSubject, setDraftSubject] = useState("");
+  const [draftText, setDraftText] = useState("");
+  const [draftDirty, setDraftDirty] = useState(false);
+
   const recipientQuery = useQuery({
     queryKey: ["time-off", "recipients"],
     queryFn: getTimeOffRecipients,
+  });
+
+  const profileQuery = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: getProfile,
+    enabled: !!user,
   });
 
   const myQuery = useQuery({
@@ -367,6 +382,7 @@ export function TimeOffPage() {
       details?: string;
       businessTripSchedule?: BusinessTripScheduleItem[];
       recipientIds: string[];
+      mailDraft: { subject: string; text: string; html: string };
     }) => {
       const job = await createMailJob(payload);
       setJobStatusLabel("Đã tạo job — đang chờ máy trạm…");
@@ -580,6 +596,41 @@ export function TimeOffPage() {
       .map(recipientLabel);
   }, [form.recipientIds, recipientQuery.data]);
 
+  const regenerateDraft = useMemo(() => {
+    return () => {
+      const draft = buildMailDraftFromForm({
+        userName: user?.fullName || user?.username || "",
+        startDate: form.startDate,
+        endDate: form.endDate,
+        session: form.session,
+        reason: form.reason,
+        details: form.details,
+        businessTripSchedule:
+          form.reason === "BUSINESS_TRIP" ? form.businessTripSchedule : undefined,
+        mailTemplate: profileQuery.data?.mailTemplate,
+      });
+      setDraftSubject(draft.subject);
+      setDraftText(draft.text);
+      setDraftDirty(false);
+    };
+  }, [
+    user?.fullName,
+    user?.username,
+    form.startDate,
+    form.endDate,
+    form.session,
+    form.reason,
+    form.details,
+    form.businessTripSchedule,
+    profileQuery.data?.mailTemplate,
+  ]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (draftDirty) return;
+    regenerateDraft();
+  }, [open, draftDirty, regenerateDraft]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -646,6 +697,10 @@ export function TimeOffPage() {
             description: row.description.trim(),
           }))
         : undefined;
+    if (!draftSubject.trim() || !draftText.trim()) {
+      setError("Bản nháp email còn trống — kiểm tra lại trước khi gửi");
+      return;
+    }
     setIsSubmittingMailJob(true);
     setMailSuccess(null);
     createMutation.mutate({
@@ -657,6 +712,11 @@ export function TimeOffPage() {
       details: form.reason === "BUSINESS_TRIP" ? undefined : form.details.trim() || undefined,
       businessTripSchedule: schedulePayload,
       recipientIds,
+      mailDraft: {
+        subject: draftSubject.trim(),
+        text: draftText.trim(),
+        html: textToSimpleHtml(draftText.trim()),
+      },
     });
   }
 
@@ -730,7 +790,15 @@ export function TimeOffPage() {
               : "Gửi yêu cầu xin off của bạn tới HR."}
           </p>
         </div>
-        <Button onClick={() => setOpen((v) => !v)}>
+        <Button
+          onClick={() =>
+            setOpen((v) => {
+              const next = !v;
+              if (next) setDraftDirty(false);
+              return next;
+            })
+          }
+        >
           <Plus className="size-4" />
           {open ? "Đóng biểu mẫu" : "Tạo yêu cầu mới"}
         </Button>
@@ -1136,6 +1204,52 @@ export function TimeOffPage() {
                     ? selectedRecipientNames.join(", ")
                     : "chưa chọn HR"}
                 </p>
+              </div>
+
+              <div className="space-y-3 rounded-xl border border-sky-200 bg-sky-50/40 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <Label className="text-sm font-semibold text-sky-950">
+                      Bản nháp email (xem trước khi gửi)
+                    </Label>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Tự cập nhật theo form. Có thể sửa tay — máy trạm sẽ gửi đúng nội dung này.
+                      {draftDirty ? " (đang giữ bản chỉnh sửa)" : ""}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => regenerateDraft()}
+                  >
+                    Tạo lại từ mẫu
+                  </Button>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="draft-subject">Tiêu đề</Label>
+                  <Input
+                    id="draft-subject"
+                    value={draftSubject}
+                    onChange={(e) => {
+                      setDraftDirty(true);
+                      setDraftSubject(e.target.value);
+                    }}
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="draft-body">Nội dung</Label>
+                  <Textarea
+                    id="draft-body"
+                    rows={8}
+                    className="font-mono text-sm leading-relaxed"
+                    value={draftText}
+                    onChange={(e) => {
+                      setDraftDirty(true);
+                      setDraftText(e.target.value);
+                    }}
+                  />
+                </div>
               </div>
 
               <p className="text-xs text-muted-foreground rounded-md border border-dashed px-3 py-2">

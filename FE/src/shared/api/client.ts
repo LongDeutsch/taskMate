@@ -233,6 +233,14 @@ export type ProfileUpdate = {
   webmailUrl?: string | null;
   smtpHost?: string | null;
   webmailPassword?: string | null;
+  mailTemplate?: {
+    department?: string;
+    greeting?: string;
+    bodyTemplate?: string;
+    businessGreeting?: string;
+    businessBodyTemplate?: string;
+    closing?: string;
+  } | null;
 };
 
 export async function updateProfile(data: ProfileUpdate, avatarFile?: File): Promise<User> {
@@ -251,6 +259,9 @@ export async function updateProfile(data: ProfileUpdate, avatarFile?: File): Pro
     if (data.webmailUrl !== undefined) form.append("webmailUrl", data.webmailUrl ?? "");
     if (data.smtpHost !== undefined) form.append("smtpHost", data.smtpHost ?? "");
     if (data.webmailPassword) form.append("webmailPassword", data.webmailPassword);
+    if (data.mailTemplate !== undefined) {
+      form.append("mailTemplate", JSON.stringify(data.mailTemplate ?? {}));
+    }
     const headers: HeadersInit = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;
     const res = await fetch(url, { method: "PATCH", body: form, headers });
@@ -530,6 +541,8 @@ export interface CreateTimeOffPayload {
   details?: string;
   businessTripSchedule?: import("@/shared/types").BusinessTripScheduleItem[];
   recipientIds?: string[];
+  /** Bản nháp đã review trên FE — agent gửi đúng nội dung này */
+  mailDraft?: { subject: string; text: string; html?: string };
 }
 
 export type CreateTimeOffResult = {

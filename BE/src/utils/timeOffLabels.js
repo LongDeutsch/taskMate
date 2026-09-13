@@ -1,9 +1,9 @@
 import {
-  formatScheduleLineHtml,
   formatScheduleLineText,
   scheduleOverallDateRange,
   serializeBusinessTripSchedule,
 } from "./businessTripSchedule.js";
+import { applyPlaceholders, escapeHtml, mergeMailTemplate, textToSimpleHtml } from "./mailTemplate.js";
 
 const REASON_LABELS = {
   ANNUAL_LEAVE: "Nghỉ phép",
@@ -168,28 +168,32 @@ export function buildTimeOffActionPhrase(reason, session, startDate, endDate) {
   return `${verb} ${sw} ${datePhrase}`;
 }
 
-function buildBusinessTripEmailContent(request, fullName) {
+function buildBusinessTripEmailContent(request, fullName, mailTemplate) {
+  const tpl = mergeMailTemplate(mailTemplate);
   const schedule = serializeBusinessTripSchedule(request.businessTripSchedule ?? []);
   const { start, end } = getRequestDateRangeForEmail(request);
   const datePhrase = formatEmailDateRangePhrase(start, end);
-  const lines = schedule.map((item) => formatScheduleLineText(item));
-
-  const text = [
-    "Dear anh/chị,",
-    "",
-    `Em là ${fullName} thuộc phòng RnD. Dưới sự chỉ đạo của ban lãnh đạo, em xin cập nhật lịch công tác ${datePhrase} như sau:`,
-    "",
-    ...lines,
-    "",
-    "Thân,",
+  const scheduleBlock = schedule.map((item) => formatScheduleLineText(item)).join("\n");
+  const vars = {
     fullName,
-  ].join("\n");
-
+    department: tpl.department,
+    datePhrase,
+    scheduleBlock,
+    actionPhrase: "",
+    details: "",
+    detailsClause: "",
+    dateRange: datePhrase,
+    subjectPrefix: "",
+  };
+  const body = applyPlaceholders(tpl.businessBodyTemplate, vars);
+  const text = [tpl.businessGreeting, "", body, "", tpl.closing, fullName].join("\n");
   const html = [
-    "<p>Dear anh/chị,</p>",
-    `<p>Em là <strong>${escapeHtml(fullName)}</strong> thuộc phòng RnD. Dưới sự chỉ đạo của ban lãnh đạo, em xin cập nhật lịch công tác ${escapeHtml(datePhrase)} như sau:</p>`,
-    `<ul>${schedule.map((item) => formatScheduleLineHtml(item)).join("")}</ul>`,
-    `<p>Thân,<br>${escapeHtml(fullName)}</p>`,
+    `<p>${escapeHtml(tpl.businessGreeting)}</p>`,
+    textToSimpleHtml(body).replace(
+      escapeHtml(fullName),
+      `<strong>${escapeHtml(fullName)}</strong>`
+    ),
+    `<p>${escapeHtml(tpl.closing)}<br>${escapeHtml(fullName)}</p>`,
   ].join("\n");
 
   return { text, html, subject: formatTimeOffEmailSubject(request) };
@@ -197,11 +201,14 @@ function buildBusinessTripEmailContent(request, fullName) {
 
 /**
  * Soạn nội dung email xin off (plain text + HTML).
+ * @param request
+ * @param mailTemplate optional user template
  */
-export function buildTimeOffEmailContent(request) {
+export function buildTimeOffEmailContent(request, mailTemplate) {
   const fullName = String(request.userName ?? "").trim() || "Nhân viên";
+  const tpl = mergeMailTemplate(mailTemplate);
   if (request.reason === "BUSINESS_TRIP") {
-    return buildBusinessTripEmailContent(request, fullName);
+    return buildBusinessTripEmailContent(request, fullName, tpl);
   }
   const actionPhrase = buildTimeOffActionPhrase(
     request.reason,
@@ -212,37 +219,28 @@ export function buildTimeOffEmailContent(request) {
   const extraDetails = String(request.details ?? "")
     .trim()
     .replace(/[.。\s]+$/u, "");
-
-  const mainSentence = extraDetails
-    ? `Em là ${fullName} thuộc phòng RnD, em gửi mail để ${actionPhrase} vì nguyên nhân sau: ${extraDetails}.`
-    : `Em là ${fullName} thuộc phòng RnD, em gửi mail để ${actionPhrase}. Kính mong lãnh đạo và nhân sự xem xét hỗ trợ.`;
-
-  const text = [
-    "Xin chào lãnh đạo và nhân sự CBT,",
-    "",
-    mainSentence,
-    "",
-    "Thân,",
+  const detailsClause = extraDetails ? ` vì nguyên nhân sau: ${extraDetails}` : "";
+  const vars = {
     fullName,
-  ].join("\n");
-
-  const htmlMain = extraDetails
-    ? `Em là <strong>${escapeHtml(fullName)}</strong> thuộc phòng RnD, em gửi mail để ${escapeHtml(actionPhrase)} vì nguyên nhân sau: ${escapeHtml(extraDetails)}.`
-    : `Em là <strong>${escapeHtml(fullName)}</strong> thuộc phòng RnD, em gửi mail để ${escapeHtml(actionPhrase)}. Kính mong lãnh đạo và nhân sự xem xét hỗ trợ.`;
-
+    department: tpl.department,
+    actionPhrase,
+    details: extraDetails,
+    detailsClause,
+    datePhrase: formatTimeOffDateEmailPhrase(request.startDate, request.endDate),
+    scheduleBlock: "",
+    dateRange: formatTimeOffDateEmailPhrase(request.startDate, request.endDate),
+    subjectPrefix: "",
+  };
+  const body = applyPlaceholders(tpl.bodyTemplate, vars);
+  const text = [tpl.greeting, "", body, "", tpl.closing, fullName].join("\n");
   const html = [
-    "<p>Xin chào lãnh đạo và nhân sự CBT,</p>",
-    `<p>${htmlMain}</p>`,
-    `<p>Thân,<br>${escapeHtml(fullName)}</p>`,
+    `<p>${escapeHtml(tpl.greeting)}</p>`,
+    `<p>${escapeHtml(body).replace(
+      escapeHtml(fullName),
+      `<strong>${escapeHtml(fullName)}</strong>`
+    )}</p>`,
+    `<p>${escapeHtml(tpl.closing)}<br>${escapeHtml(fullName)}</p>`,
   ].join("\n");
 
   return { text, html, subject: formatTimeOffEmailSubject(request) };
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }

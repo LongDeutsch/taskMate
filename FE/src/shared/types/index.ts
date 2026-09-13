@@ -31,6 +31,15 @@ export interface User {
   smtpHost?: string | null;
   /** Đã cấu hình mật khẩu webmail (không trả mật khẩu) */
   hasWebmailPassword?: boolean;
+  /** Mẫu email Xin off (placeholder) */
+  mailTemplate?: {
+    department?: string;
+    greeting?: string;
+    bodyTemplate?: string;
+    businessGreeting?: string;
+    businessBodyTemplate?: string;
+    closing?: string;
+  } | null;
   avatar?: string | null;
   deletedAt?: string | null;
   restoreUntil?: string | null;

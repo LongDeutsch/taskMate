@@ -13,11 +13,16 @@ import {
   decryptWebmailPassword,
 } from "../utils/mailCredentials.js";
 import { buildTimeOffEmailContent } from "../utils/timeOffLabels.js";
+import { textToSimpleHtml } from "../utils/mailTemplate.js";
 import {
   normalizeBusinessTripSchedule,
   scheduleOverallDateRange,
   serializeBusinessTripSchedule,
 } from "../utils/businessTripSchedule.js";
+
+function textToHtmlFromPlain(text) {
+  return textToSimpleHtml(text);
+}
 
 function newJobId() {
   return "mj-" + crypto.randomUUID().replace(/-/g, "").slice(0, 12);
@@ -176,6 +181,8 @@ export async function createJob(req, res, next) {
       details,
       businessTripSchedule,
       recipientIds,
+      /** Bản nháp đã review trên FE — ưu tiên dùng nếu hợp lệ */
+      mailDraft,
     } = req.body ?? {};
 
     if (!TIME_OFF_SESSIONS.includes(session)) {
@@ -217,7 +224,9 @@ export async function createJob(req, res, next) {
       if (range.end) end = parseDateOnly(range.end, "endDate");
     }
 
-    const me = await User.findById(req.user.id).select("fullName roleLabel role").lean();
+    const me = await User.findById(req.user.id)
+      .select("fullName roleLabel role mailTemplate")
+      .lean();
     const userName = me?.fullName ?? req.user.fullName ?? req.user.username ?? "";
     const resolved = await resolveRecipients(recipientIds, req.user.id);
     if (resolved.recipientIds.length === 0) {
@@ -248,7 +257,14 @@ export async function createJob(req, res, next) {
       businessTripSchedule:
         reason === "BUSINESS_TRIP" ? serializeBusinessTripSchedule(normalizedSchedule) : [],
     };
-    const { subject, text, html } = buildTimeOffEmailContent(emailRequest);
+
+    const generated = buildTimeOffEmailContent(emailRequest, me?.mailTemplate);
+    const draftSubject = String(mailDraft?.subject ?? "").trim();
+    const draftText = String(mailDraft?.text ?? "").trim();
+    const draftHtml = String(mailDraft?.html ?? "").trim();
+    const subject = draftSubject || generated.subject;
+    const text = draftText || generated.text;
+    const html = draftHtml || (draftText ? textToHtmlFromPlain(draftText) : generated.html);
 
     const id = newJobId();
     const now = new Date();

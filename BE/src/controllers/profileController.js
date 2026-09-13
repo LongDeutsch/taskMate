@@ -10,6 +10,7 @@ import {
   DEFAULT_WEBMAIL_URL,
   DEFAULT_SMTP_HOST,
 } from "../utils/mailCredentials.js";
+import { mergeMailTemplate, normalizeMailTemplate } from "../utils/mailTemplate.js";
 
 function normalizeEmail(value) {
   if (value === undefined) return undefined;
@@ -76,6 +77,7 @@ export async function updateProfile(req, res, next) {
       webmailUrl,
       smtpHost,
       webmailPassword,
+      mailTemplate,
     } = req.body;
     const user = await User.findById(req.user.id).select("+webmailPasswordEnc +webmailPasswordHash");
     if (!user) {
@@ -113,6 +115,9 @@ export async function updateProfile(req, res, next) {
       const plain = String(webmailPassword);
       user.webmailPasswordEnc = encryptWebmailPassword(plain);
       user.webmailPasswordHash = await hashWebmailPassword(plain);
+    }
+    if (mailTemplate !== undefined) {
+      user.mailTemplate = normalizeMailTemplate(mailTemplate);
     }
     if (req.file) {
       user.avatar = avatarFromUploadedFile(req.file);
