@@ -1,5 +1,6 @@
 // File: src/features/time-off/pages/time-off-page.tsx
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CalendarOff,
@@ -1170,51 +1171,101 @@ export function TimeOffPage() {
         </Card>
       )}
 
-      {credentialsJobId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <Card className="w-full max-w-md shadow-xl">
-            <CardHeader>
-              <CardTitle>Cấu hình email lần đầu</CardTitle>
-              <CardDescription>
-                Máy trạm chưa có account gửi mail của bạn. Nhập email + mật khẩu webmail
-                (mail.cybertech.com.vn) — chỉ lưu trên máy trạm.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmitCredentials} className="space-y-3">
+      {credentialsJobId &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
+            role="presentation"
+          >
+            <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="cred-modal-title"
+              className="relative z-[101] flex w-full max-w-[520px] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+            >
+              <div className="space-y-2 border-b border-gray-100 px-5 py-4 sm:px-6">
+                <h2
+                  id="cred-modal-title"
+                  className="text-lg font-semibold tracking-tight text-gray-900"
+                >
+                  Cấu hình email lần đầu
+                </h2>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Máy trạm chưa có account gửi mail của bạn. Nhập email và mật khẩu webmail
+                  (mail.cybertech.com.vn). Thông tin chỉ lưu trên máy trạm.
+                </p>
+              </div>
+
+              <form
+                onSubmit={handleSubmitCredentials}
+                className="flex flex-col gap-5 px-5 py-5 sm:px-6"
+              >
                 {credError && (
-                  <p className="rounded-md bg-rose-50 p-2 text-sm text-rose-700">{credError}</p>
+                  <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                    {credError}
+                  </p>
                 )}
-                <div className="grid gap-2">
-                  <Label htmlFor="credEmail">Email gửi</Label>
+
+                <div className="flex w-full flex-col gap-1.5">
+                  <Label htmlFor="credEmail" className="text-sm font-medium text-gray-800">
+                    Email gửi
+                  </Label>
                   <Input
                     id="credEmail"
                     type="email"
                     autoComplete="username"
+                    className="w-full"
                     value={credEmail}
                     onChange={(e) => setCredEmail(e.target.value)}
                     required
+                    placeholder="ban@cybertech.com.vn"
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="credPassword">Mật khẩu webmail</Label>
+
+                <div className="flex w-full flex-col gap-1.5">
+                  <Label htmlFor="credPassword" className="text-sm font-medium text-gray-800">
+                    Mật khẩu webmail
+                  </Label>
                   <Input
                     id="credPassword"
                     type="password"
                     autoComplete="current-password"
+                    className="w-full"
                     value={credPassword}
                     onChange={(e) => setCredPassword(e.target.value)}
                     required
+                    placeholder="••••••••"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={isSubmittingCreds}>
-                  {isSubmittingCreds ? "Đang gửi…" : "Lưu và tiếp tục gửi mail"}
-                </Button>
+
+                <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                    disabled={isSubmittingCreds}
+                    onClick={() => {
+                      setCredentialsJobId(null);
+                      setCredPassword("");
+                      setCredError(null);
+                    }}
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="w-full sm:w-auto sm:min-w-[10rem]"
+                    disabled={isSubmittingCreds}
+                  >
+                    {isSubmittingCreds ? "Đang gửi…" : "Lưu & tiếp tục"}
+                  </Button>
+                </div>
               </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            </div>
+          </div>,
+          document.body
+        )}
 
       <Card>
         <CardHeader className="space-y-3 pb-3">
