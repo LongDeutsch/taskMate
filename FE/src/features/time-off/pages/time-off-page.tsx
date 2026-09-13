@@ -10,14 +10,18 @@ import {
   Download,
   Eye,
   EyeOff,
+  Pencil,
   Plus,
+  RefreshCw,
   Trash2,
+  X,
   XCircle,
 } from "lucide-react";
 import {
   cancelTimeOff,
   createMailJob,
   getProfile,
+  updateProfile,
   submitMailJobCredentials,
   waitForMailJob,
   wakeApi,
@@ -30,7 +34,10 @@ import {
 import type { MailJobItem } from "@/shared/api";
 import {
   buildMailDraftFromForm,
+  DEFAULT_MAIL_TEMPLATE,
+  mergeMailTemplate,
   textToSimpleHtml,
+  type MailTemplateConfig,
 } from "@/features/time-off/lib/time-off-email";
 import {
   formatRoleLabel,
@@ -326,6 +333,11 @@ export function TimeOffPage() {
   const [draftSubject, setDraftSubject] = useState("");
   const [draftText, setDraftText] = useState("");
   const [draftDirty, setDraftDirty] = useState(false);
+  const [mailTpl, setMailTpl] = useState<MailTemplateConfig>({ ...DEFAULT_MAIL_TEMPLATE });
+  const [tplModalOpen, setTplModalOpen] = useState(false);
+  const [tplDraft, setTplDraft] = useState<MailTemplateConfig>({ ...DEFAULT_MAIL_TEMPLATE });
+  const [tplSaving, setTplSaving] = useState(false);
+  const [tplError, setTplError] = useState<string | null>(null);
 
   const recipientQuery = useQuery({
     queryKey: ["time-off", "recipients"],
@@ -607,7 +619,7 @@ export function TimeOffPage() {
         details: form.details,
         businessTripSchedule:
           form.reason === "BUSINESS_TRIP" ? form.businessTripSchedule : undefined,
-        mailTemplate: profileQuery.data?.mailTemplate,
+        mailTemplate: mailTpl,
       });
       setDraftSubject(draft.subject);
       setDraftText(draft.text);
@@ -622,14 +634,65 @@ export function TimeOffPage() {
     form.reason,
     form.details,
     form.businessTripSchedule,
-    profileQuery.data?.mailTemplate,
+    mailTpl,
   ]);
+
+  useEffect(() => {
+    if (profileQuery.data?.mailTemplate) {
+      setMailTpl(mergeMailTemplate(profileQuery.data.mailTemplate));
+    }
+  }, [profileQuery.data?.mailTemplate]);
 
   useEffect(() => {
     if (!open) return;
     if (draftDirty) return;
     regenerateDraft();
   }, [open, draftDirty, regenerateDraft]);
+
+  function handleRegenerateFromTemplate(e?: React.MouseEvent) {
+    e?.preventDefault();
+    e?.stopPropagation();
+    regenerateDraft();
+  }
+
+  function openTemplateModal(e?: React.MouseEvent) {
+    e?.preventDefault();
+    e?.stopPropagation();
+    setTplDraft({ ...mailTpl });
+    setTplError(null);
+    setTplModalOpen(true);
+  }
+
+  async function saveTemplateAndApply() {
+    setTplSaving(true);
+    setTplError(null);
+    try {
+      const next = mergeMailTemplate(tplDraft);
+      const updated = await updateProfile({ mailTemplate: next });
+      setMailTpl(mergeMailTemplate(updated.mailTemplate ?? next));
+      queryClient.setQueryData(["profile", user?.id], updated);
+      setTplModalOpen(false);
+      // Force refresh draft from new template
+      const draft = buildMailDraftFromForm({
+        userName: user?.fullName || user?.username || "",
+        startDate: form.startDate,
+        endDate: form.endDate,
+        session: form.session,
+        reason: form.reason,
+        details: form.details,
+        businessTripSchedule:
+          form.reason === "BUSINESS_TRIP" ? form.businessTripSchedule : undefined,
+        mailTemplate: next,
+      });
+      setDraftSubject(draft.subject);
+      setDraftText(draft.text);
+      setDraftDirty(false);
+    } catch (err) {
+      setTplError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setTplSaving(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -1206,25 +1269,39 @@ export function TimeOffPage() {
                 </p>
               </div>
 
-              <div className="space-y-3 rounded-xl border border-sky-200 bg-sky-50/40 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <Label className="text-sm font-semibold text-sky-950">
+              <div className="relative z-10 space-y-3 rounded-xl border border-sky-200 bg-sky-50/40 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-semibold text-sky-950">
                       Bản nháp email (xem trước khi gửi)
-                    </Label>
+                    </h3>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      Tự cập nhật theo form. Có thể sửa tay — máy trạm sẽ gửi đúng nội dung này.
+                      Tự cập nhật theo form + mẫu của bạn. Có thể sửa tay trước khi gửi.
                       {draftDirty ? " (đang giữ bản chỉnh sửa)" : ""}
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => regenerateDraft()}
-                  >
-                    Tạo lại từ mẫu
-                  </Button>
+                  <div className="relative z-20 flex shrink-0 flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="pointer-events-auto bg-white"
+                      onClick={openTemplateModal}
+                    >
+                      <Pencil className="size-3.5" />
+                      Chỉnh mẫu
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="pointer-events-auto bg-white"
+                      onClick={handleRegenerateFromTemplate}
+                    >
+                      <RefreshCw className="size-3.5" />
+                      Tạo lại từ mẫu
+                    </Button>
+                  </div>
                 </div>
                 <div className="grid gap-1.5">
                   <Label htmlFor="draft-subject">Tiêu đề</Label>
@@ -1396,6 +1473,130 @@ export function TimeOffPage() {
                   </Button>
                 </div>
               </form>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {tplModalOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6"
+            role="presentation"
+          >
+            <button
+              type="button"
+              className="absolute inset-0 bg-black/50"
+              aria-label="Đóng"
+              onClick={() => setTplModalOpen(false)}
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="tpl-modal-title"
+              className="relative z-[111] flex max-h-[min(92vh,900px)] w-full max-w-[560px] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+            >
+              <div className="flex shrink-0 items-start justify-between gap-3 border-b border-gray-100 px-5 py-4 sm:px-6">
+                <div className="min-w-0 space-y-1">
+                  <h2 id="tpl-modal-title" className="text-lg font-semibold text-gray-900">
+                    Chỉnh mẫu email
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Placeholder:{" "}
+                    <code className="text-[11px]">
+                      {"{{fullName}} {{department}} {{actionPhrase}} {{detailsClause}} {{datePhrase}} {{scheduleBlock}}"}
+                    </code>
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setTplModalOpen(false)}
+                >
+                  <X className="size-5" />
+                </Button>
+              </div>
+
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4 sm:px-6">
+                {tplError && (
+                  <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{tplError}</p>
+                )}
+                <div className="grid gap-1.5">
+                  <Label htmlFor="tpl-department">Phòng ban ({"{{department}}"})</Label>
+                  <Input
+                    id="tpl-department"
+                    value={tplDraft.department}
+                    onChange={(e) => setTplDraft((t) => ({ ...t, department: e.target.value }))}
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="tpl-greeting">Lời chào</Label>
+                  <Input
+                    id="tpl-greeting"
+                    value={tplDraft.greeting}
+                    onChange={(e) => setTplDraft((t) => ({ ...t, greeting: e.target.value }))}
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="tpl-body">Thân mail (nghỉ / WFH / đi trễ…)</Label>
+                  <Textarea
+                    id="tpl-body"
+                    rows={4}
+                    className="font-mono text-sm"
+                    value={tplDraft.bodyTemplate}
+                    onChange={(e) => setTplDraft((t) => ({ ...t, bodyTemplate: e.target.value }))}
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="tpl-biz-greeting">Lời chào (công tác)</Label>
+                  <Input
+                    id="tpl-biz-greeting"
+                    value={tplDraft.businessGreeting}
+                    onChange={(e) =>
+                      setTplDraft((t) => ({ ...t, businessGreeting: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="tpl-biz-body">Thân mail (công tác)</Label>
+                  <Textarea
+                    id="tpl-biz-body"
+                    rows={4}
+                    className="font-mono text-sm"
+                    value={tplDraft.businessBodyTemplate}
+                    onChange={(e) =>
+                      setTplDraft((t) => ({ ...t, businessBodyTemplate: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="tpl-closing">Chữ ký / kết</Label>
+                  <Input
+                    id="tpl-closing"
+                    value={tplDraft.closing}
+                    onChange={(e) => setTplDraft((t) => ({ ...t, closing: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setTplDraft({ ...DEFAULT_MAIL_TEMPLATE })}
+                >
+                  Khôi phục mặc định
+                </Button>
+                <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                  <Button type="button" variant="outline" onClick={() => setTplModalOpen(false)}>
+                    Hủy
+                  </Button>
+                  <Button type="button" disabled={tplSaving} onClick={() => void saveTemplateAndApply()}>
+                    {tplSaving ? "Đang lưu…" : "Lưu mẫu & cập nhật nháp"}
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>,
           document.body
