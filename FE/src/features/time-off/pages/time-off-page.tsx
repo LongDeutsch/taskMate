@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   Clock4,
   Download,
+  Eye,
+  EyeOff,
   Plus,
   Trash2,
   XCircle,
@@ -312,6 +314,7 @@ export function TimeOffPage() {
   const [credentialsJobId, setCredentialsJobId] = useState<string | null>(null);
   const [credEmail, setCredEmail] = useState("");
   const [credPassword, setCredPassword] = useState("");
+  const [showCredPassword, setShowCredPassword] = useState(false);
   const [credError, setCredError] = useState<string | null>(null);
   const [isSubmittingCreds, setIsSubmittingCreds] = useState(false);
 
@@ -385,6 +388,7 @@ export function TimeOffPage() {
         setCredentialsJobId(current.id);
         setCredEmail("");
         setCredPassword("");
+        setShowCredPassword(false);
         setCredError(null);
         current = await waitForMailJob(current.id, {
           timeoutMs: 180_000,
@@ -1227,16 +1231,31 @@ export function TimeOffPage() {
                   <Label htmlFor="credPassword" className="text-sm font-medium text-gray-800">
                     Mật khẩu webmail
                   </Label>
-                  <Input
-                    id="credPassword"
-                    type="password"
-                    autoComplete="current-password"
-                    className="w-full"
-                    value={credPassword}
-                    onChange={(e) => setCredPassword(e.target.value)}
-                    required
-                    placeholder="••••••••"
-                  />
+                  <div className="relative w-full">
+                    <Input
+                      id="credPassword"
+                      type={showCredPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      className="w-full pr-11"
+                      value={credPassword}
+                      onChange={(e) => setCredPassword(e.target.value)}
+                      required
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:text-gray-800"
+                      onClick={() => setShowCredPassword((v) => !v)}
+                      aria-label={showCredPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    >
+                      {showCredPassword ? (
+                        <EyeOff className="size-[18px]" />
+                      ) : (
+                        <Eye className="size-[18px]" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
@@ -1248,6 +1267,7 @@ export function TimeOffPage() {
                     onClick={() => {
                       setCredentialsJobId(null);
                       setCredPassword("");
+                      setShowCredPassword(false);
                       setCredError(null);
                     }}
                   >
