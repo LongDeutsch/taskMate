@@ -118,7 +118,7 @@ export function AdminTaskFormDrawer({
                   value={form.projectId}
                   onChange={(e) => setForm((f) => ({ ...f, projectId: e.target.value }))}
                 >
-                  <option value="">Chọn project</option>
+                  <option value="">Chọn dự án</option>
                   {projects.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name}
@@ -132,7 +132,7 @@ export function AdminTaskFormDrawer({
             )}
             <div className="grid gap-2 lg:col-span-2">
               <Label htmlFor="drawer-title" className={at.label}>
-                Title
+                Tiêu đề
               </Label>
               <Input
                 id="drawer-title"
@@ -147,7 +147,7 @@ export function AdminTaskFormDrawer({
             </div>
             <div className="grid gap-2 lg:col-span-2">
               <Label htmlFor="drawer-description" className={at.label}>
-                Description
+                Mô tả chi tiết
               </Label>
               <div className={at.feedbackScroll}>
                 <AutoResizeTextarea
@@ -167,7 +167,7 @@ export function AdminTaskFormDrawer({
           <h3 className={at.sectionTitle}>Trạng thái & phân công</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="grid gap-2">
-              <Label className={at.label}>Status</Label>
+              <Label className={at.label}>Trạng thái</Label>
               <select
                 className={at.select + " w-full"}
                 value={form.status}
@@ -177,13 +177,13 @@ export function AdminTaskFormDrawer({
               >
                 {statusOptions.map((s) => (
                   <option key={s} value={s}>
-                    {s === "InProgress" ? "In Progress" : s}
+                    {s === "Todo" ? "Cần làm (Todo)" : s === "InProgress" ? "Đang làm (In Progress)" : "Hoàn thành (Done)"}
                   </option>
                 ))}
               </select>
             </div>
             <div className="grid gap-2">
-              <Label className={at.label}>Priority</Label>
+              <Label className={at.label}>Mức độ ưu tiên</Label>
               <select
                 className={at.select + " w-full"}
                 value={form.priority}
@@ -193,14 +193,14 @@ export function AdminTaskFormDrawer({
               >
                 {priorityOptions.map((p) => (
                   <option key={p} value={p}>
-                    {p}
+                    {p === "Low" ? "Thấp (Low)" : p === "Medium" ? "Trung bình (Medium)" : "Cao (High)"}
                   </option>
                 ))}
               </select>
             </div>
             <div className="grid gap-2 sm:col-span-2 lg:col-span-1">
               <Label htmlFor="drawer-deadline" className={at.label}>
-                Deadline
+                Hạn chót
               </Label>
               <Input
                 id="drawer-deadline"
@@ -214,7 +214,7 @@ export function AdminTaskFormDrawer({
               )}
             </div>
             <div className="grid gap-2 sm:col-span-2">
-              <Label className={at.label}>Assignee</Label>
+              <Label className={at.label}>Người thực hiện</Label>
               <select
                 className={at.select + " w-full"}
                 value={form.assigneeId ?? ""}
@@ -245,7 +245,7 @@ export function AdminTaskFormDrawer({
             </div>
             {!isSelfNoteForm && (
               <div className="grid gap-2 sm:col-span-2">
-                <Label className={at.label}>Collaborators</Label>
+                <Label className={at.label}>Người phối hợp</Label>
                 <select
                   className={at.select + " w-full"}
                   value={(form.collaboratorIds ?? [])[0] ?? ""}

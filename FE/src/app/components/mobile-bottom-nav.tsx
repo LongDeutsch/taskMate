@@ -9,18 +9,18 @@ export function MobileBottomNav() {
   const roleLabel = user ? getRoleLabel(user) : "STAFF";
 
   const tasksTo = isAdmin ? "/admin/tasks" : "/tasks";
-  const tasksLabel = isAdmin ? "Tasks" : "My Tasks";
+  const tasksLabel = isAdmin ? "Công việc" : "Việc của tôi";
   const items =
     roleLabel === "HR"
       ? [
-          { to: "/time-off", label: "Xin off", icon: CalendarOff },
-          { to: "/users", label: "Users", icon: Users },
-          { to: "/profile", label: "Profile", icon: UserCircle },
+          { to: "/time-off", label: "Nghỉ phép", icon: CalendarOff },
+          { to: "/users", label: "Thành viên", icon: Users },
+          { to: "/profile", label: "Hồ sơ", icon: UserCircle },
         ]
       : [
-          { to: "/dashboard", label: "Home", icon: LayoutDashboard },
+          { to: "/dashboard", label: "Tổng quan", icon: LayoutDashboard },
           { to: tasksTo, label: tasksLabel, icon: ListTodo },
-          { to: "/profile", label: "Profile", icon: UserCircle },
+          { to: "/profile", label: "Hồ sơ", icon: UserCircle },
         ];
 
   return (

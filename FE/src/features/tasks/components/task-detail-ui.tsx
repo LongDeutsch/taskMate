@@ -76,13 +76,24 @@ function MetaBadge({ children, className }: { children: ReactNode; className: st
   );
 }
 
+const statusLabelMap: Record<TaskStatus, string> = {
+  Todo: "Cần làm",
+  InProgress: "Đang làm",
+  Done: "Hoàn thành",
+};
+
+const priorityLabelMap: Record<TaskPriority, string> = {
+  Low: "Thấp",
+  Medium: "Trung bình",
+  High: "Cao",
+};
+
 export function StatusBadge({ status }: { status: TaskStatus }) {
-  const label = status === "InProgress" ? "In Progress" : status;
-  return <MetaBadge className={statusStyles[status]}>{label}</MetaBadge>;
+  return <MetaBadge className={statusStyles[status]}>{statusLabelMap[status] ?? status}</MetaBadge>;
 }
 
 export function PriorityBadge({ priority }: { priority: TaskPriority }) {
-  return <MetaBadge className={priorityStyles[priority]}>{priority}</MetaBadge>;
+  return <MetaBadge className={priorityStyles[priority]}>{priorityLabelMap[priority] ?? priority}</MetaBadge>;
 }
 
 export function DeadlineBadge({ deadline }: { deadline: string }) {

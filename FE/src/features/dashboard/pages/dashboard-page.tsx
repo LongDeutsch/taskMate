@@ -129,9 +129,9 @@ export function DashboardPage() {
       : "— (note cá nhân)";
 
   const statusLabel: Record<TaskStatus, string> = {
-    Todo: "Todo",
-    InProgress: "In Progress",
-    Done: "Done",
+    Todo: "Cần làm",
+    InProgress: "Đang làm",
+    Done: "Hoàn thành",
   };
 
   if (user && getRoleLabel(user) === "HR") {
@@ -151,9 +151,9 @@ export function DashboardPage() {
   return (
     <div className="w-full min-w-0 space-y-6 pb-28 md:pb-0">
       <div>
-        <h1 className="text-xl font-bold sm:text-2xl">Dashboard</h1>
+        <h1 className="text-xl font-bold sm:text-2xl">Bảng điều khiển</h1>
         <p className="text-sm text-muted-foreground">
-          {isAdmin ? "Overview of all tasks" : "Your assigned tasks at a glance"}
+          {isAdmin ? "Tổng quan toàn bộ công việc trong hệ thống" : "Tổng quan công việc được giao cho bạn"}
         </p>
       </div>
 
@@ -169,7 +169,7 @@ export function DashboardPage() {
           onKeyDown={(e) => e.key === "Enter" && setSelectedStatus(selectedStatus === "Todo" ? null : "Todo")}
         >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Todo</CardTitle>
+            <CardTitle className="text-sm font-medium">Cần làm</CardTitle>
             <ListTodo className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -187,7 +187,7 @@ export function DashboardPage() {
           onKeyDown={(e) => e.key === "Enter" && setSelectedStatus(selectedStatus === "InProgress" ? null : "InProgress")}
         >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+            <CardTitle className="text-sm font-medium">Đang làm</CardTitle>
             <Clock className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -205,7 +205,7 @@ export function DashboardPage() {
           onKeyDown={(e) => e.key === "Enter" && setSelectedStatus(selectedStatus === "Done" ? null : "Done")}
         >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Done</CardTitle>
+            <CardTitle className="text-sm font-medium">Hoàn thành</CardTitle>
             <CheckCircle className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>

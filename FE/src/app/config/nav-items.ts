@@ -34,13 +34,13 @@ export function getHomePathForUser(user: Pick<User, "role" | "roleLabel"> | null
 }
 
 export const baseNavItems: NavItem[] = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/bug-reports", label: "Báo bug", icon: Bug },
-  { to: "/tasks", label: "My Tasks", icon: ListTodo, hideForHr: true },
-  { to: "/users", label: "Users", icon: Users },
-  { to: "/time-off", label: "Xin off", icon: CalendarOff },
-  { to: "/profile", label: "Profile", icon: UserCircle },
-  { to: "/automation", label: "Automation", icon: Zap },
+  { to: "/dashboard", label: "Bảng điều khiển", icon: LayoutDashboard },
+  { to: "/bug-reports", label: "Báo lỗi", icon: Bug },
+  { to: "/tasks", label: "Công việc của tôi", icon: ListTodo, hideForHr: true },
+  { to: "/users", label: "Thành viên", icon: Users },
+  { to: "/time-off", label: "Nghỉ phép", icon: CalendarOff },
+  { to: "/profile", label: "Hồ sơ cá nhân", icon: UserCircle },
+  { to: "/automation", label: "Tự động hóa", icon: Zap },
 ];
 
 export function getBaseNavItems(roleLabel: string) {
@@ -53,8 +53,8 @@ export function getBaseNavItems(roleLabel: string) {
 }
 
 export const adminNavItems: NavItem[] = [
-  { to: "/admin/projects", label: "Projects", icon: FolderKanban },
-  { to: "/admin/tasks", label: "Tasks (CRUD)", icon: ClipboardList },
-  { to: "/admin/users", label: "Quản lý Users", icon: Users },
+  { to: "/admin/projects", label: "Quản lý dự án", icon: FolderKanban },
+  { to: "/admin/tasks", label: "Quản lý công việc", icon: ClipboardList },
+  { to: "/admin/users", label: "Quản lý người dùng", icon: Users },
   { to: "/admin/trash", label: "Thùng rác", icon: Trash2 },
 ];

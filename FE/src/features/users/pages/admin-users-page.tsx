@@ -53,8 +53,8 @@ const ROLE_LABEL_OPTIONS: {
 
 const createUserSchema = z
   .object({
-    username: z.string().min(1, "Username is required"),
-    fullName: z.string().min(1, "Full name is required"),
+    username: z.string().min(1, "Tên đăng nhập không được để trống"),
+    fullName: z.string().min(1, "Họ và tên không được để trống"),
     email: z.string().optional(),
     roleLabel: z.enum(["ADMIN", "STAFF", "HR", "BODS"]),
   })
@@ -183,8 +183,8 @@ export function AdminUsersPage() {
     <div className="w-full min-w-0 space-y-6 pb-28 md:pb-0">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-xl font-bold sm:text-2xl">Users</h1>
-          <p className="text-muted-foreground">Manage users (Admin only)</p>
+          <h1 className="text-xl font-bold sm:text-2xl">Quản lý người dùng</h1>
+          <p className="text-muted-foreground">Quản lý danh sách thành viên trong hệ thống (Dành cho Quản trị viên)</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -205,7 +205,7 @@ export function AdminUsersPage() {
           </Button>
           <Button onClick={() => setOpen(true)}>
             <Plus className="size-4" />
-            Add user
+            Thêm người dùng
           </Button>
         </div>
       </div>
@@ -213,9 +213,9 @@ export function AdminUsersPage() {
       {open && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Create user</CardTitle>
+            <CardTitle>Tạo người dùng mới</CardTitle>
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-              Cancel
+              Hủy
             </Button>
           </CardHeader>
           <CardContent>
@@ -224,7 +224,7 @@ export function AdminUsersPage() {
                 <p className="text-sm text-destructive">{error}</p>
               )}
               <div className="grid gap-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username">Tên đăng nhập</Label>
                 <Input
                   id="username"
                   value={username}
@@ -233,12 +233,12 @@ export function AdminUsersPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="fullName">Full name</Label>
+                <Label htmlFor="fullName">Họ và tên</Label>
                 <Input
                   id="fullName"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Full Name"
+                  placeholder="Họ và tên"
                 />
               </div>
               <div className="grid gap-2">
@@ -265,7 +265,7 @@ export function AdminUsersPage() {
               </div>
               <div className="grid gap-2">
                 <Label>
-                  Role <span className="text-xs font-normal text-muted-foreground">(đang chọn: {formatRoleLabel(roleLabel)})</span>
+                  Vai trò <span className="text-xs font-normal text-muted-foreground">(đang chọn: {formatRoleLabel(roleLabel)})</span>
                 </Label>
                 <div
                   role="radiogroup"
@@ -313,7 +313,7 @@ export function AdminUsersPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>User list</CardTitle>
+          <CardTitle>Danh sách người dùng</CardTitle>
           <CardDescription>Xóa user sẽ đưa vào thùng rác 5 ngày</CardDescription>
         </CardHeader>
         <CardContent>
@@ -348,14 +348,14 @@ export function AdminUsersPage() {
                     </Link>
                     <p className="text-sm text-muted-foreground">
                       {user.username}
-                      {user.disabled && " · Disabled"}
+                      {user.disabled && " · Vô hiệu hóa"}
                     </p>
                   </div>
                 </div>
                 {user.role === "USER" && (
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" asChild>
-                      <Link to={`/users/${user.id}`}>Xem profile</Link>
+                      <Link to={`/users/${user.id}`}>Xem hồ sơ</Link>
                     </Button>
                     <Button variant="outline" size="sm" asChild>
                       <Link to={`/admin/users/${user.id}`}>Dự án</Link>

@@ -48,7 +48,7 @@ export function ProjectFormDrawer({
         ) : (
           <>
             <Save className="size-4 mr-2" />
-            {mode === "create" ? "Tạo project" : "Lưu thay đổi"}
+            {mode === "create" ? "Tạo dự án" : "Lưu thay đổi"}
           </>
         )}
       </Button>
@@ -59,15 +59,15 @@ export function ProjectFormDrawer({
     <TaskDetailDrawer
       open={open}
       onClose={onClose}
-      title={mode === "create" ? "Project mới" : "Chỉnh sửa project"}
-      subtitle="Tên và mô tả ngắn để nhóm task theo dự án"
+      title={mode === "create" ? "Dự án mới" : "Chỉnh sửa dự án"}
+      subtitle="Tên và mô tả ngắn để nhóm công việc theo dự án"
       footer={footer}
       panelClassName="w-full max-w-[min(100vw,520px)]"
     >
       <form id="project-form" onSubmit={onSubmit} className="space-y-5">
         <div className="grid gap-2">
           <Label htmlFor="project-name" className="text-sm font-medium text-gray-700">
-            Tên project
+            Tên dự án
           </Label>
           <Input
             id="project-name"

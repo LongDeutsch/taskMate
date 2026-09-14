@@ -54,8 +54,8 @@ export function UsersPage() {
   return (
     <div className="w-full min-w-0 space-y-6 pb-28 md:pb-0">
       <PageHeader
-        title="Users"
-        subtitle="Xem hồ sơ và thông tin đồng đội trong team"
+        title="Thành viên"
+        subtitle="Xem hồ sơ và thông tin đồng nghiệp trong hệ thống"
       />
 
       <Card>

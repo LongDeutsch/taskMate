@@ -58,21 +58,21 @@ import { toast } from "@/shared/lib/toast";
 import { ConfirmDialog } from "@/shared/components/confirm-dialog";
 
 const statusSelectOptions = [
-  { value: "", label: "Tất cả status" },
-  { value: "Todo", label: "Todo" },
-  { value: "InProgress", label: "In Progress" },
-  { value: "Done", label: "Done" },
+  { value: "", label: "Tất cả trạng thái" },
+  { value: "Todo", label: "Cần làm (Todo)" },
+  { value: "InProgress", label: "Đang làm (In Progress)" },
+  { value: "Done", label: "Hoàn thành (Done)" },
 ];
 const prioritySelectOptions = [
-  { value: "", label: "Tất cả priority" },
-  { value: "Low", label: "Low" },
-  { value: "Medium", label: "Medium" },
-  { value: "High", label: "High" },
+  { value: "", label: "Tất cả mức độ" },
+  { value: "Low", label: "Thấp (Low)" },
+  { value: "Medium", label: "Trung bình (Medium)" },
+  { value: "High", label: "Cao (High)" },
 ];
 const sortSelectOptions = [
   { value: "createdAt", label: "Mới nhất" },
-  { value: "deadline", label: "Deadline" },
-  { value: "priority", label: "Priority" },
+  { value: "deadline", label: "Hạn chót" },
+  { value: "priority", label: "Mức ưu tiên" },
 ];
 
 const ADMIN_TASK_FILTER_DEFAULTS: TaskListFilterValues = {
@@ -232,37 +232,37 @@ export function AdminTasksPage() {
         />
       </div>
       <div className="space-y-2">
-        <label className={at.label}>Assignee</label>
+        <label className={at.label}>Người thực hiện</label>
         <SearchableSelect
           className="md:w-full"
           value={assigneeFilter}
           onChange={setAssigneeFilter}
           options={assigneeSelectOptions}
-          searchPlaceholder="Tìm assignee..."
-          ariaLabel="Lọc assignee"
+          searchPlaceholder="Tìm người thực hiện..."
+          ariaLabel="Lọc người thực hiện"
           disabled={onlyMyNotes}
         />
       </div>
       <div className="space-y-2">
-        <label className={at.label}>Status</label>
+        <label className={at.label}>Trạng thái</label>
         <SearchableSelect
           className="md:w-full"
           searchable={false}
           value={status}
           onChange={(v) => setStatus(v as TaskStatus | "")}
           options={statusSelectOptions}
-          ariaLabel="Lọc status"
+          ariaLabel="Lọc trạng thái"
         />
       </div>
       <div className="space-y-2">
-        <label className={at.label}>Priority</label>
+        <label className={at.label}>Mức độ ưu tiên</label>
         <SearchableSelect
           className="md:w-full"
           searchable={false}
           value={priorityFilter}
           onChange={(v) => setPriorityFilter(v as TaskPriority | "")}
           options={prioritySelectOptions}
-          ariaLabel="Lọc priority"
+          ariaLabel="Lọc mức độ ưu tiên"
         />
       </div>
       <div className="space-y-2">
@@ -433,7 +433,7 @@ export function AdminTasksPage() {
     const data = result.data;
     const selfNote = !!authUser && data.assigneeId === authUser.id;
     if (!selfNote && !data.projectId) {
-      setFormErrors({ projectId: "Project is required" });
+      setFormErrors({ projectId: "Vui lòng chọn dự án" });
       return;
     }
     setFormErrors({});
@@ -481,8 +481,8 @@ export function AdminTasksPage() {
         onClick={() => {
           setConfirmState({
             open: true,
-            title: "Xóa toàn bộ task?",
-            message: "Xóa toàn bộ task trong hệ thống? Task sẽ vào thùng rác 5 ngày.",
+            title: "Xóa toàn bộ công việc?",
+            message: "Xóa toàn bộ công việc trong hệ thống? Công việc sẽ vào thùng rác 5 ngày.",
             onConfirm: () => deleteAllMutation.mutate(),
           });
         }}
@@ -500,7 +500,7 @@ export function AdminTasksPage() {
       </Button>
       <Button className={cn(at.primaryBtn, "h-11")} onClick={openCreate}>
         <Plus className="size-4 mr-2" />
-        Task mới
+        Tạo task mới
       </Button>
     </>
   );
@@ -508,8 +508,8 @@ export function AdminTasksPage() {
   return (
     <div className={at.page}>
       <PageHeader
-        title="Tasks"
-        subtitle={`Tạo, chỉnh sửa và quản lý task — ${visibleTasks.length} hiển thị`}
+        title="Quản lý công việc"
+        subtitle={`Tạo, chỉnh sửa và quản lý công việc — ${visibleTasks.length} hiển thị`}
         actions={desktopActions}
         mobileActions={
           <OverflowActionsMenu

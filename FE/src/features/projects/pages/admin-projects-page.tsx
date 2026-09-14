@@ -169,7 +169,7 @@ export function AdminProjectsPage() {
   return (
     <div className={pj.page}>
       <PageHeader
-        title="Projects"
+        title="Quản lý dự án"
         subtitle={`Quản lý dự án${
           showList
             ? ` · ${filteredProjects.length}${search.trim() ? ` / ${projects.length}` : ""} hiển thị`
@@ -184,8 +184,8 @@ export function AdminProjectsPage() {
               onClick={() => {
                 setConfirmState({
                   open: true,
-                  title: "Xóa tất cả project?",
-                  message: `Xóa tất cả ${projects.length} project? Mọi task đang active cũng sẽ vào thùng rác 5 ngày.`,
+                  title: "Xóa tất cả dự án?",
+                  message: `Xóa tất cả ${projects.length} dự án? Mọi task đang active cũng sẽ vào thùng rác 5 ngày.`,
                   onConfirm: () => deleteAllMutation.mutate(),
                 });
               }}
@@ -195,7 +195,7 @@ export function AdminProjectsPage() {
             </Button>
             <Button className={cn(pj.primaryBtn, "h-11")} onClick={openCreate}>
               <Plus className="size-4 mr-2" />
-              New project
+              Tạo dự án mới
             </Button>
           </>
         }
@@ -209,8 +209,8 @@ export function AdminProjectsPage() {
                 onClick: () => {
                   setConfirmState({
                     open: true,
-                    title: "Xóa tất cả project?",
-                    message: `Xóa tất cả ${projects.length} project? Mọi task đang active cũng sẽ vào thùng rác 5 ngày.`,
+                    title: "Xóa tất cả dự án?",
+                    message: `Xóa tất cả ${projects.length} dự án? Mọi task đang active cũng sẽ vào thùng rác 5 ngày.`,
                     onConfirm: () => deleteAllMutation.mutate(),
                   });
                 },
@@ -221,7 +221,7 @@ export function AdminProjectsPage() {
       />
 
       <FloatingActionButton
-        label="New project"
+        label="Tạo dự án mới"
         icon={<Plus className="size-6" />}
         onClick={openCreate}
       />
@@ -237,7 +237,7 @@ export function AdminProjectsPage() {
                 placeholder="Tìm theo tên hoặc mô tả..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                aria-label="Tìm project"
+                aria-label="Tìm kiếm dự án"
               />
             </div>
           </div>
@@ -249,13 +249,13 @@ export function AdminProjectsPage() {
           className={`${pj.surface} flex flex-col items-center justify-center px-6 py-16 text-center`}
         >
           <FolderKanban className="mb-4 size-12 text-gray-300" />
-          <p className="text-lg font-medium text-gray-900">Chưa có project</p>
+          <p className="text-lg font-medium text-gray-900">Chưa có dự án nào</p>
           <p className="mt-1 max-w-sm text-sm text-gray-500">
-            Tạo project đầu tiên để nhóm task theo dự án và quản lý thành viên.
+            Tạo dự án đầu tiên để nhóm công việc theo dự án và quản lý thành viên.
           </p>
           <Button className={cn(pj.primaryBtn, "mt-6")} onClick={openCreate}>
             <Plus className="size-4 mr-2" />
-            New project
+            Tạo dự án mới
           </Button>
         </div>
       )}
@@ -313,13 +313,13 @@ export function AdminProjectsPage() {
                     variant="ghost"
                     size="icon"
                     className={pj.iconBtnDanger}
-                    title="Xóa project"
-                    aria-label="Xóa project"
+                    title="Xóa dự án"
+                    aria-label="Xóa dự án"
                     onClick={() => {
                       setConfirmState({
                         open: true,
-                        title: "Xóa project?",
-                        message: `Xóa project "${project.name}"? Tất cả task thuộc project sẽ bị xóa và vào thùng rác.`,
+                        title: "Xóa dự án?",
+                        message: `Xóa dự án "${project.name}"? Tất cả task thuộc dự án sẽ bị xóa và vào thùng rác.`,
                         onConfirm: () => deleteMutation.mutate(project.id),
                       });
                     }}

@@ -69,10 +69,10 @@ export function AppHeader({ onOpenMenu }: AppHeaderProps) {
           size="icon"
           className="size-11 text-gray-600 hover:text-gray-900"
           onClick={handleLogout}
-          aria-label="Logout"
+          aria-label="Đăng xuất"
         >
           <LogOut className="size-4" />
-          <span className="sr-only">Logout</span>
+          <span className="sr-only">Đăng xuất</span>
         </Button>
       </div>
     </header>

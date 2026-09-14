@@ -32,23 +32,23 @@ import { Calendar, Eye, Search, Users } from "lucide-react";
 import { toast } from "@/shared/lib/toast";
 
 const statusOptions: { value: TaskStatus | ""; label: string }[] = [
-  { value: "", label: "Tất cả status" },
-  { value: "Todo", label: "Todo" },
-  { value: "InProgress", label: "In Progress" },
-  { value: "Done", label: "Done" },
+  { value: "", label: "Tất cả trạng thái" },
+  { value: "Todo", label: "Cần làm (Todo)" },
+  { value: "InProgress", label: "Đang làm (In Progress)" },
+  { value: "Done", label: "Hoàn thành (Done)" },
 ];
 
 const priorityOptions: { value: TaskPriority | ""; label: string }[] = [
-  { value: "", label: "Tất cả priority" },
-  { value: "High", label: "High" },
-  { value: "Medium", label: "Medium" },
-  { value: "Low", label: "Low" },
+  { value: "", label: "Tất cả mức độ" },
+  { value: "High", label: "Cao (High)" },
+  { value: "Medium", label: "Trung bình (Medium)" },
+  { value: "Low", label: "Thấp (Low)" },
 ];
 
 const sortSelectOptions = [
-  { value: "deadline", label: "Deadline" },
+  { value: "deadline", label: "Hạn chót" },
   { value: "createdAt", label: "Mới nhất" },
-  { value: "priority", label: "Priority" },
+  { value: "priority", label: "Mức ưu tiên" },
 ];
 
 const STAFF_TASK_FILTER_DEFAULTS: TaskListFilterValues = {
@@ -132,7 +132,7 @@ export function TaskListPage() {
   return (
     <div className={at.page}>
       <PageHeader
-        title="My Tasks"
+        title="Công việc của tôi"
         subtitle={`Task được giao cho bạn · ${filteredTasks.length} task`}
         actions={
           isAdmin ? (
@@ -172,22 +172,22 @@ export function TaskListPage() {
               value={projectId}
               onChange={setProjectId}
               options={projectSelectOptions}
-              searchPlaceholder="Tìm project..."
-              ariaLabel="Lọc project"
+              searchPlaceholder="Tìm dự án..."
+              ariaLabel="Lọc dự án"
             />
             <SearchableSelect
               searchable={false}
               value={status}
               onChange={(v) => setStatus(v as TaskStatus | "")}
               options={statusOptions}
-              ariaLabel="Lọc status"
+              ariaLabel="Lọc trạng thái"
             />
             <SearchableSelect
               searchable={false}
               value={priority}
               onChange={(v) => setPriority(v as TaskPriority | "")}
               options={priorityOptions}
-              ariaLabel="Lọc priority"
+              ariaLabel="Lọc mức độ ưu tiên"
             />
             <SearchableSelect
               searchable={false}
@@ -207,8 +207,8 @@ export function TaskListPage() {
             value={projectId}
             onChange={setProjectId}
             options={projectSelectOptions}
-            searchPlaceholder="Tìm project..."
-            ariaLabel="Lọc project"
+            searchPlaceholder="Tìm dự án..."
+            ariaLabel="Lọc dự án"
           />
           <SearchableSelect
             className="md:w-full"
@@ -216,7 +216,7 @@ export function TaskListPage() {
             value={status}
             onChange={(v) => setStatus(v as TaskStatus | "")}
             options={statusOptions}
-            ariaLabel="Lọc status"
+            ariaLabel="Lọc trạng thái"
           />
           <SearchableSelect
             className="md:w-full"
@@ -224,7 +224,7 @@ export function TaskListPage() {
             value={priority}
             onChange={(v) => setPriority(v as TaskPriority | "")}
             options={priorityOptions}
-            ariaLabel="Lọc priority"
+            ariaLabel="Lọc mức độ ưu tiên"
           />
           <SearchableSelect
             className="md:w-full"
