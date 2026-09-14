@@ -23,6 +23,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { BugStatusBadge, bugPage } from "../components/bug-report-ui";
+import { toast } from "@/shared/lib/toast";
+import { ConfirmDialog } from "@/shared/components/confirm-dialog";
 
 const bugFormSchema = z.object({
   title: z.string().trim().min(1, "Tiêu đề là bắt buộc").max(200, "Tối đa 200 ký tự"),
@@ -51,6 +53,7 @@ export function BugReportsPage() {
   const [content, setContent] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ title?: string; content?: string }>({});
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const { data: bugs = [], isLoading } = useQuery({
     queryKey: ["bug-reports"],
@@ -67,9 +70,12 @@ export function BugReportsPage() {
       setFormError(null);
       setFieldErrors({});
       setFormOpen(false);
+      toast.success("Báo cáo lỗi đã được gửi thành công!");
     },
     onError: (err) => {
-      setFormError(err instanceof Error ? err.message : "Không tạo được bug");
+      const msg = err instanceof Error ? err.message : "Không tạo được bug";
+      setFormError(msg);
+      toast.error("Lỗi gửi báo cáo", msg);
     },
   });
 
@@ -79,6 +85,10 @@ export function BugReportsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bug-reports"] });
       queryClient.invalidateQueries({ queryKey: ["bug-reports", "open"] });
+      toast.success("Đã cập nhật trạng thái bug!");
+    },
+    onError: (err) => {
+      toast.error("Lỗi cập nhật trạng thái", err instanceof Error ? err.message : undefined);
     },
   });
 
@@ -87,6 +97,11 @@ export function BugReportsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bug-reports"] });
       queryClient.invalidateQueries({ queryKey: ["bug-reports", "open"] });
+      toast.success("Đã xóa báo cáo bug!");
+      setDeleteConfirmId(null);
+    },
+    onError: (err) => {
+      toast.error("Lỗi xóa báo cáo", err instanceof Error ? err.message : undefined);
     },
   });
 
@@ -233,15 +248,25 @@ export function BugReportsPage() {
               bug={bug}
               isAdmin={isAdmin}
               onStatusChange={(status) => statusMutation.mutate({ id: bug.id, status })}
-              onDelete={() => {
-                if (confirm("Xóa bug report này?")) deleteMutation.mutate(bug.id);
-              }}
+              onDelete={() => setDeleteConfirmId(bug.id)}
               statusPending={statusMutation.isPending}
               deletePending={deleteMutation.isPending}
             />
           ))}
         </ul>
       )}
+
+      <ConfirmDialog
+        open={!!deleteConfirmId}
+        title="Xóa báo cáo bug?"
+        message="Bạn có chắc chắn muốn xóa báo cáo lỗi này?"
+        variant="danger"
+        loading={deleteMutation.isPending}
+        onCancel={() => setDeleteConfirmId(null)}
+        onConfirm={() => {
+          if (deleteConfirmId) deleteMutation.mutate(deleteConfirmId);
+        }}
+      />
     </div>
   );
 }

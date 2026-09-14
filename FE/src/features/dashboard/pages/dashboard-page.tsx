@@ -23,6 +23,8 @@ import { BugStatusBadge, BugStatusSelect } from "@/features/bug-reports/componen
 import { at } from "@/features/tasks/components/admin-tasks-ui";
 import { ListTodo, CheckCircle, Clock, Calendar, User, FolderKanban, Bug } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { toast } from "@/shared/lib/toast";
+import { ConfirmDialog } from "@/shared/components/confirm-dialog";
 
 export function DashboardPage() {
   const { user, isAdmin } = useAuth();
@@ -31,6 +33,7 @@ export function DashboardPage() {
   const [viewBug, setViewBug] = useState<BugReport | null>(null);
   const [editBug, setEditBug] = useState<BugReport | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
+  const [deleteBugConfirmId, setDeleteBugConfirmId] = useState<string | null>(null);
 
   const { data: openBugs = [], isLoading: bugsLoading } = useQuery({
     queryKey: ["bug-reports", "open"],
@@ -43,8 +46,12 @@ export function DashboardPage() {
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ["bug-reports"] });
       queryClient.invalidateQueries({ queryKey: ["bug-reports", "open"] });
+      toast.success("Đã cập nhật trạng thái bug!");
       if (updated.status === "done") setViewBug(null);
       else setViewBug((prev) => (prev?.id === updated.id ? updated : prev));
+    },
+    onError: (err) => {
+      toast.error("Lỗi cập nhật trạng thái", err instanceof Error ? err.message : undefined);
     },
   });
 
@@ -56,10 +63,13 @@ export function DashboardPage() {
       setEditBug(null);
       queryClient.invalidateQueries({ queryKey: ["bug-reports"] });
       queryClient.invalidateQueries({ queryKey: ["bug-reports", "open"] });
+      toast.success("Cập nhật bug thành công!");
       setViewBug((prev) => (prev?.id === updated.id ? updated : prev));
     },
     onError: (err) => {
-      setEditError(err instanceof Error ? err.message : "Không lưu được bug");
+      const msg = err instanceof Error ? err.message : "Không lưu được bug";
+      setEditError(msg);
+      toast.error("Lỗi cập nhật bug", msg);
     },
   });
 
@@ -70,6 +80,11 @@ export function DashboardPage() {
       setEditBug(null);
       queryClient.invalidateQueries({ queryKey: ["bug-reports"] });
       queryClient.invalidateQueries({ queryKey: ["bug-reports", "open"] });
+      toast.success("Đã xóa báo cáo bug!");
+      setDeleteBugConfirmId(null);
+    },
+    onError: (err) => {
+      toast.error("Lỗi xóa báo cáo", err instanceof Error ? err.message : undefined);
     },
   });
 
@@ -235,7 +250,7 @@ export function DashboardPage() {
                     setEditBug(bug);
                   }}
                   onDelete={() => {
-                    if (confirm("Xóa bug report này?")) bugDeleteMutation.mutate(bug.id);
+                    setDeleteBugConfirmId(bug.id);
                   }}
                   deletePending={bugDeleteMutation.isPending}
                   onStatusChange={
@@ -274,6 +289,18 @@ export function DashboardPage() {
         onSave={(data) => editBug && bugUpdateMutation.mutate({ id: editBug.id, data })}
         isPending={bugUpdateMutation.isPending}
         error={editError}
+      />
+
+      <ConfirmDialog
+        open={!!deleteBugConfirmId}
+        title="Xóa bug report?"
+        message="Bạn có chắc chắn muốn xóa báo cáo lỗi này?"
+        variant="danger"
+        loading={bugDeleteMutation.isPending}
+        onCancel={() => setDeleteBugConfirmId(null)}
+        onConfirm={() => {
+          if (deleteBugConfirmId) bugDeleteMutation.mutate(deleteBugConfirmId);
+        }}
       />
 
       {selectedStatus && (

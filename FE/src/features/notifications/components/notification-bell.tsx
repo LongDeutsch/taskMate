@@ -94,11 +94,11 @@ export function NotificationBell() {
         onClick={() => setOpen((v) => !v)}
         className="relative"
       >
-        <Bell className={`size-5 ${unreadCount > 0 ? "text-indigo-600" : ""}`} />
+        <Bell className={`size-5 ${unreadCount > 0 ? "text-blue-600" : "text-gray-600"}`} />
         {unreadCount > 0 && (
           <>
-            <span className="absolute -right-0.5 -top-0.5 inline-flex size-4 animate-ping rounded-full bg-indigo-500 opacity-60" />
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-semibold text-white ring-2 ring-background">
+            <span className="absolute -right-0.5 -top-0.5 inline-flex size-4 animate-ping rounded-full bg-blue-400 opacity-50" />
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-semibold text-white ring-2 ring-white">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           </>
@@ -106,15 +106,20 @@ export function NotificationBell() {
       </Button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-96 max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg border-2 border-indigo-500 bg-white text-popover-foreground shadow-[0_10px_40px_-10px_rgba(79,70,229,0.55)] ring-2 ring-indigo-500/15 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex items-center justify-between border-b border-indigo-100 bg-gradient-to-r from-indigo-600 via-blue-600 to-sky-500 px-3 py-2 text-white">
-            <p className="text-sm font-semibold">
-              Thông báo {unreadCount > 0 && <span className="ml-1 rounded-full bg-white/25 px-2 py-0.5 text-[10px] font-bold">{unreadCount}</span>}
-            </p>
+        <div className="absolute right-0 top-full z-50 mt-2 w-96 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-[0_16px_48px_rgba(15,23,42,0.12)] animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-white px-4 py-3">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-slate-900">Thông báo</p>
+              {unreadCount > 0 && (
+                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                  {unreadCount} mới
+                </span>
+              )}
+            </div>
             {unreadCount > 0 && (
               <button
                 type="button"
-                className="flex items-center gap-1 rounded px-1 text-xs text-white/90 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/60"
+                className="flex items-center gap-1 rounded text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors focus:outline-none"
                 onClick={() => markAll()}
               >
                 <CheckCheck className="size-3.5" />
@@ -122,57 +127,53 @@ export function NotificationBell() {
               </button>
             )}
           </div>
-          <div className="max-h-96 overflow-y-auto bg-gradient-to-b from-indigo-50 to-white">
+          <div className="max-h-96 overflow-y-auto bg-white divide-y divide-slate-100">
             {isLoading ? (
-              <p className="px-3 py-6 text-center text-sm text-indigo-700/70">Đang tải…</p>
+              <p className="px-4 py-8 text-center text-sm text-slate-500">Đang tải…</p>
             ) : items.length === 0 ? (
-              <p className="px-3 py-6 text-center text-sm text-indigo-700/70">
+              <p className="px-4 py-8 text-center text-sm text-slate-500">
                 Chưa có thông báo nào.
               </p>
             ) : (
-              <ul className="divide-y divide-indigo-200">
+              <ul className="divide-y divide-slate-100">
                 {items.map((n) => (
                   <li key={n.id}>
                     <button
                       type="button"
                       onClick={() => handleClick(n)}
-                      className={`flex w-full flex-col items-start gap-0.5 px-3 py-2.5 text-left text-sm transition-colors focus:outline-none ${
+                      className={`flex w-full flex-col items-start gap-1 px-4 py-3 text-left text-sm transition-colors focus:outline-none ${
                         n.read
-                          ? "bg-white/60 text-foreground hover:bg-indigo-50 focus:bg-indigo-50"
-                          : "border-l-4 border-l-indigo-500 bg-indigo-100 text-indigo-950 hover:bg-indigo-200/80 focus:bg-indigo-200/80"
+                          ? "bg-white text-slate-700 hover:bg-slate-50"
+                          : "border-l-2 border-l-blue-600 bg-blue-50/40 text-slate-900 hover:bg-blue-50/70"
                       }`}
                     >
-                      <div className="flex w-full items-start gap-2">
+                      <div className="flex w-full items-start gap-2.5">
                         {!n.read && (
-                          <span className="mt-1.5 inline-block size-2 shrink-0 rounded-full bg-indigo-600" />
+                          <span className="mt-1.5 inline-block size-2 shrink-0 rounded-full bg-blue-600" />
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="truncate">
-                            <span className={`font-semibold ${n.read ? "" : "text-indigo-900"}`}>
+                          <p className="truncate text-sm leading-snug">
+                            <span className={`font-semibold ${n.read ? "text-slate-800" : "text-slate-900"}`}>
                               {n.actorName || "Hệ thống"}
                             </span>{" "}
-                            <span className={n.read ? "text-muted-foreground" : "text-indigo-800/80"}>
+                            <span className={n.read ? "text-slate-500" : "text-slate-600"}>
                               {labelForType(n.type)}
                               {n.taskTitle ? ":" : ""}
                             </span>{" "}
                             {n.taskTitle && (
-                              <span className="font-semibold">{n.taskTitle}</span>
+                              <span className="font-semibold text-slate-900">{n.taskTitle}</span>
                             )}
                           </p>
                           {n.changeSummary && (
                             <p
-                              className={`truncate text-xs ${
-                                n.read ? "text-muted-foreground" : "text-indigo-800 font-medium"
+                              className={`truncate text-xs mt-0.5 ${
+                                n.read ? "text-slate-500" : "text-blue-700 font-medium"
                               }`}
                             >
                               {n.changeSummary}
                             </p>
                           )}
-                          <p
-                            className={`text-xs ${
-                              n.read ? "text-muted-foreground" : "text-indigo-700/80"
-                            }`}
-                          >
+                          <p className="text-xs text-slate-400 mt-1">
                             {formatRelative(n.createdAt)}
                           </p>
                         </div>

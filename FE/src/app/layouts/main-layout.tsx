@@ -7,6 +7,7 @@ import { AppHeader } from "../components/app-header";
 import { MobileNavDrawer } from "../components/mobile-nav-drawer";
 import { MobileBottomNav } from "../components/mobile-bottom-nav";
 import { NewTaskLoginToast } from "@/features/notifications/components/new-task-login-toast";
+import { Toaster } from "@/components/ui/toaster";
 
 export function MainLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -16,8 +17,8 @@ export function MainLayout() {
   }, []);
 
   return (
-    <div className="flex h-[100dvh] w-full overflow-hidden bg-[#F9FAFB]">
-      <aside className="hidden h-full w-[280px] shrink-0 border-r border-[#E5E7EB] md:flex">
+    <div className="flex h-[100dvh] w-full overflow-hidden bg-slate-50/70">
+      <aside className="hidden h-full w-[280px] shrink-0 border-r border-slate-200 md:flex">
         <AppSidebar />
       </aside>
 
@@ -30,6 +31,7 @@ export function MainLayout() {
         </main>
         <MobileBottomNav />
         <NewTaskLoginToast />
+        <Toaster />
       </div>
     </div>
   );

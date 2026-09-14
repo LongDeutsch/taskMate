@@ -10,20 +10,10 @@
 
 /* Custom Theme Extensions for Tailwind v4 */
 @theme {
-    /* Border Radius - Neo-brutalism minimal */
-    --radius-lg: 0.125rem;
-    --radius-md: 0.125rem;
-    --radius-sm: 0.125rem;
-
-    /* Border Width */
-    --border-width-3: 3px;
-    --border-width-6: 6px;
-
     /* Font Family */
-    --font-sans: "Space Grotesk", "Inter", -apple-system, BlinkMacSystemFont,
-        "Segoe UI", sans-serif;
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --font-serif: Georgia, serif;
-    --font-mono: "Space Mono", "Courier New", monospace;
+    --font-mono: "JetBrains Mono", "Space Mono", "Courier New", monospace;
 
     /* Animations */
     --animate-accordion-down: accordion-down 0.2s ease-out;
@@ -59,161 +49,137 @@
     }
 }
 
-/* LIGHT MODE - Neo-brutalism Theme (Yellow Primary) */
+/* LIGHT MODE - Clean SaaS Theme (Blue 600 Primary) */
 :root {
-    --button-outline: rgba(0, 0, 0, 0.1);
+    --button-outline: rgba(0, 0, 0, 0.08);
     --badge-outline: rgba(0, 0, 0, 0.05);
 
-    /* Automatic computation of border around primary / danger buttons */
-    --opaque-button-border-intensity: -8; /* In terms of percentages */
-
-    /* Backgrounds applied on top of other backgrounds when hovered/active */
     --elevate-1: rgba(0, 0, 0, 0.03);
-    --elevate-2: rgba(0, 0, 0, 0.08);
+    --elevate-2: rgba(0, 0, 0, 0.06);
 
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --border: oklch(0.922 0 0);
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --border: 214.3 31.8% 91.4%;
 
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --card-border: 0 0% 0%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --card-border: 214.3 31.8% 91.4%;
 
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --sidebar: 210 40% 98%;
+    --sidebar-foreground: 222.2 84% 4.9%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-primary: 221.2 83.2% 53.3%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+    --sidebar-ring: 221.2 83.2% 53.3%;
 
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --popover-border: 0 0% 0%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --popover-border: 214.3 31.8% 91.4%;
 
-    /* Neo-brutalism Yellow Primary */
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
+    /* Clean Blue Primary (#2563EB) */
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    /* Pink Accent */
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
 
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
+    --chart-1: 221.2 83.2% 53.3%;
+    --chart-2: 142.1 76.2% 36.3%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
 
-    --font-sans: "Space Grotesk", "Inter", -apple-system, BlinkMacSystemFont,
-        "Segoe UI", sans-serif;
-    --font-serif: Georgia, serif;
-    --font-mono: "Space Mono", "Courier New", monospace;
+    --radius: 0.75rem;
 
-    --radius: 0.625rem;
-
-    /* Neo-brutalism Hard Shadow */
-    --shadow-2xs: 0px 0px 0px 0px hsl(0 0% 0% / 0);
-    --shadow-xs: 0px 0px 0px 0px hsl(0 0% 0% / 0);
-    --shadow-sm: 2px 2px 0px 0px hsl(0 0% 0% / 1);
-    --shadow: 4px 4px 0px 0px hsl(0 0% 0% / 1);
-    --shadow-md: 6px 6px 0px 0px hsl(0 0% 0% / 1);
-    --shadow-lg: 8px 8px 0px 0px hsl(0 0% 0% / 1);
-    --shadow-xl: 12px 12px 0px 0px hsl(0 0% 0% / 1);
-    --shadow-2xl: 16px 16px 0px 0px hsl(0 0% 0% / 1);
+    /* Clean Modern Soft Shadows */
+    --shadow-2xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+    --shadow: 0 3px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+    --shadow-md: 0 8px 16px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.03);
+    --shadow-lg: 0 14px 24px -4px rgb(0 0 0 / 0.08), 0 6px 12px -4px rgb(0 0 0 / 0.03);
+    --shadow-xl: 0 20px 32px -4px rgb(0 0 0 / 0.09), 0 8px 16px -4px rgb(0 0 0 / 0.03);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.15);
 
     --tracking-normal: -0.01em;
     --spacing: 0.25rem;
-
-    /* Automatically computed borders */
-    --sidebar-primary-border: hsl(var(--sidebar-primary));
-    --sidebar-accent-border: hsl(var(--sidebar-accent));
-    --primary-border: hsl(var(--primary));
-    --secondary-border: hsl(var(--secondary));
-    --muted-border: hsl(var(--muted));
-    --accent-border: hsl(var(--accent));
-    --destructive-border: hsl(var(--destructive));
 }
 
-/* DARK MODE - Neo-brutalism Theme */
+/* DARK MODE - Clean SaaS Theme */
 .dark {
     --button-outline: rgba(255, 255, 255, 0.1);
     --badge-outline: rgba(255, 255, 255, 0.05);
 
-    --opaque-button-border-intensity: 9;
-
     --elevate-1: rgba(255, 255, 255, 0.04);
-    --elevate-2: rgba(255, 255, 255, 0.09);
+    --elevate-2: rgba(255, 255, 255, 0.08);
 
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --border: oklch(1 0 0 / 10%);
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
 
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --card-border: 0 0% 100%;
+    --card: 222.2 84% 7%;
+    --card-foreground: 210 40% 98%;
+    --card-border: 217.2 32.6% 17.5%;
 
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-ring: oklch(0.556 0 0);
+    --sidebar: 222.2 84% 6%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-primary: 217.2 91.2% 59.8%;
+    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-ring: 224.3 76.3% 48%;
 
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --popover-border: 0 0% 100%;
+    --popover: 222.2 84% 7%;
+    --popover-foreground: 210 40% 98%;
+    --popover-border: 217.2 32.6% 17.5%;
 
-    /* Neo-brutalism Yellow Primary */
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    /* Pink Accent */
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: oklch(0.704 0.191 22.216);
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
 
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
 
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
+    --chart-1: 221.2 83.2% 53.3%;
+    --chart-2: 142.1 76.2% 36.3%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
 
-    /* Neo-brutalism Hard Shadow (White in dark mode) */
-    --shadow-2xs: 0px 0px 0px 0px hsl(0 0% 100% / 0);
-    --shadow-xs: 0px 0px 0px 0px hsl(0 0% 100% / 0);
-    --shadow-sm: 2px 2px 0px 0px hsl(0 0% 100% / 1);
-    --shadow: 4px 4px 0px 0px hsl(0 0% 100% / 1);
-    --shadow-md: 6px 6px 0px 0px hsl(0 0% 100% / 1);
-    --shadow-lg: 8px 8px 0px 0px hsl(0 0% 100% / 1);
-    --shadow-xl: 12px 12px 0px 0px hsl(0 0% 100% / 1);
-    --shadow-2xl: 16px 16px 0px 0px hsl(0 0% 100% / 1);
+    --shadow-2xs: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.25);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.2);
+    --shadow: 0 3px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+    --shadow-md: 0 8px 16px -3px rgb(0 0 0 / 0.35), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+    --shadow-lg: 0 14px 24px -4px rgb(0 0 0 / 0.4), 0 6px 12px -4px rgb(0 0 0 / 0.2);
+    --shadow-xl: 0 20px 32px -4px rgb(0 0 0 / 0.45), 0 8px 16px -4px rgb(0 0 0 / 0.2);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.5);
 }
 
 /* Theme inline for Tailwind v4 color mapping */

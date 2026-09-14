@@ -16,6 +16,7 @@ import {
   getProfileAgeError,
   getProfileDateOfBirthBounds,
 } from "@/shared/lib/birthday";
+import { toast } from "@/shared/lib/toast";
 
 const GENDER_OPTIONS = [
   { value: "", label: "— Chọn —" },
@@ -114,6 +115,10 @@ export function ProfilePage() {
       setAvatarFile(null);
       setAvatarFileError(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
+      toast.success("Cập nhật hồ sơ thành công!");
+    },
+    onError: (err) => {
+      toast.error("Lỗi khi lưu hồ sơ", err instanceof Error ? err.message : undefined);
     },
   });
 

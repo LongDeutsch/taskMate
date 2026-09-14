@@ -29,6 +29,7 @@ import {
 import { UserResponseEditor } from "../components/user-response-editor";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Calendar, Eye, Search, Users } from "lucide-react";
+import { toast } from "@/shared/lib/toast";
 
 const statusOptions: { value: TaskStatus | ""; label: string }[] = [
   { value: "", label: "Tất cả status" },
@@ -287,9 +288,12 @@ function UserTaskCard({ task, currentUser, assigneeLabel, detailPath }: UserTask
       setStatusError(null);
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["task", task.id] });
+      toast.success("Đã cập nhật trạng thái task!");
     },
     onError: (err) => {
-      setStatusError(err instanceof Error ? err.message : "Cập nhật status thất bại");
+      const msg = err instanceof Error ? err.message : "Cập nhật status thất bại";
+      setStatusError(msg);
+      toast.error("Lỗi cập nhật trạng thái", msg);
     },
   });
 

@@ -30,6 +30,9 @@ import { PageHeader } from "@/app/components/page-header";
 import { FloatingActionButton } from "@/app/components/floating-action-button";
 import { OverflowActionsMenu } from "@/app/components/overflow-actions-menu";
 
+import { toast } from "@/shared/lib/toast";
+import { ConfirmDialog } from "@/shared/components/confirm-dialog";
+
 export function AdminProjectsPage() {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<Project | null>(null);
@@ -37,6 +40,17 @@ export function AdminProjectsPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [search, setSearch] = useState("");
+  const [confirmState, setConfirmState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    open: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
@@ -58,7 +72,11 @@ export function AdminProjectsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Tạo dự án thành công!");
       closeDrawer();
+    },
+    onError: (err) => {
+      toast.error("Không tạo được dự án", err instanceof Error ? err.message : undefined);
     },
   });
 
@@ -67,7 +85,11 @@ export function AdminProjectsPage() {
       updateProject(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast.success("Cập nhật thông tin dự án thành công!");
       closeDrawer();
+    },
+    onError: (err) => {
+      toast.error("Không cập nhật được dự án", err instanceof Error ? err.message : undefined);
     },
   });
 
@@ -76,6 +98,10 @@ export function AdminProjectsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Đã chuyển dự án vào thùng rác!");
+    },
+    onError: (err) => {
+      toast.error("Không xóa được dự án", err instanceof Error ? err.message : undefined);
     },
   });
 
@@ -86,6 +112,10 @@ export function AdminProjectsPage() {
       queryClient.invalidateQueries({ queryKey: ["projects", "trash"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["tasks", "trash"] });
+      toast.success("Đã xóa tất cả dự án!");
+    },
+    onError: (err) => {
+      toast.error("Không xóa được tất cả dự án", err instanceof Error ? err.message : undefined);
     },
   });
 
@@ -152,14 +182,12 @@ export function AdminProjectsPage() {
               className="h-11 border-red-200 text-red-700 hover:bg-red-50"
               disabled={projects.length === 0 || deleteAllMutation.isPending}
               onClick={() => {
-                if (
-                  !confirm(
-                    `Xóa tất cả ${projects.length} project? Mọi task đang active cũng vào thùng rác 5 ngày.`
-                  )
-                ) {
-                  return;
-                }
-                deleteAllMutation.mutate();
+                setConfirmState({
+                  open: true,
+                  title: "Xóa tất cả project?",
+                  message: `Xóa tất cả ${projects.length} project? Mọi task đang active cũng sẽ vào thùng rác 5 ngày.`,
+                  onConfirm: () => deleteAllMutation.mutate(),
+                });
               }}
             >
               <Trash2 className="size-4 mr-2" />
@@ -179,14 +207,12 @@ export function AdminProjectsPage() {
                 destructive: true,
                 disabled: projects.length === 0 || deleteAllMutation.isPending,
                 onClick: () => {
-                  if (
-                    !confirm(
-                      `Xóa tất cả ${projects.length} project? Mọi task đang active cũng vào thùng rác 5 ngày.`
-                    )
-                  ) {
-                    return;
-                  }
-                  deleteAllMutation.mutate();
+                  setConfirmState({
+                    open: true,
+                    title: "Xóa tất cả project?",
+                    message: `Xóa tất cả ${projects.length} project? Mọi task đang active cũng sẽ vào thùng rác 5 ngày.`,
+                    onConfirm: () => deleteAllMutation.mutate(),
+                  });
                 },
               },
             ]}
@@ -290,13 +316,12 @@ export function AdminProjectsPage() {
                     title="Xóa project"
                     aria-label="Xóa project"
                     onClick={() => {
-                      if (
-                        confirm(
-                          "Xóa project này? Tất cả task thuộc project sẽ bị xóa."
-                        )
-                      ) {
-                        deleteMutation.mutate(project.id);
-                      }
+                      setConfirmState({
+                        open: true,
+                        title: "Xóa project?",
+                        message: `Xóa project "${project.name}"? Tất cả task thuộc project sẽ bị xóa và vào thùng rác.`,
+                        onConfirm: () => deleteMutation.mutate(project.id),
+                      });
                     }}
                   >
                     <Trash2 className="size-4" />
@@ -318,6 +343,19 @@ export function AdminProjectsPage() {
         onDescriptionChange={setDescription}
         onSubmit={handleSubmit}
         isPending={formPending}
+      />
+
+      <ConfirmDialog
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant="danger"
+        loading={deleteMutation.isPending || deleteAllMutation.isPending}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onConfirm={() => {
+          confirmState.onConfirm();
+          setConfirmState((s) => ({ ...s, open: false }));
+        }}
       />
     </div>
   );

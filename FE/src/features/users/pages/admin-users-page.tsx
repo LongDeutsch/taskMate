@@ -16,6 +16,8 @@ import {
 import { z } from "zod";
 import { Check, Plus, Trash2 } from "lucide-react";
 import { formatRoleLabel, getRoleLabel, type RoleLabel } from "@/shared/types";
+import { toast } from "@/shared/lib/toast";
+import { ConfirmDialog } from "@/shared/components/confirm-dialog";
 
 const ROLE_LABEL_OPTIONS: {
   value: RoleLabel;
@@ -85,6 +87,17 @@ export function AdminUsersPage() {
   const [email, setEmail] = useState("");
   const [roleLabel, setRoleLabel] = useState<RoleLabel>("STAFF");
   const [error, setError] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    open: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users"],
@@ -100,12 +113,18 @@ export function AdminUsersPage() {
     }) => createUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast.success("Thêm thành viên mới thành công!");
       setOpen(false);
       setUsername("");
       setFullName("");
       setEmail("");
       setRoleLabel("STAFF");
       setError(null);
+    },
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : "Không thể tạo user";
+      setError(msg);
+      toast.error("Lỗi tạo user", msg);
     },
   });
 
@@ -114,6 +133,10 @@ export function AdminUsersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["users", "trash"] });
+      toast.success("Đã chuyển user vào thùng rác!");
+    },
+    onError: (err) => {
+      toast.error("Lỗi xóa user", err instanceof Error ? err.message : undefined);
     },
   });
 
@@ -127,6 +150,10 @@ export function AdminUsersPage() {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["users", "trash"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Đã xóa tất cả user!");
+    },
+    onError: (err) => {
+      toast.error("Lỗi xóa tất cả user", err instanceof Error ? err.message : undefined);
     },
   });
 
@@ -165,14 +192,12 @@ export function AdminUsersPage() {
             className="border-red-200 text-red-700 hover:bg-red-50"
             disabled={deletableUsers.length === 0 || deleteAllMutation.isPending}
             onClick={() => {
-              if (
-                !confirm(
-                  `Xóa tất cả ${deletableUsers.length} user? Tài khoản PM (admin) được giữ lại. User sẽ vào thùng rác 5 ngày.`
-                )
-              ) {
-                return;
-              }
-              deleteAllMutation.mutate();
+              setConfirmState({
+                open: true,
+                title: "Xóa tất cả user?",
+                message: `Xóa tất cả ${deletableUsers.length} user? Tài khoản PM (admin) được giữ lại. User sẽ vào thùng rác 5 ngày.`,
+                onConfirm: () => deleteAllMutation.mutate(),
+              });
             }}
           >
             <Trash2 className="size-4" />
@@ -340,9 +365,12 @@ export function AdminUsersPage() {
                       size="sm"
                       className="bg-red-600 text-white hover:bg-red-700"
                       onClick={() => {
-                        if (confirm("Xóa user này? User sẽ nằm trong thùng rác 5 ngày.")) {
-                          deleteMutation.mutate(user.id);
-                        }
+                        setConfirmState({
+                          open: true,
+                          title: "Xóa user?",
+                          message: `Xóa user "${user.fullName}" (@${user.username})? User sẽ nằm trong thùng rác 5 ngày.`,
+                          onConfirm: () => deleteMutation.mutate(user.id),
+                        });
                       }}
                       disabled={deleteMutation.isPending}
                     >
@@ -357,6 +385,19 @@ export function AdminUsersPage() {
           </div>
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant="danger"
+        loading={deleteMutation.isPending || deleteAllMutation.isPending}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onConfirm={() => {
+          confirmState.onConfirm();
+          setConfirmState((s) => ({ ...s, open: false }));
+        }}
+      />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Undo2 } from "lucide-react";
+import { toast } from "@/shared/lib/toast";
 
 function fmt(ts?: string | null) {
   if (!ts) return "—";
@@ -38,6 +39,10 @@ export function AdminTrashPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       queryClient.invalidateQueries({ queryKey: ["users", "trash"] });
+      toast.success("Khôi phục thành viên thành công!");
+    },
+    onError: (err) => {
+      toast.error("Lỗi khôi phục thành viên", err instanceof Error ? err.message : undefined);
     },
   });
   const restoreProjectMutation = useMutation({
@@ -47,6 +52,10 @@ export function AdminTrashPage() {
       queryClient.invalidateQueries({ queryKey: ["projects", "trash"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["tasks", "trash"] });
+      toast.success("Khôi phục dự án thành công!");
+    },
+    onError: (err) => {
+      toast.error("Lỗi khôi phục dự án", err instanceof Error ? err.message : undefined);
     },
   });
   const restoreTaskMutation = useMutation({
@@ -54,6 +63,10 @@ export function AdminTrashPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["tasks", "trash"] });
+      toast.success("Khôi phục task thành công!");
+    },
+    onError: (err) => {
+      toast.error("Lỗi khôi phục task", err instanceof Error ? err.message : undefined);
     },
   });
 

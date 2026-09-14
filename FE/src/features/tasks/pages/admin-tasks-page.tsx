@@ -54,6 +54,8 @@ import {
   useTaskListFilters,
   type TaskListFilterValues,
 } from "../hooks/use-task-list-filters";
+import { toast } from "@/shared/lib/toast";
+import { ConfirmDialog } from "@/shared/components/confirm-dialog";
 
 const statusSelectOptions = [
   { value: "", label: "Tất cả status" },
@@ -127,6 +129,17 @@ export function AdminTasksPage() {
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof TaskFormValues, string>>>({});
   const [filterOpen, setFilterOpen] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    open: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const activeFilterCount = [
     status,
@@ -279,10 +292,13 @@ export function AdminTasksPage() {
     onSuccess: () => {
       setSaveError(null);
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success(isSelfNoteForm ? "Tạo note thành công!" : "Tạo task thành công!");
       closeDrawer();
     },
     onError: (err) => {
-      setSaveError(err instanceof Error ? err.message : "Không tạo được task.");
+      const msg = err instanceof Error ? err.message : "Không tạo được task.";
+      setSaveError(msg);
+      toast.error("Lỗi tạo task", msg);
     },
   });
 
@@ -292,16 +308,25 @@ export function AdminTasksPage() {
     onSuccess: () => {
       setSaveError(null);
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Cập nhật task thành công!");
       closeDrawer();
     },
     onError: (err) => {
-      setSaveError(err instanceof Error ? err.message : "Không lưu được task.");
+      const msg = err instanceof Error ? err.message : "Không lưu được task.";
+      setSaveError(msg);
+      toast.error("Lỗi cập nhật task", msg);
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteTask,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Đã chuyển task vào thùng rác!");
+    },
+    onError: (err) => {
+      toast.error("Lỗi xóa task", err instanceof Error ? err.message : undefined);
+    },
   });
 
   const deleteAllMutation = useMutation({
@@ -309,6 +334,10 @@ export function AdminTasksPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["tasks", "trash"] });
+      toast.success("Đã xóa tất cả task!");
+    },
+    onError: (err) => {
+      toast.error("Lỗi xóa tất cả task", err instanceof Error ? err.message : undefined);
     },
   });
 
@@ -450,14 +479,12 @@ export function AdminTasksPage() {
         className="h-11 border-red-200 text-red-700 hover:bg-red-50"
         disabled={deleteAllMutation.isPending}
         onClick={() => {
-          if (
-            !confirm(
-              "Xóa toàn bộ task trong hệ thống? Task sẽ vào thùng rác 5 ngày."
-            )
-          ) {
-            return;
-          }
-          deleteAllMutation.mutate();
+          setConfirmState({
+            open: true,
+            title: "Xóa toàn bộ task?",
+            message: "Xóa toàn bộ task trong hệ thống? Task sẽ vào thùng rác 5 ngày.",
+            onConfirm: () => deleteAllMutation.mutate(),
+          });
         }}
       >
         <Trash2 className="size-4 mr-2" />
@@ -496,14 +523,12 @@ export function AdminTasksPage() {
                 destructive: true,
                 disabled: deleteAllMutation.isPending,
                 onClick: () => {
-                  if (
-                    !confirm(
-                      "Xóa toàn bộ task trong hệ thống? Task sẽ vào thùng rác 5 ngày."
-                    )
-                  ) {
-                    return;
-                  }
-                  deleteAllMutation.mutate();
+                  setConfirmState({
+                    open: true,
+                    title: "Xóa toàn bộ task?",
+                    message: "Xóa toàn bộ task trong hệ thống? Task sẽ vào thùng rác 5 ngày.",
+                    onConfirm: () => deleteAllMutation.mutate(),
+                  });
                 },
               },
             ]}
@@ -652,7 +677,12 @@ export function AdminTasksPage() {
                       title="Xóa"
                       aria-label="Xóa"
                       onClick={() => {
-                        if (confirm("Xóa task này?")) deleteMutation.mutate(task.id);
+                        setConfirmState({
+                          open: true,
+                          title: "Xóa task?",
+                          message: `Xóa task "${task.title}"? Task sẽ vào thùng rác 5 ngày.`,
+                          onConfirm: () => deleteMutation.mutate(task.id),
+                        });
                       }}
                     >
                       <Trash2 className="size-4" />
@@ -692,6 +722,19 @@ export function AdminTasksPage() {
         authUser={authUser ? { id: authUser.id, fullName: authUser.fullName } : null}
         collaboratorOptions={collaboratorOptions}
         saveError={saveError}
+      />
+
+      <ConfirmDialog
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant="danger"
+        loading={deleteMutation.isPending || deleteAllMutation.isPending}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onConfirm={() => {
+          confirmState.onConfirm();
+          setConfirmState((s) => ({ ...s, open: false }));
+        }}
       />
     </div>
   );
