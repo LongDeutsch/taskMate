@@ -20,8 +20,8 @@ const inputClass = cn(
 export function LoginForm() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [username, setUsername] = useState("pm");
-  const [password, setPassword] = useState("admin123");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -61,13 +61,6 @@ export function LoginForm() {
       setLoading(false);
     }
   }
-
-  const fillAccount = (u: string, p: string) => {
-    setUsername(u);
-    setPassword(p);
-    setError(null);
-    setErrors({});
-  };
 
   return (
     <div
@@ -115,7 +108,7 @@ export function LoginForm() {
             id="username"
             name="username"
             type="text"
-            placeholder="Nhập tên đăng nhập (vd: pm, admin)..."
+            placeholder="Nhập tên đăng nhập..."
             autoComplete="username"
             disabled={loading}
             value={username}
@@ -160,34 +153,6 @@ export function LoginForm() {
             </button>
           </div>
           {errors.password && <p className="text-xs text-red-600 dark:text-red-400">{errors.password}</p>}
-        </div>
-
-        {/* Quick Demo Accounts Fill */}
-        <div className="pt-1">
-          <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">Tài khoản trải nghiệm nhanh:</p>
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              onClick={() => fillAccount("pm", "admin123")}
-              className="cursor-pointer rounded-lg border border-border/70 bg-muted/60 px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:border-border"
-            >
-              👔 PM (pm)
-            </button>
-            <button
-              type="button"
-              onClick={() => fillAccount("admin", "admin123")}
-              className="cursor-pointer rounded-lg border border-border/70 bg-muted/60 px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:border-border"
-            >
-              🛡️ Admin (admin)
-            </button>
-            <button
-              type="button"
-              onClick={() => fillAccount("user1", "123456")}
-              className="cursor-pointer rounded-lg border border-border/70 bg-muted/60 px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:border-border"
-            >
-              👤 Member (user1)
-            </button>
-          </div>
         </div>
 
         <button
