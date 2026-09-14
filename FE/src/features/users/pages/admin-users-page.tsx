@@ -14,10 +14,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { z } from "zod";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { Check, Plus, Search, SearchX, Trash2, X } from "lucide-react";
 import { formatRoleLabel, getRoleLabel, type RoleLabel } from "@/shared/types";
 import { toast } from "@/shared/lib/toast";
 import { ConfirmDialog } from "@/shared/components/confirm-dialog";
+import { cn } from "@/shared/lib/utils";
 
 const ROLE_LABEL_OPTIONS: {
   value: RoleLabel;
@@ -86,6 +87,8 @@ export function AdminUsersPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [roleLabel, setRoleLabel] = useState<RoleLabel>("STAFF");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"ALL" | RoleLabel>("ALL");
   const [error, setError] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<{
     open: boolean;
@@ -102,6 +105,26 @@ export function AdminUsersPage() {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users"],
     queryFn: getUsers,
+  });
+
+  const roleCounts = {
+    ALL: users.length,
+    STAFF: users.filter((u) => getRoleLabel(u) === "STAFF").length,
+    HR: users.filter((u) => getRoleLabel(u) === "HR").length,
+    ADMIN: users.filter((u) => getRoleLabel(u) === "ADMIN").length,
+    BODS: users.filter((u) => getRoleLabel(u) === "BODS").length,
+  };
+
+  const filteredUsers = users.filter((u) => {
+    const userRole = getRoleLabel(u);
+    if (roleFilter !== "ALL" && userRole !== roleFilter) return false;
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase().trim();
+    return (
+      u.fullName.toLowerCase().includes(q) ||
+      u.username.toLowerCase().includes(q) ||
+      (u.email && u.email.toLowerCase().includes(q))
+    );
   });
 
   const createMutation = useMutation({
@@ -312,77 +335,163 @@ export function AdminUsersPage() {
       )}
 
       <Card>
-        <CardHeader>
-          <CardTitle>Danh sách người dùng</CardTitle>
-          <CardDescription>Xóa user sẽ đưa vào thùng rác 5 ngày</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {users.map((user) => {
-              const userRoleLabel = getRoleLabel(user);
+        <CardHeader className="gap-4 pb-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle>Danh sách người dùng</CardTitle>
+              <CardDescription className="mt-1">
+                {searchQuery.trim() || roleFilter !== "ALL"
+                  ? `Tìm thấy ${filteredUsers.length} trên tổng số ${users.length} người dùng`
+                  : `Tổng cộng ${users.length} người dùng (Xóa user sẽ đưa vào thùng rác 5 ngày)`}
+              </CardDescription>
+            </div>
+
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Tìm theo tên, username, email..."
+                className="h-10 pl-9 pr-8"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                  aria-label="Xóa từ khóa tìm kiếm"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Role filter pills */}
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {(["ALL", "STAFF", "HR", "ADMIN", "BODS"] as const).map((r) => {
+              const active = roleFilter === r;
+              const label = r === "ALL" ? "Tất cả" : formatRoleLabel(r);
+              const count = roleCounts[r];
               return (
-              <div
-                key={user.id}
-                className="flex min-w-0 flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="flex items-start gap-3">
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRoleFilter(r)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                    active
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : "border border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground"
+                  )}
+                >
+                  <span>{label}</span>
                   <span
-                    className={`mt-0.5 inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
-                      userRoleLabel === "ADMIN"
-                        ? "bg-violet-100 text-violet-800"
-                        : userRoleLabel === "HR"
-                          ? "bg-emerald-100 text-emerald-800"
-                          : userRoleLabel === "BODS"
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-slate-100 text-slate-700"
-                    }`}
+                    className={cn(
+                      "rounded-full px-1.5 py-0.2 text-[10px]",
+                      active
+                        ? "bg-primary-foreground/20 text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                    )}
                   >
-                    {formatRoleLabel(userRoleLabel)}
+                    {count}
                   </span>
-                  <div>
-                    <Link
-                      to={`/users/${user.id}`}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      {user.fullName}
-                    </Link>
-                    <p className="text-sm text-muted-foreground">
-                      {user.username}
-                      {user.disabled && " · Vô hiệu hóa"}
-                    </p>
-                  </div>
-                </div>
-                {user.role === "USER" && (
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to={`/users/${user.id}`}>Xem hồ sơ</Link>
-                    </Button>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to={`/admin/users/${user.id}`}>Dự án</Link>
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="bg-red-600 text-white hover:bg-red-700"
-                      onClick={() => {
-                        setConfirmState({
-                          open: true,
-                          title: "Xóa user?",
-                          message: `Xóa user "${user.fullName}" (@${user.username})? User sẽ nằm trong thùng rác 5 ngày.`,
-                          onConfirm: () => deleteMutation.mutate(user.id),
-                        });
-                      }}
-                      disabled={deleteMutation.isPending}
-                    >
-                      <Trash2 className="size-4" />
-                      Xóa
-                    </Button>
-                  </div>
-                )}
-              </div>
+                </button>
               );
             })}
           </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {users.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">Chưa có user nào.</p>
+          ) : filteredUsers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <SearchX className="mb-3 size-10 text-muted-foreground/60" />
+              <p className="font-medium text-foreground">Không tìm thấy người dùng</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Không có tài khoản nào khớp với điều kiện lọc hiện tại.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4"
+                onClick={() => {
+                  setSearchQuery("");
+                  setRoleFilter("ALL");
+                }}
+              >
+                Đặt lại bộ lọc
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {filteredUsers.map((user) => {
+                const userRoleLabel = getRoleLabel(user);
+                return (
+                  <div
+                    key={user.id}
+                    className="flex min-w-0 flex-col gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-accent/40 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span
+                        className={`mt-0.5 inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                          userRoleLabel === "ADMIN"
+                            ? "bg-violet-100 text-violet-800 dark:bg-violet-950/60 dark:text-violet-300 dark:ring-1 dark:ring-violet-800/60"
+                            : userRoleLabel === "HR"
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 dark:ring-1 dark:ring-emerald-800/60"
+                              : userRoleLabel === "BODS"
+                                ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 dark:ring-1 dark:ring-amber-800/60"
+                                : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                        }`}
+                      >
+                        {formatRoleLabel(userRoleLabel)}
+                      </span>
+                      <div>
+                        <Link
+                          to={`/users/${user.id}`}
+                          className="font-semibold text-primary hover:underline"
+                        >
+                          {user.fullName}
+                        </Link>
+                        <p className="text-sm text-muted-foreground">
+                          @{user.username}
+                          {user.email && ` · ${user.email}`}
+                          {user.disabled && " · (Vô hiệu hóa)"}
+                        </p>
+                      </div>
+                    </div>
+                    {user.role === "USER" && (
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to={`/users/${user.id}`}>Xem hồ sơ</Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to={`/admin/users/${user.id}`}>Dự án</Link>
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="bg-red-600 text-white hover:bg-red-700"
+                          onClick={() => {
+                            setConfirmState({
+                              open: true,
+                              title: "Xóa user?",
+                              message: `Xóa user "${user.fullName}" (@${user.username})? User sẽ nằm trong thùng rác 5 ngày.`,
+                              onConfirm: () => deleteMutation.mutate(user.id),
+                            });
+                          }}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="size-4" />
+                          Xóa
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
 

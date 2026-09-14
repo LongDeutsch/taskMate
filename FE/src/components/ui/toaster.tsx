@@ -22,14 +22,14 @@ function getToastIcon(type: ToastType) {
 function getToastBorder(type: ToastType) {
   switch (type) {
     case "success":
-      return "border-emerald-200/80 bg-white";
+      return "border-emerald-200/80 bg-card text-card-foreground dark:border-emerald-800/60 dark:bg-slate-900";
     case "error":
-      return "border-rose-200/80 bg-white";
+      return "border-rose-200/80 bg-card text-card-foreground dark:border-rose-800/60 dark:bg-slate-900";
     case "warning":
-      return "border-amber-200/80 bg-white";
+      return "border-amber-200/80 bg-card text-card-foreground dark:border-amber-800/60 dark:bg-slate-900";
     case "info":
     default:
-      return "border-blue-200/80 bg-white";
+      return "border-blue-200/80 bg-card text-card-foreground dark:border-blue-800/60 dark:bg-slate-900";
   }
 }
 
@@ -53,16 +53,16 @@ export function Toaster() {
         <div
           key={item.id}
           className={cn(
-            "pointer-events-auto flex items-start gap-3 rounded-xl border p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all",
+            "pointer-events-auto flex items-start gap-3 rounded-xl border p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] transition-all",
             "animate-in fade-in slide-in-from-top-2 duration-200",
             getToastBorder(item.type)
           )}
         >
           {getToastIcon(item.type)}
           <div className="min-w-0 flex-1 pt-0.5">
-            <p className="text-sm font-semibold text-slate-900 leading-tight">{item.title}</p>
+            <p className="text-sm font-semibold text-foreground leading-tight">{item.title}</p>
             {item.description && (
-              <p className="mt-1 text-xs text-slate-600 leading-relaxed break-words">
+              <p className="mt-1 text-xs text-muted-foreground leading-relaxed break-words">
                 {item.description}
               </p>
             )}
@@ -71,7 +71,7 @@ export function Toaster() {
             type="button"
             onClick={() => toast.dismiss(item.id)}
             aria-label="Đóng thông báo"
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+            className="rounded p-1 text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
           >
             <X className="size-4" />
           </button>

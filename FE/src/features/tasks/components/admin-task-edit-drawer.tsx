@@ -9,6 +9,7 @@ import { getProjects, getUsers, updateTask } from "@/shared/api";
 import type { Task, TaskPriority, TaskStatus } from "@/shared/types";
 import { TaskDetailDrawer } from "./task-detail-overlay";
 import { td } from "./task-detail-ui";
+import { DatePicker } from "@/shared/components/date-picker";
 
 type AdminTaskEditDrawerProps = {
   open: boolean;
@@ -214,16 +215,15 @@ export function AdminTaskEditDrawer({ open, onClose, task }: AdminTaskEditDrawer
               </select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="drawer-deadline" className="text-blue-700">
+              <Label htmlFor="drawer-deadline" className="text-blue-700 dark:text-blue-400">
                 Hạn chót
               </Label>
-              <Input
+              <DatePicker
                 id="drawer-deadline"
-                type="date"
                 value={form.deadline}
                 disabled={mut.isPending}
-                onChange={(e) => setForm((f) => ({ ...f, deadline: e.target.value }))}
-                className="h-10 rounded-lg border-gray-200 bg-white shadow-sm"
+                onChange={(val) => setForm((f) => ({ ...f, deadline: val }))}
+                placeholder="Chọn hạn chót..."
               />
             </div>
           </div>

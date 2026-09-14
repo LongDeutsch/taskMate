@@ -58,12 +58,12 @@ export function ConfirmDialog({
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
         aria-describedby="confirm-dialog-message"
-        className="relative z-10 w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_64px_rgba(15,23,42,0.22)] animate-in zoom-in-95 duration-150"
+        className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-[0_24px_64px_rgba(15,23,42,0.22)] animate-in zoom-in-95 duration-150 dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_24px_64px_rgba(0,0,0,0.6)]"
       >
-        <h2 id="confirm-dialog-title" className="text-lg font-semibold text-slate-900">
+        <h2 id="confirm-dialog-title" className="text-lg font-semibold text-foreground">
           {title}
         </h2>
-        <p id="confirm-dialog-message" className="mt-3 text-sm leading-relaxed text-slate-600">
+        <p id="confirm-dialog-message" className="mt-3 text-sm leading-relaxed text-muted-foreground">
           {message}
         </p>
         <div className="mt-6 flex flex-wrap justify-end gap-3">
@@ -72,7 +72,7 @@ export function ConfirmDialog({
             variant="outline"
             disabled={loading}
             onClick={onCancel}
-            className="min-w-[84px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+            className="min-w-[84px] border-border bg-card text-muted-foreground hover:bg-accent dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             {cancelLabel}
           </Button>

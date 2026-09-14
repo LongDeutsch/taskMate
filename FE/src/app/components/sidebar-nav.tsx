@@ -12,8 +12,8 @@ export function navLinkClass({ isActive }: { isActive: boolean }) {
   return cn(
     "relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm transition-colors duration-200",
     isActive
-      ? "bg-[#EFF6FF] font-semibold text-[#2563EB] before:absolute before:left-0 before:top-1/2 before:h-6 before:w-1 before:-translate-y-1/2 before:rounded-r before:bg-[#2563EB]"
-      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+      ? "bg-blue-50 font-semibold text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 before:absolute before:left-0 before:top-1/2 before:h-6 before:w-1 before:-translate-y-1/2 before:rounded-r before:bg-blue-600 dark:before:bg-blue-500"
+      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100"
   );
 }
 
@@ -40,7 +40,7 @@ export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
         {isAdmin && (
           <>
             <div className="px-3 pt-4">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Admin
               </p>
             </div>
@@ -60,20 +60,20 @@ export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
         <TodayBirthdaySection currentUserId={user?.id} variant="sidebar" />
       </div>
 
-      <div className="shrink-0 border-t border-[#E5E7EB] p-3">
-        <div className="flex min-h-11 items-center gap-3 rounded-xl bg-gray-50 px-3 py-2">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-[#E5E7EB]">
+      <div className="shrink-0 border-t border-border p-3 dark:border-slate-800">
+        <div className="flex min-h-11 items-center gap-3 rounded-xl bg-muted/40 px-3 py-2 dark:bg-slate-800/50">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-card ring-1 ring-border dark:ring-slate-700">
             {user?.avatar ? (
               <UserAvatar avatar={user.avatar} cacheBust={avatarTs} className="size-8" />
             ) : (
-              <UserCircle className="size-5 text-gray-500" />
+              <UserCircle className="size-5 text-muted-foreground" />
             )}
           </div>
           <div className="min-w-0">
-            <div className="truncate text-sm font-medium text-gray-900">
+            <div className="truncate text-sm font-medium text-foreground">
               {user?.fullName ?? "—"}
             </div>
-            <div className="truncate text-xs text-gray-500">{roleLabel}</div>
+            <div className="truncate text-xs text-muted-foreground">{roleLabel}</div>
           </div>
         </div>
       </div>

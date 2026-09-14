@@ -67,6 +67,7 @@ import {
 import { filterTimeOffByCreatedDate } from "@/features/time-off/lib/filter-by-created-date";
 import { ConfirmDialog } from "@/shared/components/confirm-dialog";
 import { toast } from "@/shared/lib/toast";
+import { DatePicker } from "@/shared/components/date-picker";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -1092,27 +1093,26 @@ export function TimeOffPage() {
               </h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-1.5">
-                  <Label htmlFor="startDate" className="text-xs font-medium text-slate-700">
+                  <Label htmlFor="startDate" className="text-xs font-medium text-foreground">
                     Từ ngày <span className="text-rose-500">*</span>
                   </Label>
-                  <Input
+                  <DatePicker
                     id="startDate"
-                    type="date"
-                    className="h-10 border-slate-200 shadow-sm"
                     value={form.startDate}
-                    onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
+                    onChange={(val) => setForm((f) => ({ ...f, startDate: val }))}
+                    placeholder="Chọn ngày bắt đầu"
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="endDate" className="text-xs font-medium text-slate-700">
+                  <Label htmlFor="endDate" className="text-xs font-medium text-foreground">
                     Đến ngày <span className="text-rose-500">*</span>
                   </Label>
-                  <Input
+                  <DatePicker
                     id="endDate"
-                    type="date"
-                    className="h-10 border-slate-200 shadow-sm"
                     value={form.endDate}
-                    onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
+                    min={form.startDate || undefined}
+                    onChange={(val) => setForm((f) => ({ ...f, endDate: val }))}
+                    placeholder="Chọn ngày kết thúc"
                   />
                 </div>
               </div>
@@ -1631,27 +1631,28 @@ export function TimeOffPage() {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div className={`grid flex-1 gap-3 sm:grid-cols-2 ${canViewAll && activeTab !== "mine" ? "lg:grid-cols-3 lg:max-w-2xl" : "lg:max-w-sm"}`}>
               <div className="grid gap-1">
-                <Label htmlFor="filter-from" className="text-xs font-medium text-slate-700">
+                <Label htmlFor="filter-from" className="text-xs font-medium text-foreground">
                   Từ ngày tạo
                 </Label>
-                <Input
+                <DatePicker
                   id="filter-from"
-                  type="date"
-                  className="h-9 border-slate-200 text-xs shadow-sm"
+                  className="h-9 text-xs"
                   value={draftDateFrom}
-                  onChange={(e) => setDraftDateFrom(e.target.value)}
+                  onChange={(val) => setDraftDateFrom(val)}
+                  placeholder="Từ ngày..."
                 />
               </div>
               <div className="grid gap-1">
-                <Label htmlFor="filter-to" className="text-xs font-medium text-slate-700">
+                <Label htmlFor="filter-to" className="text-xs font-medium text-foreground">
                   Đến ngày tạo
                 </Label>
-                <Input
+                <DatePicker
                   id="filter-to"
-                  type="date"
-                  className="h-9 border-slate-200 text-xs shadow-sm"
+                  className="h-9 text-xs"
                   value={draftDateTo}
-                  onChange={(e) => setDraftDateTo(e.target.value)}
+                  min={draftDateFrom || undefined}
+                  onChange={(val) => setDraftDateTo(val)}
+                  placeholder="Đến ngày..."
                 />
               </div>
               {canViewAll && activeTab !== "mine" && (

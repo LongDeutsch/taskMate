@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { AutoResizeTextarea } from "./auto-resize-textarea";
 import { TaskDetailDrawer } from "./task-detail-overlay";
 import { at } from "./admin-tasks-ui";
+import { DatePicker } from "@/shared/components/date-picker";
 
 const statusOptions: TaskStatus[] = ["Todo", "InProgress", "Done"];
 const priorityOptions: TaskPriority[] = ["Low", "Medium", "High"];
@@ -202,12 +203,11 @@ export function AdminTaskFormDrawer({
               <Label htmlFor="drawer-deadline" className={at.label}>
                 Hạn chót
               </Label>
-              <Input
+              <DatePicker
                 id="drawer-deadline"
-                type="date"
                 value={form.deadline}
-                onChange={(e) => setForm((f) => ({ ...f, deadline: e.target.value }))}
-                className="h-10 rounded-lg border-gray-200 shadow-sm"
+                onChange={(val) => setForm((f) => ({ ...f, deadline: val }))}
+                placeholder="Chọn hạn chót..."
               />
               {formErrors.deadline && (
                 <p className="text-sm text-destructive">{formErrors.deadline}</p>

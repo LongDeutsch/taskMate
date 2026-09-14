@@ -17,8 +17,8 @@ export function MainLayout() {
   }, []);
 
   return (
-    <div className="flex h-[100dvh] w-full overflow-hidden bg-slate-50/70">
-      <aside className="hidden h-full w-[280px] shrink-0 border-r border-slate-200 md:flex">
+    <div className="flex h-[100dvh] w-full overflow-hidden bg-slate-50/70 text-foreground transition-colors dark:bg-slate-950">
+      <aside className="hidden h-full w-[280px] shrink-0 border-r border-slate-200 dark:border-slate-800 md:flex">
         <AppSidebar />
       </aside>
 

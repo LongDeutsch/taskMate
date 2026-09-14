@@ -106,12 +106,12 @@ export function NotificationBell() {
       </Button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-96 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-[0_16px_48px_rgba(15,23,42,0.12)] animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex items-center justify-between border-b border-slate-100 bg-white px-4 py-3">
+        <div className="absolute right-0 top-full z-50 mt-2 w-96 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-[0_16px_48px_rgba(15,23,42,0.12)] animate-in fade-in slide-in-from-top-2 duration-200 dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_16px_48px_rgba(0,0,0,0.5)]">
+          <div className="flex items-center justify-between border-b border-border bg-card px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-slate-900">Thông báo</p>
+              <p className="text-sm font-semibold text-foreground">Thông báo</p>
               {unreadCount > 0 && (
-                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-600 dark:bg-blue-950/70 dark:text-blue-400">
                   {unreadCount} mới
                 </span>
               )}
@@ -119,7 +119,7 @@ export function NotificationBell() {
             {unreadCount > 0 && (
               <button
                 type="button"
-                className="flex items-center gap-1 rounded text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors focus:outline-none"
+                className="flex items-center gap-1 rounded text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors focus:outline-none dark:text-blue-400 dark:hover:text-blue-300"
                 onClick={() => markAll()}
               >
                 <CheckCheck className="size-3.5" />
@@ -127,15 +127,15 @@ export function NotificationBell() {
               </button>
             )}
           </div>
-          <div className="max-h-96 overflow-y-auto bg-white divide-y divide-slate-100">
+          <div className="max-h-96 overflow-y-auto bg-card divide-y divide-border dark:bg-slate-900 dark:divide-slate-800">
             {isLoading ? (
-              <p className="px-4 py-8 text-center text-sm text-slate-500">Đang tải…</p>
+              <p className="px-4 py-8 text-center text-sm text-muted-foreground">Đang tải…</p>
             ) : items.length === 0 ? (
-              <p className="px-4 py-8 text-center text-sm text-slate-500">
+              <p className="px-4 py-8 text-center text-sm text-muted-foreground">
                 Chưa có thông báo nào.
               </p>
             ) : (
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-border dark:divide-slate-800">
                 {items.map((n) => (
                   <li key={n.id}>
                     <button
@@ -143,37 +143,37 @@ export function NotificationBell() {
                       onClick={() => handleClick(n)}
                       className={`flex w-full flex-col items-start gap-1 px-4 py-3 text-left text-sm transition-colors focus:outline-none ${
                         n.read
-                          ? "bg-white text-slate-700 hover:bg-slate-50"
-                          : "border-l-2 border-l-blue-600 bg-blue-50/40 text-slate-900 hover:bg-blue-50/70"
+                          ? "bg-card text-muted-foreground hover:bg-accent/50 dark:bg-slate-900 dark:hover:bg-slate-800/60"
+                          : "border-l-2 border-l-blue-600 bg-blue-50/40 text-foreground hover:bg-blue-50/70 dark:bg-blue-950/30 dark:hover:bg-blue-950/50"
                       }`}
                     >
                       <div className="flex w-full items-start gap-2.5">
                         {!n.read && (
-                          <span className="mt-1.5 inline-block size-2 shrink-0 rounded-full bg-blue-600" />
+                          <span className="mt-1.5 inline-block size-2 shrink-0 rounded-full bg-blue-600 dark:bg-blue-500" />
                         )}
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm leading-snug">
-                            <span className={`font-semibold ${n.read ? "text-slate-800" : "text-slate-900"}`}>
+                            <span className={`font-semibold ${n.read ? "text-foreground" : "text-foreground"}`}>
                               {n.actorName || "Hệ thống"}
                             </span>{" "}
-                            <span className={n.read ? "text-slate-500" : "text-slate-600"}>
+                            <span className={n.read ? "text-muted-foreground" : "text-muted-foreground"}>
                               {labelForType(n.type)}
                               {n.taskTitle ? ":" : ""}
                             </span>{" "}
                             {n.taskTitle && (
-                              <span className="font-semibold text-slate-900">{n.taskTitle}</span>
+                              <span className="font-semibold text-foreground">{n.taskTitle}</span>
                             )}
                           </p>
                           {n.changeSummary && (
                             <p
                               className={`truncate text-xs mt-0.5 ${
-                                n.read ? "text-slate-500" : "text-blue-700 font-medium"
+                                n.read ? "text-muted-foreground" : "text-blue-600 dark:text-blue-400 font-medium"
                               }`}
                             >
                               {n.changeSummary}
                             </p>
                           )}
-                          <p className="text-xs text-slate-400 mt-1">
+                          <p className="text-xs text-muted-foreground mt-1">
                             {formatRelative(n.createdAt)}
                           </p>
                         </div>

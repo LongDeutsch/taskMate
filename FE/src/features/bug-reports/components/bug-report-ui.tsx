@@ -4,9 +4,9 @@ import { cn } from "@/shared/lib/utils";
 
 export function BugStatusBadge({ status }: { status: BugReportStatus }) {
   const styles: Record<BugReportStatus, string> = {
-    todo: "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
-    in_progress: "bg-amber-50 text-amber-800 ring-1 ring-amber-200",
-    done: "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200",
+    todo: "bg-slate-100 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700",
+    in_progress: "bg-amber-50 text-amber-800 ring-1 ring-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:ring-amber-800/60",
+    done: "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:ring-emerald-800/60",
   };
   return (
     <span
@@ -39,7 +39,7 @@ export function BugStatusSelect({
     <select
       id={id}
       className={cn(
-        "h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-medium shadow-sm sm:text-sm",
+        "h-9 rounded-lg border border-input bg-background px-2.5 text-xs font-medium text-foreground shadow-xs sm:text-sm transition-colors",
         className
       )}
       value={value}

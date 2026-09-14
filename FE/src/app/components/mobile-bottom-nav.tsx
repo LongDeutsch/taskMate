@@ -25,7 +25,7 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#E5E7EB] bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md transition-colors dark:border-slate-800 dark:bg-slate-900/95 md:hidden"
       aria-label="Điều hướng chính"
     >
       <ul className="flex items-stretch justify-around">
@@ -36,7 +36,9 @@ export function MobileBottomNav() {
               className={({ isActive }) =>
                 cn(
                   "flex min-h-14 flex-col items-center justify-center gap-0.5 px-2 text-[11px] font-medium transition-colors",
-                  isActive ? "text-[#2563EB]" : "text-gray-500"
+                  isActive
+                    ? "font-semibold text-blue-600 dark:text-blue-400"
+                    : "text-muted-foreground hover:text-foreground"
                 )
               }
             >
