@@ -8,18 +8,20 @@ import { getStoredAuthUser } from "@/features/auth/store/auth-store";
 import { useAuth } from "../hooks/use-auth";
 import { loginSchema, type LoginFormValues } from "../schemas/login-schema";
 import { isUsingRealApi, apiBaseUrl } from "@/shared/api";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { CheckSquare, Eye, EyeOff, Loader2 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
 const inputClass = cn(
-  "h-12 w-full rounded-[11px] border border-border bg-background px-4 text-[15px] text-foreground shadow-none",
-  "placeholder:text-muted-foreground",
-  "focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/10"
+  "h-12 w-full rounded-xl border border-border bg-background px-4 text-[15px] text-foreground shadow-2xs transition-colors",
+  "placeholder:text-muted-foreground/70",
+  "focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20"
 );
 
 export function LoginForm() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [username, setUsername] = useState("pm");
+  const [password, setPassword] = useState("admin123");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -31,10 +33,9 @@ export function LoginForm() {
     e.preventDefault();
     setError(null);
     setErrors({});
-    const form = e.currentTarget;
     const data: LoginFormValues = {
-      username: (form.elements.namedItem("username") as HTMLInputElement).value.trim(),
-      password: (form.elements.namedItem("password") as HTMLInputElement).value,
+      username: username.trim(),
+      password,
     };
     const result = loginSchema.safeParse(data);
     if (!result.success) {
@@ -52,55 +53,85 @@ export function LoginForm() {
       if (ok) {
         navigate(getHomePathForUser(getStoredAuthUser()), { replace: true });
       } else {
-        setError("Invalid username or password.");
+        setError("Tên đăng nhập hoặc mật khẩu không chính xác.");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Invalid username or password.");
+      setError(err instanceof Error ? err.message : "Tên đăng nhập hoặc mật khẩu không chính xác.");
     } finally {
       setLoading(false);
     }
   }
 
+  const fillAccount = (u: string, p: string) => {
+    setUsername(u);
+    setPassword(p);
+    setError(null);
+    setErrors({});
+  };
+
   return (
     <div
-      className="w-full max-w-[420px] rounded-[18px] border border-border bg-card p-8 text-card-foreground shadow-xl dark:border-border dark:bg-card"
+      className="w-full max-w-[420px] rounded-3xl border border-border/80 bg-card/90 p-7 sm:p-8 text-card-foreground shadow-xl shadow-slate-900/5 backdrop-blur-md dark:border-border dark:bg-card/85 dark:shadow-2xl dark:shadow-black/50"
     >
-      <header className="mb-7">
-        <h1 className="text-[26px] font-extrabold tracking-tight text-foreground">TaskMate</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">Sign in to your account</p>
-        <p className="mt-2 text-xs text-muted-foreground">Một cú sign in, ngàn task đang chờ.</p>
+      <header className="mb-6 space-y-3">
+        {/* Branding Logo & Badge */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-blue-500/25">
+              <CheckSquare className="size-5" />
+            </div>
+            <span className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent dark:from-blue-400 dark:via-indigo-300 dark:to-violet-400">
+              TaskMate
+            </span>
+          </div>
+          <span className="rounded-full border border-blue-200/80 bg-blue-50/80 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/60 dark:text-blue-300">
+            v2.0 Workspace
+          </span>
+        </div>
+
+        <div>
+          <h1 className="text-lg font-bold text-foreground">Đăng nhập tài khoản</h1>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Một cú chạm, ngàn task sẵn sàng hoàn thành.
+          </p>
+        </div>
       </header>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div
-            className="rounded-[10px] bg-red-50 px-3 py-2.5 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300"
+            className="rounded-xl border border-red-200/80 bg-red-50/90 px-3.5 py-2.5 text-xs font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/50 dark:text-red-300 animate-in fade-in duration-200"
             role="alert"
           >
             {error}
           </div>
         )}
 
-        <div className="space-y-2">
-          <Label htmlFor="username" className="text-sm font-medium text-foreground">
-            Username
+        <div className="space-y-1.5">
+          <Label htmlFor="username" className="text-xs font-semibold text-foreground">
+            Tên đăng nhập
           </Label>
           <Input
             id="username"
             name="username"
             type="text"
-            placeholder="pm"
+            placeholder="Nhập tên đăng nhập (vd: pm, admin)..."
             autoComplete="username"
             disabled={loading}
+            value={username}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              if (errors.username) setErrors((prev) => ({ ...prev, username: undefined }));
+            }}
             aria-invalid={!!errors.username}
             className={inputClass}
           />
-          {errors.username && <p className="text-sm text-red-600 dark:text-red-400">{errors.username}</p>}
+          {errors.username && <p className="text-xs text-red-600 dark:text-red-400">{errors.username}</p>}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="password" className="text-sm font-medium text-foreground">
-            Password
+        <div className="space-y-1.5">
+          <Label htmlFor="password" className="text-xs font-semibold text-foreground">
+            Mật khẩu
           </Label>
           <div className="relative">
             <Input
@@ -110,6 +141,11 @@ export function LoginForm() {
               placeholder="••••••••"
               autoComplete="current-password"
               disabled={loading}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+              }}
               aria-invalid={!!errors.password}
               className={cn(inputClass, "pr-11")}
             />
@@ -118,38 +154,65 @@ export function LoginForm() {
               tabIndex={-1}
               className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground"
               onClick={() => setShowPassword((v) => !v)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
             >
-              {showPassword ? <EyeOff className="size-[18px]" /> : <Eye className="size-[18px]" />}
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </button>
           </div>
-          {errors.password && <p className="text-sm text-red-600 dark:text-red-400">{errors.password}</p>}
+          {errors.password && <p className="text-xs text-red-600 dark:text-red-400">{errors.password}</p>}
+        </div>
+
+        {/* Quick Demo Accounts Fill */}
+        <div className="pt-1">
+          <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">Tài khoản trải nghiệm nhanh:</p>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => fillAccount("pm", "admin123")}
+              className="cursor-pointer rounded-lg border border-border/70 bg-muted/60 px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:border-border"
+            >
+              👔 PM (pm)
+            </button>
+            <button
+              type="button"
+              onClick={() => fillAccount("admin", "admin123")}
+              className="cursor-pointer rounded-lg border border-border/70 bg-muted/60 px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:border-border"
+            >
+              🛡️ Admin (admin)
+            </button>
+            <button
+              type="button"
+              onClick={() => fillAccount("user1", "123456")}
+              className="cursor-pointer rounded-lg border border-border/70 bg-muted/60 px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:border-border"
+            >
+              👤 Member (user1)
+            </button>
+          </div>
         </div>
 
         <button
           type="submit"
           disabled={loading}
           className={cn(
-            "flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-[11px]",
-            "bg-[#111827] text-sm font-semibold text-white",
-            "transition-colors duration-200",
-            "hover:bg-[#1f2937] active:bg-[#030712]",
-            "dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90",
+            "flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl mt-2",
+            "bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-sm font-semibold text-white",
+            "shadow-md shadow-blue-500/25 transition-all duration-200",
+            "hover:from-blue-700 hover:via-indigo-700 hover:to-blue-800 active:scale-[0.99]",
             "disabled:cursor-not-allowed disabled:opacity-60"
           )}
         >
           {loading ? (
             <>
               <Loader2 className="size-4 animate-spin" />
-              Signing in...
+              Đang đăng nhập...
             </>
           ) : (
-            "Sign in"
+            "Đăng nhập"
           )}
         </button>
 
         {isDev && (
-          <p className="pt-1 text-center text-xs leading-relaxed text-muted-foreground">
+          <p className="pt-2 text-center text-[11px] leading-relaxed text-muted-foreground">
             {isUsingRealApi ? (
               <>
                 Dev API:{" "}
@@ -157,9 +220,9 @@ export function LoginForm() {
               </>
             ) : (
               <>
-                Dev mode: Mock API — set{" "}
-                <code className="rounded bg-muted px-1 text-[11px] text-foreground">VITE_API_URL</code> in{" "}
-                <code className="rounded bg-muted px-1 text-[11px] text-foreground">FE/.env</code>
+                Chế độ thử nghiệm: Mock API — chỉnh{" "}
+                <code className="rounded bg-muted px-1 py-0.5 text-[10px] text-foreground">VITE_API_URL</code> trong{" "}
+                <code className="rounded bg-muted px-1 py-0.5 text-[10px] text-foreground">FE/.env</code>
               </>
             )}
           </p>
