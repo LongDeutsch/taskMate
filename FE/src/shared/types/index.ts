@@ -40,9 +40,17 @@ export interface User {
     businessBodyTemplate?: string;
     closing?: string;
   } | null;
+  /** Người nhận khác (Xin off) — lưu theo user */
+  timeOffExtraRecipients?: TimeOffExtraRecipient[];
   avatar?: string | null;
   deletedAt?: string | null;
   restoreUntil?: string | null;
+}
+
+/** Email người nhận khác ngoài danh sách HR */
+export interface TimeOffExtraRecipient {
+  email: string;
+  isDefault: boolean;
 }
 
 export const DEFAULT_WEBMAIL_URL = "https://mail.cybertech.com.vn/mail/";

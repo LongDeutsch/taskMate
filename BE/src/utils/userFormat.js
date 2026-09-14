@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { formatDateOnly } from "./birthday.js";
 import { mergeMailTemplate } from "./mailTemplate.js";
+import { formatTimeOffExtraRecipients } from "./timeOffExtraRecipients.js";
 
 const PUBLIC_API_URL = (process.env.PUBLIC_API_URL || process.env.RENDER_EXTERNAL_URL || "")
   .replace(/\/$/, "");
@@ -47,10 +48,12 @@ export function formatPublicUser(user, opts = {}) {
       smtpHost: user.smtpHost ?? "mail.cybertech.com.vn",
       hasWebmailPassword: !!(user.webmailPasswordEnc || user.webmailPasswordHash),
       mailTemplate: mergeMailTemplate(user.mailTemplate),
+      timeOffExtraRecipients: formatTimeOffExtraRecipients(user.timeOffExtraRecipients),
     };
   }
   return {
     ...base,
     mailTemplate: mergeMailTemplate(user.mailTemplate),
+    timeOffExtraRecipients: formatTimeOffExtraRecipients(user.timeOffExtraRecipients),
   };
 }

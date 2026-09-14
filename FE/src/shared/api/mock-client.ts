@@ -81,6 +81,8 @@ export async function mockUpdateProfile(
     webmailUrl?: string | null;
     smtpHost?: string | null;
     webmailPassword?: string | null;
+    mailTemplate?: User["mailTemplate"];
+    timeOffExtraRecipients?: User["timeOffExtraRecipients"];
   },
   _avatarFile?: File
 ): Promise<User> {

@@ -20,6 +20,7 @@ import {
   scheduleOverallDateRange,
   serializeBusinessTripSchedule,
 } from "../utils/businessTripSchedule.js";
+import { normalizeAdditionalEmails } from "../utils/timeOffExtraRecipients.js";
 
 function textToHtmlFromPlain(text) {
   return textToSimpleHtml(text);
@@ -186,6 +187,8 @@ export async function createJob(req, res, next) {
       details,
       businessTripSchedule,
       recipientIds,
+      /** Email người nhận khác (ngoài HR) */
+      additionalEmails,
       /** Bản nháp đã review trên FE — ưu tiên dùng nếu hợp lệ */
       mailDraft,
     } = req.body ?? {};
@@ -238,10 +241,20 @@ export async function createJob(req, res, next) {
       return next(createBadRequestError("Chưa có tài khoản HR active để nhận yêu cầu xin off"));
     }
 
+    let extraEmails = [];
+    try {
+      extraEmails = normalizeAdditionalEmails(additionalEmails);
+    } catch (err) {
+      return next(err);
+    }
+
     const recipientEmails = [
       ...new Set(
-        resolved.recipients
-          .map((r) => r.email)
+        [
+          ...resolved.recipients.map((r) => r.email),
+          ...extraEmails,
+        ]
+          .map((e) => String(e ?? "").trim().toLowerCase())
           .filter((e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))
       ),
     ];
@@ -293,6 +306,7 @@ export async function createJob(req, res, next) {
           username,
           roleLabel,
         })),
+        additionalEmails: extraEmails,
       },
       mail: { to: recipientEmails, subject, text, html },
       createdAt: now,

@@ -46,6 +46,20 @@ const userSchema = new mongoose.Schema(
       },
       closing: { type: String, default: "Thân," },
     },
+    /**
+     * Email người nhận khác (ngoài HR) — mỗi user tự quản lý.
+     * isDefault = tự chọn khi mở form Xin off.
+     */
+    timeOffExtraRecipients: {
+      type: [
+        {
+          email: { type: String, required: true },
+          isDefault: { type: Boolean, default: false },
+          _id: false,
+        },
+      ],
+      default: [],
+    },
     /** Mã hóa AES — dùng gửi SMTP */
     webmailPasswordEnc: { type: String, default: null, select: false },
     /** Hash bcrypt — xác minh đã cấu hình, không trả client */

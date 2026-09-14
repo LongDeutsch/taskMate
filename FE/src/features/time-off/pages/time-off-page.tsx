@@ -12,6 +12,7 @@ import {
   Pencil,
   Plus,
   RefreshCw,
+  Star,
   Trash2,
   X,
   XCircle,
@@ -44,6 +45,7 @@ import {
   formatTimeOffSession,
   getRoleLabel,
   type BusinessTripScheduleItem,
+  type TimeOffExtraRecipient,
   type TimeOffReason,
   type TimeOffRequest,
   type TimeOffSession,
@@ -60,6 +62,8 @@ import {
 } from "@/features/time-off/lib/export-time-off-xlsx";
 import { filterTimeOffByCreatedDate } from "@/features/time-off/lib/filter-by-created-date";
 import { ConfirmDialog } from "@/shared/components/confirm-dialog";
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type DeleteConfirmState =
   | { kind: "one"; id: string }
@@ -306,6 +310,12 @@ export function TimeOffPage() {
   const [tplSaving, setTplSaving] = useState(false);
   const [tplError, setTplError] = useState<string | null>(null);
   const [draftExpanded, setDraftExpanded] = useState(false);
+  const [extraRecipients, setExtraRecipients] = useState<TimeOffExtraRecipient[]>([]);
+  const [selectedExtraEmails, setSelectedExtraEmails] = useState<string[]>([]);
+  const [extraEmailInput, setExtraEmailInput] = useState("");
+  const [extraEmailError, setExtraEmailError] = useState<string | null>(null);
+  const [extraSaving, setExtraSaving] = useState(false);
+  const [extraDefaultsReady, setExtraDefaultsReady] = useState(false);
 
   const recipientQuery = useQuery({
     queryKey: ["time-off", "recipients"],
@@ -362,6 +372,7 @@ export function TimeOffPage() {
       details?: string;
       businessTripSchedule?: BusinessTripScheduleItem[];
       recipientIds: string[];
+      additionalEmails?: string[];
       mailDraft: { subject: string; text: string; html: string };
     }) => {
       const job = await createMailJob(payload);
@@ -572,6 +583,110 @@ export function TimeOffPage() {
     );
   }, [open, hrRecipientIds]);
 
+  useEffect(() => {
+    const saved = profileQuery.data?.timeOffExtraRecipients ?? [];
+    setExtraRecipients(saved);
+  }, [profileQuery.data?.timeOffExtraRecipients]);
+
+  useEffect(() => {
+    if (!open) {
+      setExtraDefaultsReady(false);
+      return;
+    }
+    if (extraDefaultsReady) return;
+    const defaults = (profileQuery.data?.timeOffExtraRecipients ?? [])
+      .filter((r) => r.isDefault)
+      .map((r) => r.email);
+    setSelectedExtraEmails(defaults);
+    setExtraEmailInput("");
+    setExtraEmailError(null);
+    setExtraDefaultsReady(true);
+  }, [open, extraDefaultsReady, profileQuery.data?.timeOffExtraRecipients]);
+
+  const draftToEmails = useMemo(() => {
+    const hrEmails = (recipientQuery.data ?? [])
+      .filter((r) => form.recipientIds.includes(r.id))
+      .map((r) => String(r.email ?? "").trim().toLowerCase())
+      .filter((e) => EMAIL_RE.test(e));
+    return [...new Set([...hrEmails, ...selectedExtraEmails])];
+  }, [recipientQuery.data, form.recipientIds, selectedExtraEmails]);
+
+  async function persistExtraRecipients(next: TimeOffExtraRecipient[]) {
+    setExtraSaving(true);
+    setExtraEmailError(null);
+    try {
+      const updated = await updateProfile({ timeOffExtraRecipients: next });
+      const saved = updated.timeOffExtraRecipients ?? next;
+      setExtraRecipients(saved);
+      queryClient.setQueryData(["profile", user?.id], updated);
+      return saved;
+    } catch (err) {
+      setExtraEmailError(err instanceof Error ? err.message : String(err));
+      throw err;
+    } finally {
+      setExtraSaving(false);
+    }
+  }
+
+  async function handleAddExtraEmail(e?: React.FormEvent) {
+    e?.preventDefault();
+    const email = extraEmailInput.trim().toLowerCase();
+    if (!email) {
+      setExtraEmailError("Nhập email người nhận");
+      return;
+    }
+    if (!EMAIL_RE.test(email)) {
+      setExtraEmailError("Email không đúng định dạng");
+      return;
+    }
+    setExtraEmailError(null);
+    const exists = extraRecipients.some((r) => r.email === email);
+    if (exists) {
+      setSelectedExtraEmails((prev) => (prev.includes(email) ? prev : [...prev, email]));
+      setExtraEmailInput("");
+      return;
+    }
+    const next = [...extraRecipients, { email, isDefault: false }];
+    try {
+      await persistExtraRecipients(next);
+      setSelectedExtraEmails((prev) => (prev.includes(email) ? prev : [...prev, email]));
+      setExtraEmailInput("");
+    } catch {
+      /* error already set */
+    }
+  }
+
+  function toggleExtraSelected(email: string) {
+    setSelectedExtraEmails((prev) =>
+      prev.includes(email) ? prev.filter((e) => e !== email) : [...prev, email]
+    );
+  }
+
+  async function toggleExtraDefault(email: string) {
+    const next = extraRecipients.map((r) =>
+      r.email === email ? { ...r, isDefault: !r.isDefault } : r
+    );
+    try {
+      const saved = await persistExtraRecipients(next);
+      const row = saved.find((r) => r.email === email);
+      if (row?.isDefault) {
+        setSelectedExtraEmails((prev) => (prev.includes(email) ? prev : [...prev, email]));
+      }
+    } catch {
+      /* error already set */
+    }
+  }
+
+  async function removeExtraRecipient(email: string) {
+    const next = extraRecipients.filter((r) => r.email !== email);
+    try {
+      await persistExtraRecipients(next);
+      setSelectedExtraEmails((prev) => prev.filter((e) => e !== email));
+    } catch {
+      /* error already set */
+    }
+  }
+
   function toggleRecipient(id: string) {
     setForm((f) => {
       const has = f.recipientIds.includes(id);
@@ -751,6 +866,7 @@ export function TimeOffPage() {
       details: form.reason === "BUSINESS_TRIP" ? undefined : form.details.trim() || undefined,
       businessTripSchedule: schedulePayload,
       recipientIds,
+      additionalEmails: selectedExtraEmails,
       mailDraft: {
         subject: draftSubject.trim(),
         text: draftText.trim(),
@@ -1189,6 +1305,108 @@ export function TimeOffPage() {
               )}
             </div>
 
+            <div className="grid gap-1.5">
+              <Label className="text-xs">
+                Người nhận khác{" "}
+                <span className="font-normal text-muted-foreground">
+                  ({selectedExtraEmails.length} chọn
+                  {extraRecipients.length > 0 ? ` · ${extraRecipients.length} đã lưu` : ""})
+                </span>
+              </Label>
+              <div className="flex gap-1.5">
+                <Input
+                  type="email"
+                  className="h-8 flex-1"
+                  placeholder="email@cybertech.com.vn"
+                  value={extraEmailInput}
+                  disabled={extraSaving}
+                  onChange={(e) => {
+                    setExtraEmailInput(e.target.value);
+                    if (extraEmailError) setExtraEmailError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void handleAddExtraEmail();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-8 shrink-0 px-2.5"
+                  disabled={extraSaving}
+                  onClick={() => void handleAddExtraEmail()}
+                >
+                  Thêm
+                </Button>
+              </div>
+              {extraEmailError && (
+                <p className="text-[11px] text-rose-600" role="alert">
+                  {extraEmailError}
+                </p>
+              )}
+              {extraRecipients.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {extraRecipients.map((row) => {
+                    const selected = selectedExtraEmails.includes(row.email);
+                    return (
+                      <div
+                        key={row.email}
+                        className={`inline-flex max-w-full items-center gap-0.5 rounded-full border pl-1 pr-1 py-0.5 text-xs transition ${
+                          selected
+                            ? "border-sky-500 bg-sky-50 text-sky-950"
+                            : "border-border bg-background text-muted-foreground"
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          className="rounded-full p-0.5 hover:bg-black/5"
+                          title={row.isDefault ? "Bỏ mặc định" : "Đặt mặc định"}
+                          disabled={extraSaving}
+                          onClick={() => void toggleExtraDefault(row.email)}
+                        >
+                          <Star
+                            className={`size-3 ${
+                              row.isDefault
+                                ? "fill-amber-400 text-amber-500"
+                                : "text-muted-foreground"
+                            }`}
+                          />
+                        </button>
+                        <button
+                          type="button"
+                          className="max-w-[12rem] truncate px-0.5 text-left font-medium"
+                          title={
+                            selected
+                              ? "Bỏ chọn lần gửi này"
+                              : "Chọn gửi lần này"
+                          }
+                          onClick={() => toggleExtraSelected(row.email)}
+                        >
+                          {row.email}
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-full p-0.5 text-muted-foreground hover:bg-rose-50 hover:text-rose-600"
+                          title="Xóa khỏi danh sách đã lưu"
+                          disabled={extraSaving}
+                          onClick={() => void removeExtraRecipient(row.email)}
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-[11px] text-muted-foreground">
+                  Thêm email ngoài HR. Sao ★ = mặc định lần sau.
+                </p>
+              )}
+            </div>
+
             <div className="rounded-md border border-sky-200/80 bg-sky-50/30">
               <div className="flex flex-wrap items-center justify-between gap-2 px-2.5 py-2">
                 <button
@@ -1197,6 +1415,12 @@ export function TimeOffPage() {
                   onClick={() => setDraftExpanded((v) => !v)}
                 >
                   <p className="text-xs font-semibold text-sky-950">Bản nháp email</p>
+                  <p className="truncate text-[11px] text-muted-foreground">
+                    Đến:{" "}
+                    {draftToEmails.length > 0
+                      ? draftToEmails.join(", ")
+                      : "— chưa có người nhận"}
+                  </p>
                   <p className="truncate text-[11px] text-muted-foreground">
                     {draftSubject || "Chưa có tiêu đề"}
                     {draftDirty ? " · đã sửa" : ""}
@@ -1236,6 +1460,14 @@ export function TimeOffPage() {
               </div>
               {draftExpanded && (
                 <div className="space-y-2 border-t border-sky-100 px-2.5 py-2">
+                  <div className="grid gap-1">
+                    <Label className="text-xs">Đến ({draftToEmails.length})</Label>
+                    <p className="rounded-md border border-sky-100 bg-white/70 px-2 py-1.5 text-[11px] leading-relaxed text-sky-950">
+                      {draftToEmails.length > 0
+                        ? draftToEmails.join(", ")
+                        : "Chưa chọn người nhận"}
+                    </p>
+                  </div>
                   <div className="grid gap-1">
                     <Label htmlFor="draft-subject" className="text-xs">
                       Tiêu đề

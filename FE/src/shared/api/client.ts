@@ -241,6 +241,7 @@ export type ProfileUpdate = {
     businessBodyTemplate?: string;
     closing?: string;
   } | null;
+  timeOffExtraRecipients?: import("@/shared/types").TimeOffExtraRecipient[];
 };
 
 export async function updateProfile(data: ProfileUpdate, avatarFile?: File): Promise<User> {
@@ -541,6 +542,8 @@ export interface CreateTimeOffPayload {
   details?: string;
   businessTripSchedule?: import("@/shared/types").BusinessTripScheduleItem[];
   recipientIds?: string[];
+  /** Email người nhận khác (ngoài HR) — merge vào mail.to */
+  additionalEmails?: string[];
   /** Bản nháp đã review trên FE — agent gửi đúng nội dung này */
   mailDraft?: { subject: string; text: string; html?: string };
 }
