@@ -545,7 +545,7 @@ export function AdminTasksPage() {
       <div className={at.surface}>
         <div className={at.toolbar}>
           <div className="relative w-full min-w-0 md:max-w-xs">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="search"
               className={at.search}
@@ -616,7 +616,7 @@ export function AdminTasksPage() {
         <TaskListSkeleton />
       ) : visibleTasks.length === 0 ? (
         <div className={`${at.surface} px-6 py-16 text-center`}>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             {onlyMyNotes
               ? 'Chưa có note cá nhân. Bấm "Note cho tôi" để tạo.'
               : search.trim()
@@ -643,7 +643,7 @@ export function AdminTasksPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <Link
                         to={taskDetailPath(task.id)}
-                        className="text-base font-semibold text-gray-900 hover:text-blue-600"
+                        className="text-base font-semibold text-foreground hover:text-blue-600 dark:hover:text-blue-400"
                       >
                         {task.title}
                       </Link>

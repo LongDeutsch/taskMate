@@ -66,7 +66,7 @@ export function ProjectFormDrawer({
     >
       <form id="project-form" onSubmit={onSubmit} className="space-y-5">
         <div className="grid gap-2">
-          <Label htmlFor="project-name" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="project-name" className="text-sm font-medium text-foreground">
             Tên dự án
           </Label>
           <Input
@@ -74,12 +74,12 @@ export function ProjectFormDrawer({
             value={name}
             onChange={(e) => onNameChange(e.target.value)}
             placeholder="VD: TaskMate App"
-            className="h-10 rounded-lg border-[#E5E7EB] shadow-sm"
+            className="h-10 rounded-lg shadow-sm"
             autoFocus
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="project-desc" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="project-desc" className="text-sm font-medium text-foreground">
             Mô tả
           </Label>
           <textarea
@@ -88,7 +88,7 @@ export function ProjectFormDrawer({
             onChange={(e) => onDescriptionChange(e.target.value)}
             placeholder="Mô tả ngắn về dự án..."
             rows={4}
-            className="min-h-[88px] max-h-[160px] w-full resize-y overflow-y-auto rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-sm leading-relaxed text-gray-900 shadow-sm focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="min-h-[88px] max-h-[160px] w-full resize-y overflow-y-auto rounded-lg border border-border bg-background px-3 py-2 text-sm leading-relaxed text-foreground shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-800"
           />
         </div>
       </form>

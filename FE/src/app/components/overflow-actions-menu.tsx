@@ -42,7 +42,7 @@ export function OverflowActionsMenu({
         type="button"
         variant="outline"
         size="icon"
-        className="size-11 shrink-0 border-gray-200"
+        className="size-11 shrink-0 border-border"
         aria-label="Thêm thao tác"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
@@ -51,7 +51,7 @@ export function OverflowActionsMenu({
       </Button>
       {open && (
         <ul
-          className="absolute right-0 top-full z-50 mt-1 min-w-[180px] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+          className="absolute right-0 top-full z-50 mt-1 min-w-[180px] overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground py-1 shadow-lg dark:border-slate-800"
           role="menu"
         >
           {actions.map((action) => (
@@ -63,8 +63,8 @@ export function OverflowActionsMenu({
                 className={cn(
                   "flex min-h-11 w-full items-center px-4 text-left text-sm transition-colors",
                   action.destructive
-                    ? "text-red-600 hover:bg-red-50"
-                    : "text-gray-700 hover:bg-gray-50",
+                    ? "text-rose-600 hover:bg-rose-500/10"
+                    : "text-foreground hover:bg-muted",
                   action.disabled && "opacity-50"
                 )}
                 onClick={() => {

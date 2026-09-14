@@ -94,11 +94,11 @@ export function NotificationBell() {
         onClick={() => setOpen((v) => !v)}
         className="relative"
       >
-        <Bell className={`size-5 ${unreadCount > 0 ? "text-blue-600" : "text-gray-600"}`} />
+        <Bell className={`size-5 ${unreadCount > 0 ? "text-blue-600" : "text-muted-foreground"}`} />
         {unreadCount > 0 && (
           <>
             <span className="absolute -right-0.5 -top-0.5 inline-flex size-4 animate-ping rounded-full bg-blue-400 opacity-50" />
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-semibold text-white ring-2 ring-white">
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-semibold text-white ring-2 ring-background">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           </>

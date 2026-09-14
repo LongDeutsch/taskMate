@@ -139,8 +139,9 @@ export function AdminTaskFormDrawer({
                 id="drawer-title"
                 value={form.title}
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                placeholder="Tiêu đề task"
-                className="h-10 rounded-lg border-gray-200 shadow-sm"
+                placeholder="VD: Thiết kế banner homepage"
+                className="h-10 rounded-lg shadow-sm"
+                autoFocus
               />
               {formErrors.title && (
                 <p className="text-sm text-destructive">{formErrors.title}</p>
@@ -289,8 +290,8 @@ export function AdminTaskFormDrawer({
         {mode === "edit" && editingTask && (
           <section className="space-y-2">
             <h3 className={at.sectionTitle}>Phản hồi từ người thực hiện</h3>
-            <p className="text-xs text-gray-500">Chỉ đọc — do assignee gửi</p>
-            <div className="max-h-40 overflow-y-auto rounded-lg border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap text-gray-800">
+            <p className="text-xs text-muted-foreground">Chỉ đọc — do assignee gửi</p>
+            <div className="max-h-40 overflow-y-auto rounded-lg border border-emerald-200/60 bg-emerald-50/40 dark:border-emerald-900/40 dark:bg-emerald-950/20 px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap text-foreground">
               {editingTask.userResponse?.trim()
                 ? editingTask.userResponse
                 : "Chưa có phản hồi."}

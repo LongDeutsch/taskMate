@@ -121,21 +121,21 @@ function formatScheduleDateRange(startDate: string, endDate: string) {
 function BusinessTripScheduleList({ items }: { items: BusinessTripScheduleItem[] }) {
   if (!items.length) return null;
   return (
-    <div className="mt-2 space-y-1.5 rounded-lg border border-amber-200/80 bg-amber-50/50 p-2.5 text-xs">
-      <p className="font-semibold text-amber-900">Lịch trình công tác ({items.length} chặng):</p>
+    <div className="mt-2 space-y-1.5 rounded-lg border border-amber-200/80 bg-amber-50/50 p-2.5 text-xs dark:border-amber-900/50 dark:bg-amber-950/20">
+      <p className="font-semibold text-amber-900 dark:text-amber-300">Lịch trình công tác ({items.length} chặng):</p>
       {items.map((row, idx) => (
-        <div key={idx} className="flex flex-col gap-0.5 rounded bg-white/70 p-2 border border-amber-100 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-1.5 text-slate-800">
-            <span className="font-medium text-blue-700">
+        <div key={idx} className="flex flex-col gap-0.5 rounded bg-card/80 p-2 border border-amber-100 dark:border-amber-900/40 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-1.5 text-foreground">
+            <span className="font-medium text-blue-600 dark:text-blue-400">
               {formatScheduleDateRange(row.startDate, row.endDate)}
             </span>
             <span>·</span>
             <span className="font-medium">{row.staff}</span>
           </div>
-          <div className="flex items-center gap-1 text-slate-600">
+          <div className="flex items-center gap-1 text-muted-foreground">
             {row.location && (
               <span className="inline-flex items-center gap-1">
-                <MapPin className="size-3 text-amber-600" />
+                <MapPin className="size-3 text-amber-600 dark:text-amber-400" />
                 {row.location}
               </span>
             )}
@@ -154,20 +154,20 @@ function BusinessTripScheduleList({ items }: { items: BusinessTripScheduleItem[]
 function StatusBadge({ status }: { status: TimeOffStatus }) {
   if (status === "approved") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-800">
         <CheckCircle2 className="size-3.5" /> Đã duyệt
       </span>
     );
   }
   if (status === "rejected") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-700 ring-1 ring-rose-200">
+      <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-700 ring-1 ring-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:ring-rose-800">
         <XCircle className="size-3.5" /> Từ chối
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
+    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:ring-amber-800">
       <Clock4 className="size-3.5" /> Chờ duyệt
     </span>
   );
@@ -189,18 +189,18 @@ function RequestCard({
   onDecide: (id: string, status: "approved" | "rejected") => void;
 }) {
   return (
-    <div className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-slate-300 hover:shadow">
+    <div className="group rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:border-border/80 hover:shadow dark:border-slate-800">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1 space-y-2">
           {/* Requester Header */}
           {showOwner && (
             <div className="flex flex-wrap items-center gap-2 text-sm">
-              <div className="flex size-7 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-700 text-xs">
+              <div className="flex size-7 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950/60 font-semibold text-blue-700 dark:text-blue-300 text-xs">
                 {req.userName?.charAt(0)?.toUpperCase() || "U"}
               </div>
-              <span className="font-semibold text-slate-900 leading-tight">{req.userName}</span>
+              <span className="font-semibold text-foreground leading-tight">{req.userName}</span>
               {req.userRoleLabel && (
-                <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                   {formatRoleLabel(req.userRoleLabel)}
                 </span>
               )}
@@ -209,7 +209,7 @@ function RequestCard({
 
           {/* Time and Reason Details */}
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+            <span className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 dark:bg-blue-950/50 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:text-blue-300">
               <Calendar className="size-3.5" />
               {formatDateViDisplay(req.startDate)}
               {req.startDate !== req.endDate && (
@@ -219,10 +219,10 @@ function RequestCard({
                 </>
               )}
             </span>
-            <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+            <span className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-xs font-medium text-foreground">
               {formatTimeOffSession(req.session)}
             </span>
-            <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700">
+            <span className="inline-flex items-center rounded-md bg-indigo-50 dark:bg-indigo-950/50 px-2 py-1 text-xs font-medium text-indigo-700 dark:text-indigo-300">
               {formatTimeOffReason(req.reason)}
             </span>
             {req.reason === "OTHER" && req.reasonOther && (
@@ -239,7 +239,7 @@ function RequestCard({
 
           {/* Additional details */}
           {req.details ? (
-            <div className="rounded-md border-l-2 border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-700 whitespace-pre-wrap">
+            <div className="rounded-md border-l-2 border-border bg-muted/40 px-3 py-2 text-xs text-foreground whitespace-pre-wrap dark:border-slate-700">
               {req.details}
             </div>
           ) : null}
@@ -249,11 +249,11 @@ function RequestCard({
             <span>Tạo lúc: {new Date(req.createdAt).toLocaleString("vi-VN")}</span>
             {req.recipients && req.recipients.length > 0 && (
               <span>
-                Người nhận: <span className="font-medium text-slate-700">{req.recipients.map((r) => r.fullName).join(", ")}</span>
+                Người nhận: <span className="font-medium text-foreground">{req.recipients.map((r) => r.fullName).join(", ")}</span>
               </span>
             )}
             {req.status !== "pending" && req.decidedByName && (
-              <span className="font-medium text-slate-700">
+              <span className="font-medium text-foreground">
                 {req.status === "approved" ? "✓ Đã duyệt bởi:" : "✗ Từ chối bởi:"} {req.decidedByName}
               </span>
             )}
@@ -268,7 +268,7 @@ function RequestCard({
 
       {/* Action buttons */}
       {(canDelete || (canDecide && req.status === "pending")) && (
-        <div className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 pt-3">
+        <div className="mt-3 flex flex-wrap items-center justify-end gap-2 border-t border-border pt-3">
           {canDecide && req.status === "pending" && (
             <>
               <Button
@@ -282,7 +282,7 @@ function RequestCard({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 border-rose-200 px-3 text-rose-700 hover:bg-rose-50"
+                className="h-8 border-rose-200 dark:border-rose-900/60 px-3 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                 onClick={() => onDecide(req.id, "rejected")}
               >
                 <XCircle className="size-3.5 mr-1" />
@@ -296,7 +296,7 @@ function RequestCard({
               variant="ghost"
               size="sm"
               onClick={() => onDelete(req.id)}
-              className="h-8 px-2.5 text-muted-foreground hover:text-rose-700 hover:bg-rose-50"
+              className="h-8 px-2.5 text-muted-foreground hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
               title="Xóa đơn"
             >
               <Trash2 className="size-3.5 mr-1" />
@@ -1017,7 +1017,7 @@ export function TimeOffPage() {
       {/* Top Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h1 className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+          <h1 className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
             <CalendarOff className="size-6 text-blue-600" /> Nghỉ phép & Công tác
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -1055,14 +1055,14 @@ export function TimeOffPage() {
 
       {/* Creation Form (Collapsible Card with Clean SaaS Styling) */}
       {open && (
-        <section className="rounded-2xl border border-blue-200/80 bg-white shadow-md overflow-hidden transition-all">
-          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-5 py-3.5">
+        <section className="rounded-2xl border border-border bg-card shadow-md transition-all dark:border-slate-800">
+          <div className="flex items-center justify-between border-b border-border bg-muted/40 px-5 py-3.5">
             <div className="flex items-center gap-2.5">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-blue-100 text-blue-700">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
                 <FileText className="size-4" />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-slate-900">Tạo đơn xin nghỉ phép / công tác</h2>
+                <h2 className="text-sm font-semibold text-foreground">Tạo đơn xin nghỉ phép / công tác</h2>
                 <p className="text-xs text-muted-foreground">
                   Gửi thông báo qua máy trạm tới HR và đồng nghiệp liên quan
                 </p>
@@ -1072,7 +1072,7 @@ export function TimeOffPage() {
               type="button"
               variant="ghost"
               size="icon"
-              className="size-8 text-slate-500 hover:text-slate-900"
+              className="size-8 text-muted-foreground hover:text-foreground"
               onClick={() => setOpen(false)}
             >
               <X className="size-4" />
@@ -1088,7 +1088,7 @@ export function TimeOffPage() {
 
             {/* Block 1: Thời gian & Hình thức */}
             <div className="space-y-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 1. Thời gian & Hình thức nghỉ
               </h3>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -1119,7 +1119,7 @@ export function TimeOffPage() {
 
               {/* Buổi */}
               <div className="grid gap-2">
-                <Label className="text-xs font-medium text-slate-700">Buổi áp dụng</Label>
+                <Label className="text-xs font-medium text-foreground">Buổi áp dụng</Label>
                 <div role="radiogroup" className="flex flex-wrap gap-2">
                   {SESSION_OPTIONS.map((opt) => {
                     const active = form.session === opt.value;
@@ -1132,8 +1132,8 @@ export function TimeOffPage() {
                         onClick={() => setForm((f) => ({ ...f, session: opt.value }))}
                         className={`rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-colors ${
                           active
-                            ? "border-blue-600 bg-blue-50 text-blue-700 font-semibold ring-1 ring-blue-600 shadow-sm"
-                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                            ? "border-blue-600 bg-blue-50 text-blue-700 font-semibold ring-1 ring-blue-600 shadow-sm dark:bg-blue-950/60 dark:text-blue-300"
+                            : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground dark:border-slate-800"
                         }`}
                       >
                         {opt.label}
@@ -1145,7 +1145,7 @@ export function TimeOffPage() {
 
               {/* Lý do */}
               <div className="grid gap-2">
-                <Label className="text-xs font-medium text-slate-700">Lý do nghỉ / Công tác</Label>
+                <Label className="text-xs font-medium text-foreground">Lý do nghỉ / Công tác</Label>
                 <div role="radiogroup" className="flex flex-wrap gap-2">
                   {REASON_OPTIONS.map((opt) => {
                     const active = form.reason === opt.value;
@@ -1158,8 +1158,8 @@ export function TimeOffPage() {
                         onClick={() => selectReason(opt.value)}
                         className={`rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-colors ${
                           active
-                            ? "border-blue-600 bg-blue-50 text-blue-700 font-semibold ring-1 ring-blue-600 shadow-sm"
-                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                            ? "border-blue-600 bg-blue-50 text-blue-700 font-semibold ring-1 ring-blue-600 shadow-sm dark:bg-blue-950/60 dark:text-blue-300"
+                            : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground dark:border-slate-800"
                         }`}
                       >
                         {opt.label}
@@ -1171,7 +1171,7 @@ export function TimeOffPage() {
 
               {form.reason === "OTHER" && (
                 <div className="grid gap-1.5">
-                  <Label htmlFor="reasonOther" className="text-xs font-medium text-slate-700">
+                  <Label htmlFor="reasonOther" className="text-xs font-medium text-foreground">
                     Mô tả lý do cụ thể <span className="text-rose-500">*</span>
                   </Label>
                   <Textarea
@@ -1180,14 +1180,14 @@ export function TimeOffPage() {
                     onChange={(e) => setForm((f) => ({ ...f, reasonOther: e.target.value }))}
                     placeholder="Nhập lý do cụ thể của bạn..."
                     rows={2}
-                    className="border-slate-200 shadow-sm"
+                    className="shadow-sm"
                   />
                 </div>
               )}
 
               {form.reason !== "BUSINESS_TRIP" && (
                 <div className="grid gap-1.5">
-                  <Label htmlFor="timeoff-details" className="text-xs font-medium text-slate-700">
+                  <Label htmlFor="timeoff-details" className="text-xs font-medium text-foreground">
                     Ghi chú thêm (tùy chọn)
                   </Label>
                   <Textarea
@@ -1196,7 +1196,7 @@ export function TimeOffPage() {
                     onChange={(e) => setForm((f) => ({ ...f, details: e.target.value }))}
                     placeholder="Bàn giao công việc hoặc các lưu ý khác..."
                     rows={2}
-                    className="border-slate-200 shadow-sm"
+                    className="shadow-sm"
                   />
                 </div>
               )}
@@ -1204,13 +1204,13 @@ export function TimeOffPage() {
 
             {/* Block 2: Lịch trình công tác (Nếu chọn BUSINESS_TRIP) */}
             {form.reason === "BUSINESS_TRIP" && (
-              <div className="space-y-3 rounded-xl border border-amber-200/90 bg-amber-50/40 p-4">
+              <div className="space-y-3 rounded-xl border border-amber-200/90 bg-amber-50/40 p-4 dark:border-amber-900/50 dark:bg-amber-950/20">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-900">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-amber-900 dark:text-amber-300">
                       2. Lịch trình công tác chi tiết
                     </h3>
-                    <p className="text-xs text-amber-700">
+                    <p className="text-xs text-amber-700 dark:text-amber-400">
                       Cần ít nhất 1 chặng lịch trình để bộ phận HR và kế toán theo dõi.
                     </p>
                   </div>
@@ -1218,7 +1218,7 @@ export function TimeOffPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-8 border-amber-300 bg-white text-amber-900 hover:bg-amber-100"
+                    className="h-8 border-amber-300 bg-card text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-slate-800"
                     onClick={addScheduleRow}
                   >
                     <Plus className="size-3.5 mr-1" /> Thêm chặng
@@ -1227,9 +1227,9 @@ export function TimeOffPage() {
 
                 <div className="space-y-3">
                   {form.businessTripSchedule.map((row, index) => (
-                    <div key={index} className="rounded-lg border border-amber-200/80 bg-white p-3.5 shadow-sm space-y-3">
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                        <span className="text-xs font-semibold text-amber-800">
+                    <div key={index} className="rounded-lg border border-amber-200/80 bg-card p-3.5 shadow-sm space-y-3 dark:border-amber-900/40">
+                      <div className="flex items-center justify-between border-b border-border pb-2">
+                        <span className="text-xs font-semibold text-amber-800 dark:text-amber-300">
                           Chặng {index + 1}
                         </span>
                         {form.businessTripSchedule.length > 1 && (
@@ -1237,7 +1237,7 @@ export function TimeOffPage() {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="h-7 text-rose-600 hover:bg-rose-50 px-2"
+                            className="h-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 dark:text-rose-400 px-2"
                             onClick={() => removeScheduleRow(index)}
                           >
                             <Trash2 className="size-3.5 mr-1" /> Xóa chặng
@@ -1246,46 +1246,46 @@ export function TimeOffPage() {
                       </div>
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div>
-                          <Label className="text-[11px] text-slate-500">Từ ngày</Label>
+                          <Label className="text-[11px] text-muted-foreground">Từ ngày</Label>
                           <Input
                             type="date"
-                            className="h-8 text-xs border-slate-200"
+                            className="h-8 text-xs"
                             value={row.startDate}
                             onChange={(e) => updateScheduleRow(index, { startDate: e.target.value })}
                           />
                         </div>
                         <div>
-                          <Label className="text-[11px] text-slate-500">Đến ngày</Label>
+                          <Label className="text-[11px] text-muted-foreground">Đến ngày</Label>
                           <Input
                             type="date"
-                            className="h-8 text-xs border-slate-200"
+                            className="h-8 text-xs"
                             value={row.endDate}
                             onChange={(e) => updateScheduleRow(index, { endDate: e.target.value })}
                           />
                         </div>
                         <div>
-                          <Label className="text-[11px] text-slate-500">Nhân sự đi cùng</Label>
+                          <Label className="text-[11px] text-muted-foreground">Nhân sự đi cùng</Label>
                           <Input
-                            className="h-8 text-xs border-slate-200"
+                            className="h-8 text-xs"
                             value={row.staff}
                             onChange={(e) => updateScheduleRow(index, { staff: e.target.value })}
                             placeholder="Tên nhân sự tham gia..."
                           />
                         </div>
                         <div>
-                          <Label className="text-[11px] text-slate-500">Địa điểm</Label>
+                          <Label className="text-[11px] text-muted-foreground">Địa điểm</Label>
                           <Input
-                            className="h-8 text-xs border-slate-200"
+                            className="h-8 text-xs"
                             value={row.location}
                             onChange={(e) => updateScheduleRow(index, { location: e.target.value })}
                             placeholder="Tỉnh/Thành phố hoặc Khách hàng..."
                           />
                         </div>
                         <div className="sm:col-span-2">
-                          <Label className="text-[11px] text-slate-500">Nội dung công tác</Label>
+                          <Label className="text-[11px] text-muted-foreground">Nội dung công tác</Label>
                           <Textarea
                             rows={2}
-                            className="text-xs border-slate-200"
+                            className="text-xs"
                             value={row.description}
                             onChange={(e) =>
                               updateScheduleRow(index, { description: e.target.value })
@@ -1302,14 +1302,14 @@ export function TimeOffPage() {
 
             {/* Block 3: Người nhận thông báo */}
             <div className="space-y-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {form.reason === "BUSINESS_TRIP" ? "3." : "2."} Người nhận thông báo
               </h3>
 
               {/* HR Recipients */}
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs font-medium text-slate-700">
+                  <Label className="text-xs font-medium text-foreground">
                     Bộ phận HR nhận đơn{" "}
                     <span className="font-normal text-muted-foreground">
                       ({form.recipientIds.length} đã chọn)
@@ -1319,7 +1319,7 @@ export function TimeOffPage() {
                 {recipientQuery.isLoading ? (
                   <p className="text-xs text-muted-foreground">Đang tải danh sách HR...</p>
                 ) : (recipientQuery.data ?? []).length === 0 ? (
-                  <p className="text-xs text-amber-700">Chưa có tài khoản HR nào đang hoạt động.</p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400">Chưa có tài khoản HR nào đang hoạt động.</p>
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {(recipientQuery.data ?? []).map((recipient) => {
@@ -1329,8 +1329,8 @@ export function TimeOffPage() {
                           key={recipient.id}
                           className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition-colors ${
                             selected
-                              ? "border-blue-600 bg-blue-50 text-blue-900 font-semibold"
-                              : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                              ? "border-blue-600 bg-blue-50 text-blue-900 font-semibold dark:bg-blue-950/60 dark:text-blue-200 dark:border-blue-500"
+                              : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground dark:border-slate-800"
                           }`}
                         >
                           <input
@@ -1349,7 +1349,7 @@ export function TimeOffPage() {
 
               {/* Extra Recipients */}
               <div className="grid gap-2">
-                <Label className="text-xs font-medium text-slate-700">
+                <Label className="text-xs font-medium text-foreground">
                   Đồng nghiệp khác nhận CC qua email{" "}
                   <span className="font-normal text-muted-foreground">
                     ({selectedExtraEmails.length} đã chọn)
@@ -1358,7 +1358,7 @@ export function TimeOffPage() {
                 <div className="flex gap-2">
                   <Input
                     type="email"
-                    className="h-9 flex-1 border-slate-200 text-xs shadow-sm"
+                    className="h-9 flex-1 text-xs shadow-sm"
                     placeholder="dongnghiep@cybertech.com.vn"
                     value={extraEmailInput}
                     disabled={extraSaving}
@@ -1377,7 +1377,7 @@ export function TimeOffPage() {
                     type="button"
                     size="sm"
                     variant="outline"
-                    className="h-9 shrink-0 border-slate-200 px-3 text-xs"
+                    className="h-9 shrink-0 px-3 text-xs"
                     disabled={extraSaving}
                     onClick={() => void handleAddExtraEmail()}
                   >
@@ -1399,8 +1399,8 @@ export function TimeOffPage() {
                           key={row.email}
                           className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs transition ${
                             selected
-                              ? "border-blue-300 bg-blue-50 text-blue-900 font-medium"
-                              : "border-slate-200 bg-white text-slate-500"
+                              ? "border-blue-300 bg-blue-50 text-blue-900 font-medium dark:border-blue-800 dark:bg-blue-950/60 dark:text-blue-200"
+                              : "border-border bg-card text-muted-foreground dark:border-slate-800"
                           }`}
                         >
                           <button
@@ -1414,7 +1414,7 @@ export function TimeOffPage() {
                               className={`size-3 ${
                                 row.isDefault
                                   ? "fill-amber-400 text-amber-500"
-                                  : "text-slate-400"
+                                  : "text-muted-foreground"
                               }`}
                             />
                           </button>
@@ -1427,7 +1427,7 @@ export function TimeOffPage() {
                           </button>
                           <button
                             type="button"
-                            className="p-0.5 text-slate-400 hover:text-rose-600"
+                            className="p-0.5 text-muted-foreground hover:text-rose-600"
                             title="Xóa email này"
                             disabled={extraSaving}
                             onClick={() => void removeExtraRecipient(row.email)}
@@ -1443,10 +1443,10 @@ export function TimeOffPage() {
             </div>
 
             {/* Block 4: Bản nháp email gửi từ máy trạm */}
-            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
+            <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-3 dark:border-slate-800">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground">
                     {form.reason === "BUSINESS_TRIP" ? "4." : "3."} Bản nháp email gửi đi
                   </h3>
                   <p className="text-xs text-muted-foreground">
@@ -1458,7 +1458,7 @@ export function TimeOffPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-8 border-slate-200 bg-white px-2.5 text-xs text-slate-700"
+                    className="h-8 px-2.5 text-xs"
                     onClick={openTemplateModal}
                   >
                     <Pencil className="size-3.5 mr-1" /> Mẫu mail
@@ -1467,7 +1467,7 @@ export function TimeOffPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-8 border-slate-200 bg-white px-2.5 text-xs text-slate-700"
+                    className="h-8 px-2.5 text-xs"
                     onClick={handleRegenerateFromTemplate}
                   >
                     <RefreshCw className="size-3.5 mr-1" /> Làm mới nháp
@@ -1476,7 +1476,7 @@ export function TimeOffPage() {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-8 px-2.5 text-xs text-slate-600"
+                    className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground"
                     onClick={() => setDraftExpanded((v) => !v)}
                   >
                     {draftExpanded ? "Thu gọn" : "Chỉnh sửa nội dung"}
@@ -1485,14 +1485,14 @@ export function TimeOffPage() {
               </div>
 
               {draftExpanded && (
-                <div className="space-y-3 border-t border-slate-200 pt-3">
+                <div className="space-y-3 border-t border-border pt-3">
                   <div className="grid gap-1.5">
-                    <Label htmlFor="draft-subject" className="text-xs font-medium text-slate-700">
+                    <Label htmlFor="draft-subject" className="text-xs font-medium text-foreground">
                       Tiêu đề email
                     </Label>
                     <Input
                       id="draft-subject"
-                      className="h-9 border-slate-200 bg-white text-xs shadow-sm"
+                      className="h-9 text-xs shadow-sm"
                       value={draftSubject}
                       onChange={(e) => {
                         setDraftDirty(true);
@@ -1501,13 +1501,13 @@ export function TimeOffPage() {
                     />
                   </div>
                   <div className="grid gap-1.5">
-                    <Label htmlFor="draft-body" className="text-xs font-medium text-slate-700">
+                    <Label htmlFor="draft-body" className="text-xs font-medium text-foreground">
                       Nội dung email
                     </Label>
                     <Textarea
                       id="draft-body"
                       rows={6}
-                      className="font-mono text-xs border-slate-200 bg-white leading-relaxed shadow-sm"
+                      className="font-mono text-xs leading-relaxed shadow-sm"
                       value={draftText}
                       onChange={(e) => {
                         setDraftDirty(true);
@@ -1520,14 +1520,14 @@ export function TimeOffPage() {
             </div>
 
             {jobStatusLabel && (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-800 flex items-center gap-2">
+              <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300 flex items-center gap-2">
                 <Clock4 className="size-4 animate-spin text-blue-600" />
                 {jobStatusLabel}
               </div>
             )}
 
             {/* Form submit actions */}
-            <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+            <div className="flex flex-wrap items-center justify-end gap-2.5 pt-2 border-t border-border">
               <Button
                 type="button"
                 variant="ghost"
@@ -1557,17 +1557,17 @@ export function TimeOffPage() {
       )}
 
       {/* Filter and Tab Section */}
-      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <section className="rounded-2xl border border-border bg-card shadow-sm dark:border-slate-800">
         {/* Navigation Tabs for HR/Admin */}
         {canViewAll ? (
-          <div className="flex border-b border-slate-200 bg-slate-50/50 px-4 pt-2">
+          <div className="flex border-b border-border bg-muted/40 px-4 pt-2">
             <button
               type="button"
               onClick={() => setActiveTab("all")}
               className={`relative px-4 py-2.5 text-sm font-semibold transition-colors ${
                 activeTab === "all"
-                  ? "text-blue-600 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-blue-600"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "text-blue-600 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-blue-600 dark:text-blue-400 dark:after:bg-blue-400"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Tất cả yêu cầu ({allQuery.data?.length ?? 0})
@@ -1577,8 +1577,8 @@ export function TimeOffPage() {
               onClick={() => setActiveTab("pending")}
               className={`relative px-4 py-2.5 text-sm font-semibold transition-colors flex items-center gap-1.5 ${
                 activeTab === "pending"
-                  ? "text-blue-600 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-blue-600"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "text-blue-600 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-blue-600 dark:text-blue-400 dark:after:bg-blue-400"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Chờ duyệt
@@ -1593,8 +1593,8 @@ export function TimeOffPage() {
               onClick={() => setActiveTab("mine")}
               className={`relative px-4 py-2.5 text-sm font-semibold transition-colors ${
                 activeTab === "mine"
-                  ? "text-blue-600 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-blue-600"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "text-blue-600 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-blue-600 dark:text-blue-400 dark:after:bg-blue-400"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Đơn của tôi ({myQuery.data?.length ?? 0})
@@ -1602,8 +1602,8 @@ export function TimeOffPage() {
           </div>
         ) : (
           /* Status Pills Filter for Staff */
-          <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200 bg-slate-50/50 px-4 py-2.5">
-            <span className="text-xs font-medium text-slate-500 mr-1">Trạng thái:</span>
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-border bg-muted/40 px-4 py-2.5">
+            <span className="text-xs font-medium text-muted-foreground mr-1">Trạng thái:</span>
             {[
               { value: "", label: "Tất cả" },
               { value: "pending", label: "Chờ duyệt" },
@@ -1617,7 +1617,7 @@ export function TimeOffPage() {
                 className={`rounded-full px-3 py-1 text-xs font-medium transition ${
                   statusFilter === st.value
                     ? "bg-blue-600 text-white font-semibold shadow-sm"
-                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
+                    : "bg-card text-muted-foreground border border-border hover:bg-muted hover:text-foreground dark:border-slate-800"
                 }`}
               >
                 {st.label}
@@ -1657,7 +1657,7 @@ export function TimeOffPage() {
               </div>
               {canViewAll && activeTab !== "mine" && (
                 <div className="grid gap-1 sm:col-span-2 lg:col-span-1">
-                  <Label htmlFor="filter-user" className="text-xs font-medium text-slate-700">
+                  <Label htmlFor="filter-user" className="text-xs font-medium text-foreground">
                     Nhân viên
                   </Label>
                   <select
@@ -1665,7 +1665,7 @@ export function TimeOffPage() {
                     value={filterUserId}
                     onChange={(e) => setFilterUserId(e.target.value)}
                     disabled={usersQuery.isLoading}
-                    className="border-input h-9 w-full min-w-0 rounded-md border border-slate-200 bg-white px-2.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shadow-sm"
+                    className="border-input h-9 w-full min-w-0 rounded-md border bg-background text-foreground px-2.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shadow-sm dark:border-slate-800"
                   >
                     <option value="">Tất cả nhân viên</option>
                     {userFilterOptions.map((u) => (
@@ -1691,7 +1691,7 @@ export function TimeOffPage() {
                 type="button"
                 size="sm"
                 variant="outline"
-                className="h-9 border-slate-200 text-slate-700 hover:bg-slate-50 px-3 text-xs"
+                className="h-9 px-3 text-xs"
                 onClick={handleClearDateFilter}
                 disabled={
                   !draftDateFrom &&
@@ -1708,11 +1708,11 @@ export function TimeOffPage() {
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="h-9 border-slate-200 text-slate-700 hover:bg-slate-50 px-3 text-xs"
+                  className="h-9 px-3 text-xs"
                   onClick={handleExportXlsx}
                   disabled={allQuery.isLoading}
                 >
-                  <Download className="size-3.5 mr-1 text-slate-500" />
+                  <Download className="size-3.5 mr-1 text-muted-foreground" />
                   Xuất Excel
                 </Button>
               )}
@@ -1721,14 +1721,14 @@ export function TimeOffPage() {
 
           {(appliedDateFrom || appliedDateTo || filterUserId) && (
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <span className="font-medium text-slate-700">Đang lọc:</span>
+              <span className="font-medium text-foreground">Đang lọc:</span>
               {(appliedDateFrom || appliedDateTo) && (
                 <span>
                   {appliedDateFrom ? formatDateViDisplay(appliedDateFrom) : "bắt đầu"} → {appliedDateTo ? formatDateViDisplay(appliedDateTo) : "nay"}
                 </span>
               )}
               {filterUserId && (
-                <span>· Nhân viên: <strong className="text-slate-800">{filterUserName}</strong></span>
+                <span>· Nhân viên: <strong className="text-foreground">{filterUserName}</strong></span>
               )}
             </p>
           )}
@@ -1743,7 +1743,7 @@ export function TimeOffPage() {
       {/* Requests List Section */}
       <section className="space-y-3">
         <div className="flex items-center justify-between px-1">
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2 className="text-sm font-semibold text-foreground">
             {canViewAll
               ? activeTab === "pending"
                 ? "Danh sách đơn chờ duyệt"
@@ -1771,16 +1771,16 @@ export function TimeOffPage() {
         </div>
 
         {listLoading ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white py-16 shadow-sm">
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card py-16 shadow-sm dark:border-slate-800">
             <Clock4 className="size-8 animate-spin text-blue-600 mb-2" />
             <p className="text-sm text-muted-foreground">Đang tải danh sách đơn...</p>
           </div>
         ) : displayList.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
-            <div className="flex size-14 items-center justify-center rounded-full bg-blue-50 text-blue-600 mb-3">
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card px-6 py-16 text-center shadow-sm dark:border-slate-800">
+            <div className="flex size-14 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 mb-3">
               <CalendarOff className="size-7" />
             </div>
-            <p className="text-base font-semibold text-slate-900">Chưa có đơn xin nghỉ phép nào</p>
+            <p className="text-base font-semibold text-foreground">Chưa có đơn xin nghỉ phép nào</p>
             <p className="mt-1 max-w-sm text-xs text-muted-foreground">
               {appliedDateFrom || appliedDateTo || filterUserId
                 ? "Không tìm thấy yêu cầu nào phù hợp với bộ lọc hiện tại. Thử xóa lọc để xem lại."
@@ -1825,12 +1825,12 @@ export function TimeOffPage() {
               role="dialog"
               aria-modal="true"
               aria-labelledby="cred-modal-title"
-              className="relative z-[101] flex w-full max-w-[500px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+              className="relative z-[101] flex w-full max-w-[500px] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl dark:border-slate-800"
             >
-              <div className="space-y-1.5 border-b border-slate-100 px-6 py-4">
+              <div className="space-y-1.5 border-b border-border px-6 py-4">
                 <h2
                   id="cred-modal-title"
-                  className="text-lg font-semibold tracking-tight text-slate-900"
+                  className="text-lg font-semibold tracking-tight text-foreground"
                 >
                   Cấu hình tài khoản email gửi
                 </h2>
@@ -1844,20 +1844,20 @@ export function TimeOffPage() {
                 className="flex flex-col gap-4 p-6"
               >
                 {credError && (
-                  <p className="rounded-lg bg-rose-50 border border-rose-200 px-3 py-2 text-xs text-rose-700">
+                  <p className="rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 px-3 py-2 text-xs text-rose-700 dark:text-rose-300">
                     {credError}
                   </p>
                 )}
 
                 <div className="flex w-full flex-col gap-1.5">
-                  <Label htmlFor="credEmail" className="text-xs font-medium text-slate-800">
+                  <Label htmlFor="credEmail" className="text-xs font-medium text-foreground">
                     Địa chỉ email
                   </Label>
                   <Input
                     id="credEmail"
                     type="email"
                     autoComplete="username"
-                    className="w-full border-slate-200 text-sm shadow-sm"
+                    className="w-full text-sm shadow-sm"
                     value={credEmail}
                     onChange={(e) => setCredEmail(e.target.value)}
                     required
@@ -1866,7 +1866,7 @@ export function TimeOffPage() {
                 </div>
 
                 <div className="flex w-full flex-col gap-1.5">
-                  <Label htmlFor="credPassword" className="text-xs font-medium text-slate-800">
+                  <Label htmlFor="credPassword" className="text-xs font-medium text-foreground">
                     Mật khẩu webmail
                   </Label>
                   <div className="relative w-full">
@@ -1874,7 +1874,7 @@ export function TimeOffPage() {
                       id="credPassword"
                       type={showCredPassword ? "text" : "password"}
                       autoComplete="current-password"
-                      className="w-full pr-11 border-slate-200 text-sm shadow-sm"
+                      className="w-full pr-11 text-sm shadow-sm"
                       value={credPassword}
                       onChange={(e) => setCredPassword(e.target.value)}
                       required
@@ -1883,7 +1883,7 @@ export function TimeOffPage() {
                     <button
                       type="button"
                       tabIndex={-1}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:text-slate-800"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground"
                       onClick={() => setShowCredPassword((v) => !v)}
                       aria-label={showCredPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                     >
@@ -1942,16 +1942,16 @@ export function TimeOffPage() {
               role="dialog"
               aria-modal="true"
               aria-labelledby="tpl-modal-title"
-              className="relative z-[111] flex max-h-[min(90vh,720px)] w-full max-w-[540px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+              className="relative z-[111] flex max-h-[min(90vh,720px)] w-full max-w-[540px] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl dark:border-slate-800"
             >
-              <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-5 py-4">
+              <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-5 py-4">
                 <div className="min-w-0 space-y-0.5">
-                  <h2 id="tpl-modal-title" className="text-base font-semibold text-slate-900">
+                  <h2 id="tpl-modal-title" className="text-base font-semibold text-foreground">
                     Cấu hình mẫu email xin nghỉ phép
                   </h2>
                   <p className="text-xs text-muted-foreground">
                     Biến thay thế:{" "}
-                    <code className="rounded bg-slate-100 px-1 py-0.5 text-[11px] text-blue-700">
+                    <code className="rounded bg-muted px-1 py-0.5 text-[11px] text-blue-600 dark:text-blue-400">
                       {"{{fullName}} {{department}} {{datePhrase}}"}
                     </code>
                   </p>
@@ -1969,51 +1969,51 @@ export function TimeOffPage() {
 
               <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5">
                 {tplError && (
-                  <p className="rounded-lg bg-rose-50 border border-rose-200 px-3 py-2 text-xs text-rose-700">
+                  <p className="rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 px-3 py-2 text-xs text-rose-700 dark:text-rose-300">
                     {tplError}
                   </p>
                 )}
                 <div className="grid gap-1.5">
-                  <Label htmlFor="tpl-department" className="text-xs font-medium text-slate-700">
+                  <Label htmlFor="tpl-department" className="text-xs font-medium text-foreground">
                     Phòng ban ({"{{department}}"})
                   </Label>
                   <Input
                     id="tpl-department"
-                    className="h-9 border-slate-200 text-xs shadow-sm"
+                    className="h-9 text-xs shadow-sm"
                     value={tplDraft.department}
                     onChange={(e) => setTplDraft((t) => ({ ...t, department: e.target.value }))}
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="tpl-greeting" className="text-xs font-medium text-slate-700">
+                  <Label htmlFor="tpl-greeting" className="text-xs font-medium text-foreground">
                     Lời chào đầu thư
                   </Label>
                   <Input
                     id="tpl-greeting"
-                    className="h-9 border-slate-200 text-xs shadow-sm"
+                    className="h-9 text-xs shadow-sm"
                     value={tplDraft.greeting}
                     onChange={(e) => setTplDraft((t) => ({ ...t, greeting: e.target.value }))}
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="tpl-body" className="text-xs font-medium text-slate-700">
+                  <Label htmlFor="tpl-body" className="text-xs font-medium text-foreground">
                     Nội dung thư (nghỉ phép / WFH / đi trễ...)
                   </Label>
                   <Textarea
                     id="tpl-body"
                     rows={3}
-                    className="font-mono text-xs border-slate-200 leading-relaxed shadow-sm"
+                    className="font-mono text-xs leading-relaxed shadow-sm"
                     value={tplDraft.bodyTemplate}
                     onChange={(e) => setTplDraft((t) => ({ ...t, bodyTemplate: e.target.value }))}
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="tpl-biz-greeting" className="text-xs font-medium text-slate-700">
+                  <Label htmlFor="tpl-biz-greeting" className="text-xs font-medium text-foreground">
                     Lời chào (khi đi công tác)
                   </Label>
                   <Input
                     id="tpl-biz-greeting"
-                    className="h-9 border-slate-200 text-xs shadow-sm"
+                    className="h-9 text-xs shadow-sm"
                     value={tplDraft.businessGreeting}
                     onChange={(e) =>
                       setTplDraft((t) => ({ ...t, businessGreeting: e.target.value }))
@@ -2021,13 +2021,13 @@ export function TimeOffPage() {
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="tpl-biz-body" className="text-xs font-medium text-slate-700">
+                  <Label htmlFor="tpl-biz-body" className="text-xs font-medium text-foreground">
                     Nội dung thư (khi đi công tác)
                   </Label>
                   <Textarea
                     id="tpl-biz-body"
                     rows={3}
-                    className="font-mono text-xs border-slate-200 leading-relaxed shadow-sm"
+                    className="font-mono text-xs leading-relaxed shadow-sm"
                     value={tplDraft.businessBodyTemplate}
                     onChange={(e) =>
                       setTplDraft((t) => ({ ...t, businessBodyTemplate: e.target.value }))
@@ -2035,25 +2035,25 @@ export function TimeOffPage() {
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="tpl-closing" className="text-xs font-medium text-slate-700">
+                  <Label htmlFor="tpl-closing" className="text-xs font-medium text-foreground">
                     Chữ ký / Lời kết
                   </Label>
                   <Input
                     id="tpl-closing"
-                    className="h-9 border-slate-200 text-xs shadow-sm"
+                    className="h-9 text-xs shadow-sm"
                     value={tplDraft.closing}
                     onChange={(e) => setTplDraft((t) => ({ ...t, closing: e.target.value }))}
                   />
                 </div>
               </div>
 
-              <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-slate-100 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   onClick={() => setTplDraft({ ...DEFAULT_MAIL_TEMPLATE })}
-                  className="text-xs text-slate-500"
+                  className="text-xs text-muted-foreground hover:text-foreground"
                 >
                   Khôi phục mặc định
                 </Button>

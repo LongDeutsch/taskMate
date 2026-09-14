@@ -22,11 +22,11 @@ export function PageHeader({
     <header className={cn("space-y-3", className)}>
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0">
-          <h1 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl lg:text-[28px] lg:font-semibold">
+          <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl lg:text-[28px] lg:font-semibold">
             {title}
           </h1>
           {subtitle && (
-            <p className="mt-1 text-sm text-gray-500 [overflow-wrap:anywhere]">{subtitle}</p>
+            <p className="mt-1 text-sm text-muted-foreground [overflow-wrap:anywhere]">{subtitle}</p>
           )}
         </div>
         {actions && (

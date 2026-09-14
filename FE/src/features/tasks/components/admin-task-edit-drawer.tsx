@@ -179,7 +179,7 @@ export function AdminTaskEditDrawer({ open, onClose, task }: AdminTaskEditDrawer
           <h3 className={td.sectionTitle}>Trạng thái & thời hạn</h3>
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="grid gap-2">
-              <Label htmlFor="drawer-status" className="text-blue-700">
+              <Label htmlFor="drawer-status" className="text-foreground font-medium">
                 Trạng thái
               </Label>
               <select
@@ -197,7 +197,7 @@ export function AdminTaskEditDrawer({ open, onClose, task }: AdminTaskEditDrawer
               </select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="drawer-priority" className="text-blue-700">
+              <Label htmlFor="drawer-priority" className="text-foreground font-medium">
                 Mức độ ưu tiên
               </Label>
               <select
@@ -215,7 +215,7 @@ export function AdminTaskEditDrawer({ open, onClose, task }: AdminTaskEditDrawer
               </select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="drawer-deadline" className="text-blue-700 dark:text-blue-400">
+              <Label htmlFor="drawer-deadline" className="text-foreground font-medium">
                 Hạn chót
               </Label>
               <DatePicker
@@ -233,7 +233,7 @@ export function AdminTaskEditDrawer({ open, onClose, task }: AdminTaskEditDrawer
           <h3 className={td.sectionTitle}>Nội dung công việc</h3>
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="drawer-project" className="text-blue-700">
+              <Label htmlFor="drawer-project" className="text-foreground font-medium">
                 Dự án
               </Label>
               <select
@@ -252,7 +252,7 @@ export function AdminTaskEditDrawer({ open, onClose, task }: AdminTaskEditDrawer
               </select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="drawer-title" className="text-blue-700">
+              <Label htmlFor="drawer-title" className="text-foreground font-medium">
                 Tiêu đề
               </Label>
               <Input
@@ -260,16 +260,16 @@ export function AdminTaskEditDrawer({ open, onClose, task }: AdminTaskEditDrawer
                 value={form.title}
                 disabled={mut.isPending}
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                className="h-10 rounded-lg border-gray-200 bg-white shadow-sm"
+                className="h-10 rounded-lg border-border bg-background text-foreground shadow-sm"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="drawer-description" className="text-blue-700">
+              <Label htmlFor="drawer-description" className="text-foreground font-medium">
                 Mô tả chi tiết
               </Label>
               <textarea
                 id="drawer-description"
-                className="min-h-[160px] w-full resize-y rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-60"
+                className="min-h-[160px] w-full resize-y rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-60"
                 value={form.description}
                 disabled={mut.isPending}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
@@ -283,7 +283,7 @@ export function AdminTaskEditDrawer({ open, onClose, task }: AdminTaskEditDrawer
           <h3 className={td.sectionTitle}>Phân công</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
-              <Label htmlFor="drawer-assignee" className="text-blue-700">
+              <Label htmlFor="drawer-assignee" className="text-foreground font-medium">
                 Người thực hiện
               </Label>
               <select
@@ -317,7 +317,7 @@ export function AdminTaskEditDrawer({ open, onClose, task }: AdminTaskEditDrawer
             </div>
             {!isSelfNoteForm && (
               <div className="grid gap-2">
-                <Label htmlFor="drawer-collaborator" className="text-blue-700">
+                <Label htmlFor="drawer-collaborator" className="text-foreground font-medium">
                   Collaborators
                 </Label>
                 <select

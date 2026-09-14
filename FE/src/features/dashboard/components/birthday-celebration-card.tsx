@@ -59,7 +59,7 @@ export function BirthdayCelebrationCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-xl border border-pink-200/80 bg-gradient-to-br from-pink-50 via-amber-50 to-violet-50 shadow-sm",
+        "relative overflow-hidden rounded-xl border border-pink-200/80 bg-gradient-to-br from-pink-50 via-amber-50 to-violet-50 shadow-sm dark:border-pink-900/40 dark:from-pink-950/40 dark:via-amber-950/30 dark:to-violet-950/40",
         isSidebar ? "p-3" : "rounded-2xl p-4 shadow-sm sm:p-5"
       )}
       role="status"
@@ -88,7 +88,7 @@ export function BirthdayCelebrationCard({
         <div className="min-w-0 space-y-1">
           <p
             className={cn(
-              "flex items-start gap-1.5 font-semibold text-pink-900 [overflow-wrap:anywhere]",
+              "flex items-start gap-1.5 font-semibold text-pink-900 dark:text-pink-200 [overflow-wrap:anywhere]",
               isSidebar ? "text-xs leading-snug" : "text-base sm:text-lg"
             )}
           >
@@ -99,7 +99,7 @@ export function BirthdayCelebrationCard({
           </p>
           <p
             className={cn(
-              "text-pink-800/90 [overflow-wrap:anywhere]",
+              "text-pink-800/90 dark:text-pink-300 [overflow-wrap:anywhere]",
               isSidebar ? "text-[11px] leading-relaxed" : "text-sm"
             )}
           >
@@ -108,7 +108,7 @@ export function BirthdayCelebrationCard({
           {extraLine && (
             <p
               className={cn(
-                "font-medium text-violet-700/80 [overflow-wrap:anywhere]",
+                "font-medium text-violet-700/80 dark:text-violet-300 [overflow-wrap:anywhere]",
                 isSidebar ? "text-[10px] leading-relaxed" : "text-xs"
               )}
             >
@@ -118,7 +118,7 @@ export function BirthdayCelebrationCard({
           {ageLine && (
             <p
               className={cn(
-                "font-medium text-violet-700/80 [overflow-wrap:anywhere]",
+                "font-medium text-violet-700/80 dark:text-violet-300 [overflow-wrap:anywhere]",
                 isSidebar ? "text-[10px]" : "text-xs"
               )}
             >
@@ -126,7 +126,7 @@ export function BirthdayCelebrationCard({
             </p>
           )}
           {!ageLine && showAge && age != null && (
-            <p className={cn("font-medium text-violet-700/80", isSidebar ? "text-[10px]" : "text-xs")}>
+            <p className={cn("font-medium text-violet-700/80 dark:text-violet-300", isSidebar ? "text-[10px]" : "text-xs")}>
               Hôm nay bạn tròn {age} tuổi 🎈
             </p>
           )}
@@ -134,7 +134,7 @@ export function BirthdayCelebrationCard({
         <button
           type="button"
           className={cn(
-            "shrink-0 rounded-full border border-pink-200/80 bg-white/70 font-medium text-pink-800 shadow-sm transition hover:bg-white hover:shadow",
+            "shrink-0 rounded-full border border-pink-200/80 bg-white/70 font-medium text-pink-800 shadow-sm transition hover:bg-white hover:shadow dark:border-pink-800 dark:bg-card/80 dark:text-pink-200 dark:hover:bg-card",
             isSidebar
               ? "w-full px-2 py-1 text-[11px]"
               : "self-start px-3 py-1.5 text-sm"

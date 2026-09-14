@@ -136,14 +136,14 @@ export function TaskListPage() {
         subtitle={`Task được giao cho bạn · ${filteredTasks.length} task`}
         actions={
           isAdmin ? (
-            <Button asChild variant="outline" className="h-11 border-gray-200">
+            <Button asChild variant="outline" className="h-11 border-border">
               <Link to="/admin/tasks">Quản lý task (Admin)</Link>
             </Button>
           ) : undefined
         }
         mobileActions={
           isAdmin ? (
-            <Button asChild variant="outline" className="h-11 w-full border-gray-200">
+            <Button asChild variant="outline" className="h-11 w-full border-border">
               <Link to="/admin/tasks">Quản lý task (Admin)</Link>
             </Button>
           ) : undefined
@@ -153,7 +153,7 @@ export function TaskListPage() {
       <div className={at.surface}>
         <div className={at.toolbar}>
           <div className="relative w-full min-w-0 md:max-w-xs">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="search"
               className={at.search}
@@ -241,9 +241,9 @@ export function TaskListPage() {
         <TaskListSkeleton />
       ) : filteredTasks.length === 0 ? (
         <div className={`${at.surface} flex flex-col items-center justify-center px-6 py-16 text-center`}>
-          <Calendar className="mb-4 size-12 text-gray-300" />
-          <p className="font-medium text-gray-900">Không có task</p>
-          <p className="mt-1 text-sm text-gray-500">
+          <Calendar className="mb-4 size-12 text-muted-foreground/40" />
+          <p className="font-medium text-foreground">Không có task</p>
+          <p className="mt-1 text-sm text-muted-foreground">
             {search.trim()
               ? "Thử đổi từ khóa hoặc bộ lọc."
               : "Bạn chưa được giao task nào."}
@@ -310,7 +310,7 @@ function UserTaskCard({ task, currentUser, assigneeLabel, detailPath }: UserTask
           <div className="min-w-0 flex-1 space-y-2">
             <Link
               to={detailPath}
-              className="text-base font-semibold text-gray-900 hover:text-blue-600"
+              className="text-base font-semibold text-foreground hover:text-blue-600 dark:hover:text-blue-400"
             >
               {task.title}
             </Link>
@@ -321,7 +321,7 @@ function UserTaskCard({ task, currentUser, assigneeLabel, detailPath }: UserTask
               {projectLabel && <ProjectTag name={projectLabel} />}
             </div>
             {collaborators && (
-              <p className="flex items-center gap-1.5 text-xs text-gray-500">
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Users className="size-3.5 shrink-0" />
                 <span className="truncate">Cộng tác: {collaborators}</span>
               </p>

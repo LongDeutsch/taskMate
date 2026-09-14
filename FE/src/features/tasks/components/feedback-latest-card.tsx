@@ -26,11 +26,11 @@ function FeedbackKindBadge({ kind }: { kind: FeedbackHistoryEntry["kind"] }) {
   const map: Record<FeedbackHistoryEntry["kind"], { label: string; className: string }> = {
     sent: {
       label: "Gửi lần đầu",
-      className: "bg-violet-50 text-violet-800 border-violet-200",
+      className: "bg-violet-50 text-violet-800 border-violet-200 dark:bg-violet-950/50 dark:text-violet-300 dark:border-violet-900/60",
     },
     edit: {
       label: "Chỉnh sửa",
-      className: "bg-blue-50 text-blue-700 border-blue-200",
+      className: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900/60",
     },
   };
   const { label, className } = map[kind];
@@ -48,17 +48,17 @@ function FeedbackHistoryList({ history }: { history: FeedbackHistoryEntry[] }) {
 
   return (
     <>
-      <ul className="divide-y divide-violet-100">
+      <ul className="divide-y divide-border">
         {[...history].reverse().map((h) => (
           <li key={h.id} className="px-4 py-3">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
                   <FeedbackKindBadge kind={h.kind} />
-                  <span className="font-medium text-gray-900">{h.authorName}</span>
-                  <span className="text-[#6B7280]">{formatDateTime(h.createdAt)}</span>
+                  <span className="font-medium text-foreground">{h.authorName}</span>
+                  <span className="text-muted-foreground">{formatDateTime(h.createdAt)}</span>
                 </div>
-                <p className="mt-1.5 line-clamp-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-800">
+                <p className="mt-1.5 line-clamp-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground/90">
                   {h.content}
                 </p>
               </div>
@@ -66,7 +66,7 @@ function FeedbackHistoryList({ history }: { history: FeedbackHistoryEntry[] }) {
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-8 shrink-0 text-violet-700 hover:bg-violet-100"
+                className="size-8 shrink-0 text-purple-600 dark:text-purple-400 hover:bg-purple-500/10"
                 aria-label="Xem nội dung feedback"
                 onClick={() => setViewEntry(h)}
               >
@@ -83,14 +83,14 @@ function FeedbackHistoryList({ history }: { history: FeedbackHistoryEntry[] }) {
         title="Nội dung feedback (lịch sử)"
         footer={
           viewEntry ? (
-            <p className="text-xs text-[#6B7280]">
+            <p className="text-xs text-muted-foreground">
               <FeedbackKindBadge kind={viewEntry.kind} /> · {viewEntry.authorName} ·{" "}
               {formatDateTime(viewEntry.createdAt)}
             </p>
           ) : undefined
         }
       >
-        <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-gray-900">
+        <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-foreground">
           {viewEntry?.content}
         </p>
       </TaskDetailModal>
@@ -143,15 +143,15 @@ export function LatestFeedbackCard({
     <>
       <Card className={td.feedbackCard}>
         <CardHeader className={td.feedbackHeader}>
-          <CardTitle className="flex min-w-0 items-center gap-2 text-base font-semibold text-[#5B21B6]">
-            <MessageSquareQuote className="size-5 shrink-0 text-violet-600" />
+          <CardTitle className="flex min-w-0 items-center gap-2 text-base font-semibold text-purple-700 dark:text-purple-300">
+            <MessageSquareQuote className="size-5 shrink-0 text-purple-600 dark:text-purple-400" />
             <span className="truncate">Feedback mới nhất</span>
           </CardTitle>
           {canEdit && onEditFeedback && (
             <Button
               size="sm"
               variant="outline"
-              className="shrink-0 border-violet-200 bg-white text-violet-800 hover:bg-violet-50"
+              className="shrink-0 border-purple-200 bg-card text-purple-700 hover:bg-purple-500/10 dark:border-purple-900/60 dark:text-purple-300"
               onClick={onEditFeedback}
             >
               <Pencil className="size-4 mr-1" />
@@ -167,7 +167,7 @@ export function LatestFeedbackCard({
                 {text}
               </div>
               {(isLong || overflows) && (
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#F5F3FF] to-transparent" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-purple-50/50 dark:from-slate-900 to-transparent" />
               )}
             </div>
           ) : (
@@ -181,12 +181,12 @@ export function LatestFeedbackCard({
           )}
 
           {hasFeedback && (isLong || overflows) && (
-            <div className="border-t border-violet-100 px-5 py-3">
+            <div className="border-t border-border px-5 py-3">
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="w-full text-violet-800 hover:bg-violet-100/80"
+                className="w-full text-purple-700 dark:text-purple-300 hover:bg-purple-500/10"
                 onClick={() => setFullOpen(true)}
               >
                 Xem toàn bộ feedback
@@ -195,23 +195,23 @@ export function LatestFeedbackCard({
           )}
         </CardContent>
 
-        <CardFooter className="flex flex-col items-stretch gap-3 border-t border-violet-100 bg-[#F5F3FF]/80 px-5 py-3">
+        <CardFooter className="flex flex-col items-stretch gap-3 border-t border-border bg-purple-50/30 dark:bg-purple-950/20 px-5 py-3">
           {task.feedbackUpdatedAt && (
-            <p className="text-xs text-[#6B7280]">
+            <p className="text-xs text-muted-foreground">
               Cập nhật lúc {formatDateTime(task.feedbackUpdatedAt)}
             </p>
           )}
           {savedAt && (
-            <p className="inline-flex items-center gap-1 text-xs text-emerald-700">
+            <p className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
               <Check className="size-3" /> Đã lưu
             </p>
           )}
           {fbHistory.length > 0 && (
-            <div className="overflow-hidden rounded-xl border border-violet-100 bg-white">
+            <div className="overflow-hidden rounded-xl border border-border bg-card dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setHistoryOpen((v) => !v)}
-                className="flex w-full items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-violet-900 hover:bg-violet-50/80 focus:outline-none focus:ring-2 focus:ring-violet-400/40"
+                className="flex w-full items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-purple-400/40"
                 aria-expanded={historyOpen}
               >
                 <span className="flex items-center gap-2">
@@ -225,7 +225,7 @@ export function LatestFeedbackCard({
                 )}
               </button>
               {historyOpen && (
-                <div className="max-h-64 overflow-y-auto border-t border-violet-100">
+                <div className="max-h-64 overflow-y-auto border-t border-border">
                   <FeedbackHistoryList history={fbHistory} />
                 </div>
               )}
@@ -240,13 +240,13 @@ export function LatestFeedbackCard({
         title="Feedback từ Project Manager"
         footer={
           task.feedbackUpdatedAt ? (
-            <p className="text-xs text-[#6B7280]">
+            <p className="text-xs text-muted-foreground">
               Cập nhật lúc {formatDateTime(task.feedbackUpdatedAt)}
             </p>
           ) : undefined
         }
       >
-        <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-gray-900">
+        <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-foreground">
           {text}
         </p>
       </TaskDetailModal>

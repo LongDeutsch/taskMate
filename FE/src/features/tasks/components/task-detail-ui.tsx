@@ -8,24 +8,24 @@ export const td = {
   twoCol:
     "grid grid-cols-1 gap-6 min-w-0 lg:grid-cols-[minmax(0,13fr)_minmax(280px,7fr)] lg:items-start",
   stack: "space-y-6",
-  surfaceCard: "gap-0 rounded-2xl border border-gray-200 bg-white py-0 shadow-sm",
-  cardHeader: "flex flex-row items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 sm:px-6",
+  surfaceCard: "gap-0 rounded-2xl border border-border bg-card py-0 shadow-sm dark:border-slate-800",
+  cardHeader: "flex flex-row items-center justify-between gap-3 border-b border-border px-5 py-4 sm:px-6",
   cardBody: "space-y-5 px-5 py-5 sm:px-6",
-  detailLabel: "text-sm font-semibold text-blue-700",
-  muted: "text-sm text-[#6B7280]",
-  empty: "text-sm italic text-[#6B7280]",
-  sectionTitle: "text-xs font-semibold uppercase tracking-wide text-[#6B7280]",
+  detailLabel: "text-sm font-semibold text-blue-600 dark:text-blue-400",
+  muted: "text-sm text-muted-foreground",
+  empty: "text-sm italic text-muted-foreground",
+  sectionTitle: "text-xs font-semibold uppercase tracking-wide text-muted-foreground",
   feedbackCard:
-    "flex max-h-[min(640px,70vh)] flex-col gap-0 overflow-hidden rounded-2xl border border-[#DDD6FE] bg-[#F5F3FF] py-0 shadow-[0_1px_3px_rgba(0,0,0,0.08)]",
+    "flex max-h-[min(640px,70vh)] flex-col gap-0 overflow-hidden rounded-2xl border border-purple-200 bg-purple-50/50 dark:border-purple-900/40 dark:bg-purple-950/20 py-0 shadow-[0_1px_3px_rgba(0,0,0,0.08)]",
   feedbackHeader:
-    "sticky top-0 z-10 flex shrink-0 flex-row items-center justify-between gap-3 border-b border-[#DDD6FE] bg-[#F5F3FF] px-5 py-4",
+    "sticky top-0 z-10 flex shrink-0 flex-row items-center justify-between gap-3 border-b border-purple-200 dark:border-purple-900/40 bg-purple-50/50 dark:bg-purple-950/20 px-5 py-4",
   feedbackScrollBody:
-    "max-h-[min(480px,60vh)] overflow-y-auto px-5 py-4 text-[15px] leading-relaxed text-gray-900 whitespace-pre-wrap break-words",
-  userCard: "gap-0 rounded-2xl border border-emerald-200 bg-emerald-50/40 py-0 shadow-sm",
+    "max-h-[min(480px,60vh)] overflow-y-auto px-5 py-4 text-[15px] leading-relaxed text-foreground whitespace-pre-wrap break-words",
+  userCard: "gap-0 rounded-2xl border border-emerald-200 bg-emerald-50/40 dark:border-emerald-900/40 dark:bg-emerald-950/20 py-0 shadow-sm",
   input:
-    "h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-60",
+    "h-10 w-full rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-60 dark:border-slate-800",
   select:
-    "h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-60",
+    "h-10 w-full rounded-lg border border-border bg-card text-foreground px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-60 dark:border-slate-800",
   primaryBtn:
     "bg-blue-600 text-white shadow-sm hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-60",
 } as const;
@@ -52,15 +52,15 @@ export function EmptyValue({ children }: { children: ReactNode }) {
 }
 
 const statusStyles: Record<TaskStatus, string> = {
-  Todo: "border-gray-200 bg-gray-50 text-gray-700",
-  InProgress: "border-blue-200 bg-blue-50 text-blue-700",
-  Done: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  Todo: "border-border bg-muted text-muted-foreground",
+  InProgress: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/50 dark:text-blue-300",
+  Done: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/50 dark:text-emerald-300",
 };
 
 const priorityStyles: Record<TaskPriority, string> = {
-  Low: "border-gray-200 bg-gray-50 text-gray-600",
-  Medium: "border-amber-200 bg-amber-50 text-amber-800",
-  High: "border-red-200 bg-red-50 text-red-700",
+  Low: "border-border bg-muted text-muted-foreground",
+  Medium: "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/50 dark:text-amber-300",
+  High: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/50 dark:text-rose-300",
 };
 
 function MetaBadge({ children, className }: { children: ReactNode; className: string }) {
@@ -98,7 +98,7 @@ export function PriorityBadge({ priority }: { priority: TaskPriority }) {
 
 export function DeadlineBadge({ deadline }: { deadline: string }) {
   return (
-    <MetaBadge className="border-gray-200 bg-white text-[#6B7280]">
+    <MetaBadge className="border-border bg-card text-muted-foreground dark:border-slate-800">
       Hạn: {deadline}
     </MetaBadge>
   );

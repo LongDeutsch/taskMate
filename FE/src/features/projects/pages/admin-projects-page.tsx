@@ -230,7 +230,7 @@ export function AdminProjectsPage() {
         <div className={pj.surface}>
           <div className={pj.toolbar}>
             <div className="relative max-w-md">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="search"
                 className={pj.search}
@@ -248,9 +248,9 @@ export function AdminProjectsPage() {
         <div
           className={`${pj.surface} flex flex-col items-center justify-center px-6 py-16 text-center`}
         >
-          <FolderKanban className="mb-4 size-12 text-gray-300" />
-          <p className="text-lg font-medium text-gray-900">Chưa có dự án nào</p>
-          <p className="mt-1 max-w-sm text-sm text-gray-500">
+          <FolderKanban className="mb-4 size-12 text-muted-foreground/40" />
+          <p className="text-lg font-medium text-foreground">Chưa có dự án nào</p>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
             Tạo dự án đầu tiên để nhóm công việc theo dự án và quản lý thành viên.
           </p>
           <Button className={cn(pj.primaryBtn, "mt-6")} onClick={openCreate}>
@@ -262,13 +262,13 @@ export function AdminProjectsPage() {
 
       {showNoResults && (
         <div className={`${pj.surface} px-6 py-12 text-center`}>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Không tìm thấy project cho &quot;{search.trim()}&quot;.
           </p>
           <Button
             variant="ghost"
             size="sm"
-            className="mt-2 text-blue-600"
+            className="mt-2 text-blue-600 dark:text-blue-400"
             onClick={() => setSearch("")}
           >
             Xóa bộ lọc
@@ -290,14 +290,14 @@ export function AdminProjectsPage() {
                 <div className="min-w-0 flex-1">
                   <Link
                     to={`/admin/projects/${project.id}`}
-                    className="text-base font-semibold text-gray-900 hover:text-[#2563EB] sm:text-lg"
+                    className="text-base font-semibold text-foreground hover:text-blue-600 dark:hover:text-blue-400 sm:text-lg"
                   >
                     {project.name}
                   </Link>
                   <ProjectDescription description={project.description} />
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3 sm:border-0 sm:pt-0 sm:justify-end">
+                <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3 sm:border-0 sm:pt-0 sm:justify-end">
                   <MembersLink projectId={project.id} />
                   <Button
                     variant="ghost"

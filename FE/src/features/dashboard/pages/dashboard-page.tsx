@@ -392,7 +392,7 @@ function DashboardBugRow({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-base font-semibold text-gray-900">{bug.title}</span>
+            <span className="text-base font-semibold text-foreground">{bug.title}</span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {isAdmin && onStatusChange ? (
@@ -405,10 +405,10 @@ function DashboardBugRow({
             ) : (
               <BugStatusBadge status={bug.status} />
             )}
-            <span className="inline-flex max-w-[200px] truncate rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+            <span className="inline-flex max-w-[200px] truncate rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
               {bug.userName}
             </span>
-            <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+            <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
               {formatBugDate(bug.createdAt)}
             </span>
           </div>

@@ -104,39 +104,39 @@ export function SearchableSelect({
         aria-label={ariaLabel}
         onClick={() => !disabled && setOpen((v) => !v)}
         className={cn(
-          "flex h-11 w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-900 shadow-sm transition-colors hover:border-gray-300 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 md:h-9 md:w-auto md:min-w-[150px]",
+          "flex h-11 w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 text-sm text-foreground shadow-sm transition-colors hover:border-border/80 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 md:h-9 md:w-auto md:min-w-[150px] dark:border-slate-800",
           disabled && "cursor-not-allowed opacity-50"
         )}
       >
         <span className="truncate">{selectedLabel}</span>
         <ChevronDown
           className={cn(
-            "size-4 shrink-0 text-gray-400 transition-transform",
+            "size-4 shrink-0 text-muted-foreground transition-transform",
             open && "rotate-180"
           )}
         />
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 z-50 mt-1 min-w-[200px] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg md:right-auto md:w-[260px]">
+        <div className="absolute left-0 right-0 z-50 mt-1 min-w-[200px] overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-lg md:right-auto md:w-[260px] dark:border-slate-800">
           {searchable && (
-            <div className="border-b border-gray-100 p-2">
+            <div className="border-b border-border p-2">
               <div className="relative">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <input
                   ref={searchRef}
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={searchPlaceholder}
-                  className="h-9 w-full rounded-lg border border-gray-200 bg-white pl-8 pr-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="h-9 w-full rounded-lg border border-border bg-background pl-8 pr-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-800"
                 />
               </div>
             </div>
           )}
           <ul role="listbox" id={listboxId} className="max-h-60 overflow-y-auto p-1">
             {filtered.length === 0 ? (
-              <li className="px-3 py-6 text-center text-sm text-gray-400">
+              <li className="px-3 py-6 text-center text-sm text-muted-foreground">
                 {emptyText}
               </li>
             ) : (
@@ -150,12 +150,12 @@ export function SearchableSelect({
                       className={cn(
                         "flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors",
                         active
-                          ? "bg-blue-50 font-medium text-blue-700"
-                          : "text-gray-700 hover:bg-gray-50"
+                          ? "bg-blue-50 font-medium text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
+                          : "text-foreground hover:bg-muted"
                       )}
                     >
                       <span className="truncate">{opt.label}</span>
-                      {active && <Check className="size-4 shrink-0 text-blue-600" />}
+                      {active && <Check className="size-4 shrink-0 text-blue-600 dark:text-blue-400" />}
                     </button>
                   </li>
                 );

@@ -82,7 +82,7 @@ export function FeedbackEditDrawer({
       panelClassName="w-full max-w-[min(100vw,640px)]"
     >
       <AutoResizeTextarea
-        className="bg-white focus:ring-2 focus:ring-violet-400/40"
+        className="border-border bg-background text-foreground focus:ring-2 focus:ring-violet-400/40"
         minRows={8}
         maxLength={5000}
         placeholder="Viết feedback cho thành viên thực hiện..."

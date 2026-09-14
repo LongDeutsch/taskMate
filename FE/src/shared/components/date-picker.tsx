@@ -1,5 +1,6 @@
 // File: src/shared/components/date-picker.tsx
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,10 @@ export function DatePicker({
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
 
   // Parse initial view date from value or fallback to today
   const initialDate = value ? new Date(value) : new Date();
@@ -70,13 +75,71 @@ export function DatePicker({
     }
   }, [value]);
 
-  // Click outside to close
+  const updatePosition = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const popupHeight = 350;
+    const popupWidth = 300;
+
+    // Check if bottom overflow: place above if not enough space below
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const placeAbove = spaceBelow < popupHeight && rect.top > spaceBelow;
+
+    let left = rect.left;
+    if (left + popupWidth > window.innerWidth - 10) {
+      left = Math.max(10, window.innerWidth - popupWidth - 10);
+    }
+    if (left < 10) {
+      left = 10;
+    }
+
+    let top = placeAbove ? rect.top - popupHeight - 6 : rect.bottom + 6;
+    if (top < 10) {
+      top = 10;
+    } else if (top + popupHeight > window.innerHeight - 10) {
+      top = Math.max(10, window.innerHeight - popupHeight - 10);
+    }
+
+    setCoords({
+      top,
+      left,
+    });
+  }, []);
+
+  const handleToggle = () => {
+    if (disabled) return;
+    if (!open) {
+      updatePosition();
+      setOpen(true);
+    } else {
+      setOpen(false);
+    }
+  };
+
+  // Update position on scroll or window resize
+  useEffect(() => {
+    if (!open) return;
+    updatePosition();
+
+    const onScroll = () => updatePosition();
+    const onResize = () => updatePosition();
+
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [open, updatePosition]);
+
+  // Click outside and escape key to close
   useEffect(() => {
     if (!open) return;
     const onMouseDown = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const target = e.target as Node;
+      if (triggerRef.current?.contains(target)) return;
+      if (popoverRef.current?.contains(target)) return;
+      setOpen(false);
     };
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
@@ -128,8 +191,6 @@ export function DatePicker({
   }
 
   // Generate calendar grid
-  // In JS, getDay() 0 is Sunday, 1 is Monday ... 6 is Saturday
-  // We want Monday as index 0, Sunday as index 6
   const firstDayOfMonth = new Date(viewYear, viewMonth, 1);
   let startingDayOfWeek = firstDayOfMonth.getDay() - 1;
   if (startingDayOfWeek === -1) startingDayOfWeek = 6; // Sunday
@@ -195,22 +256,24 @@ export function DatePicker({
     <div ref={containerRef} className="relative w-full">
       {/* Trigger Button */}
       <button
+        ref={triggerRef}
         type="button"
         id={id}
         disabled={disabled}
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={handleToggle}
         aria-haspopup="dialog"
         aria-expanded={open}
         className={cn(
-          "flex h-10 w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs transition-colors",
+          "flex h-10 w-full cursor-pointer items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs transition-colors",
           "focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+          "hover:border-slate-300 dark:hover:border-slate-700",
           disabled && "cursor-not-allowed opacity-50",
           !value && "text-muted-foreground",
-          value && "text-foreground font-medium",
+          value && "font-medium text-foreground",
           className
         )}
       >
-        <span className="flex items-center gap-2 truncate">
+        <span className="flex items-center gap-2 truncate pointer-events-none">
           <CalendarIcon className="size-4 shrink-0 text-muted-foreground" />
           <span className="truncate">{value ? formatDateDisplay(value) : placeholder}</span>
         </span>
@@ -235,141 +298,152 @@ export function DatePicker({
         )}
       </button>
 
-      {/* Dropdown Calendar Popover */}
-      {open && (
-        <div
-          role="dialog"
-          aria-label="Chọn ngày"
-          className={cn(
-            "absolute left-0 top-full z-50 mt-1.5 w-[290px] rounded-xl border border-border bg-card p-3 shadow-xl transition-all",
-            "animate-in fade-in slide-in-from-top-1 duration-150 dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_16px_36px_rgba(0,0,0,0.6)]"
-          )}
-        >
-          {/* Quick Preset Shortcuts */}
-          {shortcuts && (
-            <div className="mb-2.5 flex flex-wrap gap-1 border-b border-border pb-2 dark:border-slate-800">
-              {shortcutOptions.map((s) => {
-                const isSelected = value === s.iso;
-                const isDis = isDateDisabled(s.iso);
+      {/* Dropdown Calendar Popover rendered via Portal to avoid any overflow clipping */}
+      {open &&
+        coords &&
+        createPortal(
+          <div
+            ref={popoverRef}
+            role="dialog"
+            aria-label="Lịch chọn ngày"
+            style={{
+              position: "fixed",
+              top: `${coords.top}px`,
+              left: `${coords.left}px`,
+              zIndex: 9999,
+            }}
+            className={cn(
+              "w-[290px] rounded-xl border border-border bg-card p-3 shadow-2xl transition-all",
+              "animate-in fade-in zoom-in-95 duration-150",
+              "dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_20px_50px_rgba(0,0,0,0.8)] dark:text-slate-100"
+            )}
+          >
+            {/* Quick Preset Shortcuts */}
+            {shortcuts && (
+              <div className="mb-2.5 flex flex-wrap gap-1 border-b border-border pb-2 dark:border-slate-800">
+                {shortcutOptions.map((s) => {
+                  const isSelected = value === s.iso;
+                  const isDis = isDateDisabled(s.iso);
+                  return (
+                    <button
+                      key={s.label}
+                      type="button"
+                      disabled={isDis}
+                      onClick={() => selectDate(s.iso)}
+                      className={cn(
+                        "rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer",
+                        isSelected
+                          ? "bg-primary text-primary-foreground font-semibold"
+                          : "bg-muted/70 text-muted-foreground hover:bg-accent hover:text-foreground dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700",
+                        isDis && "cursor-not-allowed opacity-40"
+                      )}
+                    >
+                      {s.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Month / Year Navigation */}
+            <div className="flex items-center justify-between pb-2">
+              <button
+                type="button"
+                onClick={prevMonth}
+                className="cursor-pointer rounded-lg p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                aria-label="Tháng trước"
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+
+              <span className="text-xs font-semibold text-foreground dark:text-slate-100">
+                Tháng {viewMonth + 1}, {viewYear}
+              </span>
+
+              <button
+                type="button"
+                onClick={nextMonth}
+                className="cursor-pointer rounded-lg p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                aria-label="Tháng sau"
+              >
+                <ChevronRight className="size-4" />
+              </button>
+            </div>
+
+            {/* Weekday Headers */}
+            <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-muted-foreground pb-1 dark:text-slate-400">
+              {WEEKDAY_NAMES.map((w) => (
+                <div key={w} className="py-0.5">
+                  {w}
+                </div>
+              ))}
+            </div>
+
+            {/* Days Grid */}
+            <div className="grid grid-cols-7 gap-1 text-center">
+              {calendarDays.map(({ dayNumber, iso, isCurrentMonth }) => {
+                const isSelected = value === iso;
+                const isToday = iso === todayIso;
+                const isDisabled = isDateDisabled(iso);
+
                 return (
                   <button
-                    key={s.label}
+                    key={iso}
                     type="button"
-                    disabled={isDis}
-                    onClick={() => selectDate(s.iso)}
+                    disabled={isDisabled}
+                    onClick={() => selectDate(iso)}
                     className={cn(
-                      "rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors",
-                      isSelected
-                        ? "bg-primary text-primary-foreground font-semibold"
-                        : "bg-muted/70 text-muted-foreground hover:bg-accent hover:text-foreground dark:bg-slate-800",
-                      isDis && "cursor-not-allowed opacity-40"
+                      "flex size-8 cursor-pointer items-center justify-center rounded-lg text-xs transition-colors",
+                      !isCurrentMonth && "text-muted-foreground/30 dark:text-slate-600",
+                      isCurrentMonth && !isSelected && "text-foreground hover:bg-accent dark:text-slate-200 dark:hover:bg-slate-800",
+                      isToday && !isSelected && "font-bold text-primary ring-1 ring-primary/40 dark:text-blue-400 dark:ring-blue-500/40",
+                      isSelected && "bg-primary text-primary-foreground font-semibold shadow-xs",
+                      isDisabled && "cursor-not-allowed opacity-25 hover:bg-transparent"
                     )}
                   >
-                    {s.label}
+                    {dayNumber}
                   </button>
                 );
               })}
             </div>
-          )}
 
-          {/* Month / Year Navigation */}
-          <div className="flex items-center justify-between pb-2">
-            <button
-              type="button"
-              onClick={prevMonth}
-              className="rounded-lg p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-              aria-label="Tháng trước"
-            >
-              <ChevronLeft className="size-4" />
-            </button>
-
-            <span className="text-xs font-semibold text-foreground">
-              Tháng {viewMonth + 1}, {viewYear}
-            </span>
-
-            <button
-              type="button"
-              onClick={nextMonth}
-              className="rounded-lg p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-              aria-label="Tháng sau"
-            >
-              <ChevronRight className="size-4" />
-            </button>
-          </div>
-
-          {/* Weekday Headers */}
-          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-muted-foreground pb-1">
-            {WEEKDAY_NAMES.map((w) => (
-              <div key={w} className="py-0.5">
-                {w}
-              </div>
-            ))}
-          </div>
-
-          {/* Days Grid */}
-          <div className="grid grid-cols-7 gap-1 text-center">
-            {calendarDays.map(({ dayNumber, iso, isCurrentMonth }) => {
-              const isSelected = value === iso;
-              const isToday = iso === todayIso;
-              const isDisabled = isDateDisabled(iso);
-
-              return (
-                <button
-                  key={iso}
-                  type="button"
-                  disabled={isDisabled}
-                  onClick={() => selectDate(iso)}
-                  className={cn(
-                    "flex size-8 items-center justify-center rounded-lg text-xs transition-colors",
-                    !isCurrentMonth && "text-muted-foreground/40",
-                    isCurrentMonth && !isSelected && "text-foreground hover:bg-accent",
-                    isToday && !isSelected && "font-bold text-primary ring-1 ring-primary/40",
-                    isSelected && "bg-primary text-primary-foreground font-semibold shadow-xs",
-                    isDisabled && "cursor-not-allowed opacity-25 hover:bg-transparent"
-                  )}
-                >
-                  {dayNumber}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Footer actions */}
-          <div className="mt-2.5 flex items-center justify-between border-t border-border pt-2 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={() => selectDate(todayIso)}
-              disabled={isDateDisabled(todayIso)}
-              className="text-xs font-medium text-primary hover:underline focus:outline-none"
-            >
-              Hôm nay
-            </button>
-            <div className="flex gap-2">
-              {value && clearable && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChange("");
-                    setOpen(false);
-                  }}
-                  className="text-xs text-muted-foreground hover:text-foreground"
-                >
-                  Xóa
-                </button>
-              )}
-              <Button
+            {/* Footer actions */}
+            <div className="mt-2.5 flex items-center justify-between border-t border-border pt-2 dark:border-slate-800">
+              <button
                 type="button"
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-xs"
-                onClick={() => setOpen(false)}
+                onClick={() => selectDate(todayIso)}
+                disabled={isDateDisabled(todayIso)}
+                className="cursor-pointer text-xs font-medium text-primary hover:underline focus:outline-none dark:text-blue-400"
               >
-                Đóng
-              </Button>
+                Hôm nay
+              </button>
+              <div className="flex gap-2">
+                {value && clearable && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange("");
+                      setOpen(false);
+                    }}
+                    className="cursor-pointer text-xs text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-slate-200"
+                  >
+                    Xóa
+                  </button>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 cursor-pointer px-2 text-xs"
+                  onClick={() => setOpen(false)}
+                >
+                  Đóng
+                </Button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

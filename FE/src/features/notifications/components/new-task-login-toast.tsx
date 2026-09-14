@@ -98,9 +98,9 @@ export function NewTaskLoginToast() {
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-3 right-3 z-[60] mx-auto max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-[0_16px_48px_rgba(15,23,42,0.14)] animate-in fade-in slide-in-from-bottom-4 duration-300 md:bottom-4 md:left-auto md:right-4 md:max-w-sm md:slide-in-from-right-4"
+      className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-3 right-3 z-[60] mx-auto max-w-md overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300 md:bottom-4 md:left-auto md:right-4 md:max-w-sm md:slide-in-from-right-4 dark:border-slate-800"
     >
-      <div className="flex items-start gap-3 bg-slate-900 px-4 py-3 text-white">
+      <div className="flex items-start gap-3 bg-slate-900 px-4 py-3 text-white dark:bg-slate-950">
         <span className="relative mt-0.5 inline-flex shrink-0">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-40" />
           <Bell className="relative size-5 text-blue-400" />
@@ -122,7 +122,7 @@ export function NewTaskLoginToast() {
           <X className="size-4" />
         </button>
       </div>
-      <ul className="divide-y divide-slate-100 bg-white">
+      <ul className="divide-y divide-border bg-card">
         {preview.map((n) => (
           <li key={n.id}>
             <button
@@ -142,15 +142,15 @@ export function NewTaskLoginToast() {
                 }
                 if (n.taskId) navigate(`/tasks/${n.taskId}`);
               }}
-              className="flex w-full flex-col items-start gap-0.5 border-l-2 border-l-blue-600 px-3.5 py-2.5 text-left text-sm hover:bg-slate-50 transition-colors focus:outline-none"
+              className="flex w-full flex-col items-start gap-0.5 border-l-2 border-l-blue-600 px-3.5 py-2.5 text-left text-sm hover:bg-muted/50 transition-colors focus:outline-none"
             >
               <p className="line-clamp-2">
-                <span className="font-semibold text-slate-900">{n.actorName || "Hệ thống"}</span>{" "}
-                <span className="text-slate-500">{labelForType(n.type)}</span>{" "}
-                {n.taskTitle && <span className="font-semibold text-slate-900">{n.taskTitle}</span>}
+                <span className="font-semibold text-foreground">{n.actorName || "Hệ thống"}</span>{" "}
+                <span className="text-muted-foreground">{labelForType(n.type)}</span>{" "}
+                {n.taskTitle && <span className="font-semibold text-foreground">{n.taskTitle}</span>}
               </p>
               {n.changeSummary && (
-                <p className="line-clamp-1 text-xs text-blue-700 font-medium">
+                <p className="line-clamp-1 text-xs text-blue-600 dark:text-blue-400 font-medium">
                   {n.changeSummary}
                 </p>
               )}
@@ -158,10 +158,10 @@ export function NewTaskLoginToast() {
           </li>
         ))}
       </ul>
-      <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-3.5 py-2.5">
+      <div className="flex items-center justify-end gap-2 border-t border-border bg-muted/40 px-3.5 py-2.5">
         <button
           type="button"
-          className="text-xs font-medium text-slate-500 hover:text-slate-800 focus:outline-none rounded px-2.5 py-1.5 transition-colors"
+          className="text-xs font-medium text-muted-foreground hover:text-foreground focus:outline-none rounded px-2.5 py-1.5 transition-colors"
           onClick={() => setVisible(false)}
         >
           Đóng

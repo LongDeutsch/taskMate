@@ -196,8 +196,8 @@ export function UserResponseEditor({
             size="sm"
             className={
               compact
-                ? "border-emerald-200 bg-white text-emerald-800 shadow-sm hover:bg-emerald-50"
-                : "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                ? "border-emerald-200 bg-white text-emerald-800 shadow-sm hover:bg-emerald-50 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/40"
+                : "border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
             }
             onClick={() => {
               setError(null);
@@ -225,13 +225,13 @@ export function UserResponseEditor({
 
       {open && (
         <div
-          className={`rounded-xl border border-emerald-100 bg-emerald-50/40 shadow-sm ${
+          className={`rounded-xl border border-emerald-100 bg-emerald-50/40 shadow-sm dark:border-emerald-900/40 dark:bg-emerald-950/20 ${
             compact ? "p-3" : "p-4"
           }`}
         >
           {!compact && (
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">
                 {mode === "first"
                   ? "Phản hồi tới Project Manager"
                   : mode === "edit"
@@ -242,7 +242,7 @@ export function UserResponseEditor({
             </div>
           )}
           <textarea
-            className="max-h-[160px] min-h-[80px] w-full resize-y overflow-y-auto rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-emerald-400/40 disabled:opacity-60"
+            className="max-h-[160px] min-h-[80px] w-full resize-y overflow-y-auto rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-emerald-400/40 disabled:opacity-60"
             rows={compact ? 3 : 4}
             maxLength={5000}
             placeholder={
@@ -322,7 +322,7 @@ function DraftIndicator({ status }: { status: DraftStatus }) {
     );
   if (status === "saved")
     return (
-      <span className="inline-flex items-center gap-1 text-xs text-emerald-700">
+      <span className="inline-flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-400">
         <Check className="size-3" />
         Bản nháp đã lưu
       </span>
@@ -360,7 +360,7 @@ function UndoToast({
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-4 right-4 z-[60] w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border-2 border-emerald-500 bg-white shadow-[0_20px_60px_-15px_rgba(16,185,129,0.45)] ring-4 ring-emerald-500/20 animate-in fade-in slide-in-from-right-4 duration-300"
+      className="fixed bottom-4 right-4 z-[60] w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border-2 border-emerald-500 bg-card text-card-foreground shadow-[0_20px_60px_-15px_rgba(16,185,129,0.45)] ring-4 ring-emerald-500/20 animate-in fade-in slide-in-from-right-4 duration-300 dark:border-emerald-600 dark:bg-slate-900 dark:text-slate-100"
     >
       <div className="flex items-center gap-3 bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-2.5 text-white">
         <Check className="size-5" />
@@ -381,7 +381,7 @@ function UndoToast({
         <Button
           size="sm"
           variant="outline"
-          className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+          className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
           disabled={isUndoing}
           onClick={onUndo}
         >
@@ -393,7 +393,7 @@ function UndoToast({
           Hoàn tác
         </Button>
       </div>
-      <div className="h-1 w-full bg-emerald-100">
+      <div className="h-1 w-full bg-emerald-100 dark:bg-emerald-950">
         <div
           className="h-full bg-emerald-500 transition-[width] duration-100 ease-linear"
           style={{ width: `${remainingPct}%` }}

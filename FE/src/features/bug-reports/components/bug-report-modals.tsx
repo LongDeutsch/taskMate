@@ -49,7 +49,7 @@ export function BugViewModal({
             </Label>
             <select
               id="bug-view-status"
-              className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm"
+              className="h-10 rounded-lg border border-border bg-card text-foreground px-3 text-sm dark:border-slate-800"
               value={bug.status}
               disabled={statusPending}
               onChange={(e) => onStatusChange(e.target.value as BugReportStatus)}
@@ -64,30 +64,30 @@ export function BugViewModal({
     >
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-lg font-semibold text-gray-900">{bug.title}</h3>
+          <h3 className="text-lg font-semibold text-foreground">{bug.title}</h3>
           <BugStatusBadge status={bug.status} />
         </div>
-        <dl className="grid gap-2 text-sm text-gray-600">
+        <dl className="grid gap-2 text-sm text-muted-foreground">
           <div>
-            <dt className="font-medium text-gray-700">Người gửi</dt>
+            <dt className="font-medium text-foreground">Người gửi</dt>
             <dd>{bug.userName}</dd>
           </div>
           <div>
-            <dt className="font-medium text-gray-700">Trạng thái</dt>
+            <dt className="font-medium text-foreground">Trạng thái</dt>
             <dd>{formatBugStatus(bug.status)}</dd>
           </div>
           <div>
-            <dt className="font-medium text-gray-700">Tạo lúc</dt>
+            <dt className="font-medium text-foreground">Tạo lúc</dt>
             <dd>{formatDate(bug.createdAt)}</dd>
           </div>
           <div>
-            <dt className="font-medium text-gray-700">Cập nhật</dt>
+            <dt className="font-medium text-foreground">Cập nhật</dt>
             <dd>{formatDate(bug.updatedAt)}</dd>
           </div>
         </dl>
         <div>
-          <p className="mb-1 text-sm font-medium text-gray-700">Nội dung</p>
-          <p className="whitespace-pre-wrap text-sm text-gray-600 [overflow-wrap:anywhere]">
+          <p className="mb-1 text-sm font-medium text-foreground">Nội dung</p>
+          <p className="whitespace-pre-wrap text-sm text-foreground/90 [overflow-wrap:anywhere]">
             {bug.content}
           </p>
         </div>

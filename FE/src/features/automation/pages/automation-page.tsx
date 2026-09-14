@@ -29,19 +29,19 @@ function statusMeta(status: string) {
     case "failed":
       return {
         label: "Thất bại",
-        className: "bg-red-50 text-red-700 border-red-200",
+        className: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-900/60",
         Icon: XCircle,
       };
     case "running":
       return {
         label: "Đang chạy",
-        className: "bg-amber-50 text-amber-800 border-amber-200",
+        className: "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900/60",
         Icon: Loader2,
       };
     default:
       return {
         label: "Thành công",
-        className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        className: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900/60",
         Icon: CheckCircle2,
       };
   }
@@ -64,7 +64,7 @@ function DetailRow({ label, value, mono }: { label: string; value: string; mono?
   return (
     <div className="space-y-1">
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className={cn("text-sm text-gray-900 break-words whitespace-pre-wrap", mono && "font-mono text-xs")}>
+      <p className={cn("text-sm text-foreground break-words whitespace-pre-wrap", mono && "font-mono text-xs")}>
         {value || "—"}
       </p>
     </div>
@@ -83,17 +83,17 @@ function HookEventDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-4 sm:items-center backdrop-blur-xs"
       role="dialog"
       aria-modal="true"
       aria-label="Chi tiết webhook"
       onClick={onClose}
     >
       <div
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-xl"
+        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-card shadow-xl dark:border-slate-800"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 flex items-start justify-between gap-3 border-b border-gray-100 bg-white px-5 py-4">
+        <div className="sticky top-0 flex items-start justify-between gap-3 border-b border-border bg-card px-5 py-4">
           <div className="min-w-0 space-y-2">
             <span
               className={cn(
@@ -104,7 +104,7 @@ function HookEventDetailModal({
               <Icon className={cn("size-3.5", event.status === "running" && "animate-spin")} />
               {meta.label}
             </span>
-            <h2 className="text-lg font-semibold text-gray-900">{event.title}</h2>
+            <h2 className="text-lg font-semibold text-foreground">{event.title}</h2>
           </div>
           <Button
             type="button"
@@ -137,7 +137,7 @@ function HookEventDetailModal({
           />
         </div>
 
-        <div className="border-t border-gray-100 px-5 py-3">
+        <div className="border-t border-border px-5 py-3">
           <Button type="button" className="w-full" onClick={onClose}>
             Đóng
           </Button>
@@ -175,7 +175,7 @@ function HookEventCard({
                 <span className="text-xs text-muted-foreground">{event.source}</span>
               )}
             </div>
-            <p className="font-medium text-gray-900">{event.title}</p>
+            <p className="font-medium text-foreground">{event.title}</p>
             <p className="text-xs text-muted-foreground">
               jobId: <span className="font-mono">{event.jobId}</span>
               {typeof event.notifiedCount === "number"
@@ -188,7 +188,7 @@ function HookEventCard({
               type="button"
               variant="outline"
               size="icon"
-              className="size-9 border-gray-200"
+              className="size-9"
               title="Xem chi tiết webhook"
               aria-label="Xem chi tiết webhook"
               onClick={() => onOpenDetail(event)}

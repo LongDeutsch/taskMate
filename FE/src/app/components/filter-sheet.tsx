@@ -27,13 +27,13 @@ export function FilterSheetTrigger({
     <Button
       type="button"
       variant="outline"
-      className={cn("h-11 w-full gap-2 border-gray-200 md:hidden", className)}
+      className={cn("h-11 w-full gap-2 border-border md:hidden", className)}
       onClick={onClick}
     >
       <SlidersHorizontal className="size-4" />
       Bộ lọc
       {activeCount > 0 && (
-        <span className="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">
+        <span className="ml-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 px-2 py-0.5 text-xs font-semibold">
           {activeCount}
         </span>
       )}
@@ -69,18 +69,18 @@ export function FilterSheet({
     <div className="fixed inset-0 z-[65] md:hidden" role="dialog" aria-modal="true" aria-label={title}>
       <button
         type="button"
-        className="absolute inset-0 bg-black/40"
+        className="absolute inset-0 bg-black/40 backdrop-blur-xs"
         aria-label="Đóng"
         onClick={onClose}
       />
       <div
         className={cn(
-          "absolute bottom-0 left-0 right-0 flex max-h-[min(90vh,640px)] flex-col rounded-t-2xl bg-white shadow-xl",
+          "absolute bottom-0 left-0 right-0 flex max-h-[min(90vh,640px)] flex-col rounded-t-2xl border-t border-border bg-card text-card-foreground shadow-xl dark:border-slate-800",
           "animate-in slide-in-from-bottom duration-200"
         )}
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3">
-          <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+        <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
+          <h2 className="text-base font-semibold text-foreground">{title}</h2>
           <Button type="button" variant="ghost" size="icon" className="size-11" onClick={onClose}>
             <X className="size-5" />
           </Button>
@@ -88,7 +88,7 @@ export function FilterSheet({
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 [&_select]:h-11 [&_select]:w-full [&_input]:min-h-11">
           {children}
         </div>
-        <div className="flex shrink-0 gap-2 border-t border-gray-200 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="flex shrink-0 gap-2 border-t border-border p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           {onReset && (
             <Button type="button" variant="outline" className="h-11 flex-1" onClick={onReset}>
               Đặt lại

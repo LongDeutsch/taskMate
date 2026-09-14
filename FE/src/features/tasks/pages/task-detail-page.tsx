@@ -132,13 +132,13 @@ export function TaskDetailPage() {
             <Button
               variant="ghost"
               size="icon"
-              className="mt-0.5 shrink-0 text-[#6B7280] hover:bg-blue-50 hover:text-blue-700"
+              className="mt-0.5 shrink-0 text-muted-foreground hover:bg-blue-500/10 hover:text-blue-600"
               onClick={goBackToTasks}
             >
               <ArrowLeft className="size-4" />
             </Button>
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-[28px]">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-[28px]">
                 {task.title}
               </h1>
               <p className={td.muted}>
@@ -244,16 +244,16 @@ function TaskDetailsCard({
   return (
     <Card className={td.surfaceCard}>
       <CardHeader className={td.cardHeader}>
-        <CardTitle className="text-lg text-gray-900">Details</CardTitle>
+        <CardTitle className="text-lg text-foreground">Details</CardTitle>
       </CardHeader>
       <CardContent className={td.cardBody}>
         <div className="grid gap-5 sm:grid-cols-2">
           <DetailField label="Title">
-            <p className="font-medium text-gray-900">{task.title}</p>
+            <p className="font-medium text-foreground">{task.title}</p>
           </DetailField>
           <DetailField label="Project">
             {(task.projectName ?? task.projectId) ? (
-              <p className="text-gray-900">
+              <p className="text-foreground">
                 {task.projectName ?? task.projectId}
               </p>
             ) : (
@@ -263,7 +263,7 @@ function TaskDetailsCard({
         </div>
         <DetailField label="Description">
           {hasDescription ? (
-            <p className="whitespace-pre-wrap break-words text-gray-900">
+            <p className="whitespace-pre-wrap break-words text-foreground">
               {task.description}
             </p>
           ) : (
@@ -272,11 +272,11 @@ function TaskDetailsCard({
         </DetailField>
         <div className="grid gap-5 sm:grid-cols-2">
           <DetailField label="Assignee">
-            <p className="text-gray-900">{assigneeDisplay}</p>
+            <p className="text-foreground">{assigneeDisplay}</p>
           </DetailField>
           <DetailField label="Collaborators">
             {hasCollaborators ? (
-              <p className="text-gray-900">
+              <p className="text-foreground">
                 {task.collaborators!.map((c) => c.fullName).join(", ")}
               </p>
             ) : (
@@ -335,16 +335,16 @@ function UserUpdateCard({
         {statusError && <p className="text-xs text-destructive">{statusError}</p>}
 
         {task.userResponse && task.userResponse.trim() !== "" && (
-          <div className="rounded-xl border border-emerald-100 bg-white p-4">
+          <div className="rounded-xl border border-emerald-200/60 bg-card p-4 dark:border-emerald-900/40">
             <p className={td.sectionTitle}>Phản hồi đã gửi</p>
-            <p className="mt-2 whitespace-pre-wrap break-words text-gray-900">
+            <p className="mt-2 whitespace-pre-wrap break-words text-foreground">
               {task.userResponse}
             </p>
             {task.userResponseSentAt && (
-              <p className="mt-2 text-xs text-[#6B7280]">
+              <p className="mt-2 text-xs text-muted-foreground">
                 Gửi lúc {formatDateTime(task.userResponseSentAt)}
                 {editorMode === "append" && (
-                  <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-amber-800 ring-1 ring-amber-200">
+                  <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-amber-800 ring-1 ring-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:ring-amber-800">
                     PM đã phản hồi sau khi bạn gửi
                   </span>
                 )}
@@ -387,21 +387,21 @@ function UserResponseReadonlyCard({
   return (
     <Card className={td.userCard}>
       <CardHeader className={td.cardHeader}>
-        <CardTitle className="flex items-center gap-2 text-base text-emerald-900">
-          <MessageCircleHeart className="size-5 text-emerald-600" />
+        <CardTitle className="flex items-center gap-2 text-base text-emerald-900 dark:text-emerald-300">
+          <MessageCircleHeart className="size-5 text-emerald-600 dark:text-emerald-400" />
           Phản hồi từ thành viên thực hiện
         </CardTitle>
       </CardHeader>
       <CardContent className={td.cardBody}>
         {hasResponse ? (
-          <p className="whitespace-pre-wrap break-words text-gray-900">
+          <p className="whitespace-pre-wrap break-words text-foreground">
             {task.userResponse}
           </p>
         ) : (
           <EmptyValue>Chưa có phản hồi từ người thực hiện.</EmptyValue>
         )}
         {task.userResponseSentAt && (
-          <p className="text-xs text-[#6B7280]">
+          <p className="text-xs text-muted-foreground">
             Gửi lúc {formatDateTime(task.userResponseSentAt)}
           </p>
         )}
@@ -435,10 +435,10 @@ function HistoryToggle({
 }) {
   const styles =
     tone === "emerald"
-      ? "border-emerald-100 text-emerald-900 hover:bg-emerald-50/80 focus:ring-emerald-400"
-      : "border-violet-100 text-violet-900 hover:bg-violet-50/80 focus:ring-violet-400";
+      ? "border-emerald-100 text-emerald-900 hover:bg-emerald-50/80 focus:ring-emerald-400 dark:border-emerald-900/40 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
+      : "border-violet-100 text-violet-900 hover:bg-violet-50/80 focus:ring-violet-400 dark:border-purple-900/40 dark:text-purple-300 dark:hover:bg-purple-950/30";
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+    <div className="overflow-hidden rounded-xl border border-border bg-card dark:border-slate-800">
       <button
         type="button"
         onClick={onToggle}
@@ -458,17 +458,17 @@ function HistoryToggle({
 
 function ResponseHistoryList({ history }: { history: ResponseHistoryEntry[] }) {
   return (
-    <ul className="divide-y divide-gray-100">
+    <ul className="divide-y divide-border">
       {[...history].reverse().map((h) => (
         <li key={h.id} className="px-4 py-3">
           <div className="flex items-center justify-between gap-2 text-xs">
             <span className="inline-flex items-center gap-2">
               <KindBadge kind={h.kind} />
-              <span className="font-medium text-gray-900">{h.authorName}</span>
+              <span className="font-medium text-foreground">{h.authorName}</span>
             </span>
-            <span className="text-[#6B7280]">{formatDateTime(h.createdAt)}</span>
+            <span className="text-muted-foreground">{formatDateTime(h.createdAt)}</span>
           </div>
-          <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-800">
+          <p className="mt-1 whitespace-pre-wrap break-words text-sm text-foreground/90">
             {h.content}
           </p>
         </li>

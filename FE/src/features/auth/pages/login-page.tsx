@@ -6,7 +6,7 @@ const TAGLINE = "Đăng nhập đi, task không tự thêm đâu 😐";
 
 export function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white px-6 py-8 md:px-8">
+    <div className="flex min-h-screen items-center justify-center bg-background text-foreground px-6 py-8 md:px-8">
       <div className="flex w-full max-w-[1120px] flex-col gap-6">
         <LoginBirthdaySection />
 
@@ -20,7 +20,7 @@ export function LoginPage() {
         <div className="order-2 flex flex-col items-center md:order-1 md:items-start">
           <div className="relative hidden min-[481px]:flex min-[481px]:flex-col min-[481px]:items-center md:items-start">
             <div
-              className="pointer-events-none absolute left-1/2 top-1/2 z-0 size-[min(88vw,340px)] -translate-x-1/2 -translate-y-[42%] rounded-full bg-gray-100/90 md:left-[38%] md:size-[380px] md:-translate-x-1/2 md:-translate-y-1/2"
+              className="pointer-events-none absolute left-1/2 top-1/2 z-0 size-[min(88vw,340px)] -translate-x-1/2 -translate-y-[42%] rounded-full bg-muted md:left-[38%] md:size-[380px] md:-translate-x-1/2 md:-translate-y-1/2"
               aria-hidden
             />
             <img
@@ -31,7 +31,7 @@ export function LoginPage() {
               width={440}
               height={520}
             />
-            <p className="relative z-10 mt-5 max-w-[440px] text-center text-sm leading-relaxed text-[#6b7280] md:text-left">
+            <p className="relative z-10 mt-5 max-w-[440px] text-center text-sm leading-relaxed text-muted-foreground md:text-left">
               {TAGLINE}
             </p>
           </div>
