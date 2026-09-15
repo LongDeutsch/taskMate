@@ -10,6 +10,7 @@ import type { Task, TaskPriority, TaskStatus } from "@/shared/types";
 import { TaskDetailDrawer } from "./task-detail-overlay";
 import { td } from "./task-detail-ui";
 import { DatePicker } from "@/shared/components/date-picker";
+import { MarkdownEditor } from "@/shared/components/markdown-editor";
 
 type AdminTaskEditDrawerProps = {
   open: boolean;
@@ -267,13 +268,13 @@ export function AdminTaskEditDrawer({ open, onClose, task }: AdminTaskEditDrawer
               <Label htmlFor="drawer-description" className="text-foreground font-medium">
                 Mô tả chi tiết
               </Label>
-              <textarea
+              <MarkdownEditor
                 id="drawer-description"
-                className="min-h-[160px] w-full resize-y rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm leading-relaxed shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 disabled:opacity-60"
                 value={form.description}
                 disabled={mut.isPending}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                rows={6}
+                onChange={(val) => setForm((f) => ({ ...f, description: val }))}
+                placeholder="Mô tả công việc (hỗ trợ Markdown, checklist `- [ ]`, gạch đầu dòng `- `)..."
+                minRows={6}
               />
             </div>
           </div>

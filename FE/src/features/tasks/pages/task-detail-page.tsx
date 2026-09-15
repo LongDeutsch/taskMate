@@ -5,9 +5,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTask } from "../hooks/use-task";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getUsers, userUpdateTask } from "@/shared/api";
+import { getUsers, updateTask, userUpdateTask } from "@/shared/api";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import type { ResponseHistoryEntry, Task, TaskStatus } from "@/shared/types";
+import { MarkdownRenderer } from "@/shared/components/markdown-renderer";
 import {
   ArrowLeft,
   ChevronDown,
@@ -68,6 +69,30 @@ export function TaskDetailPage() {
     },
     onError: (err) => {
       setStatusError(err instanceof Error ? err.message : "Cập nhật status thất bại");
+    },
+  });
+
+  const checklistMut = useMutation({
+    mutationFn: (newDesc: string) => updateTask(task!.id, { description: newDesc }),
+    onMutate: async (newDesc: string) => {
+      await queryClient.cancelQueries({ queryKey: ["task", task?.id] });
+      const previousTask = queryClient.getQueryData<Task>(["task", task?.id]);
+      if (previousTask) {
+        queryClient.setQueryData<Task>(["task", task?.id], {
+          ...previousTask,
+          description: newDesc,
+        });
+      }
+      return { previousTask };
+    },
+    onError: (_err, _newDesc, context) => {
+      if (context?.previousTask) {
+        queryClient.setQueryData(["task", task?.id], context.previousTask);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["task", task?.id] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
   });
 
@@ -165,7 +190,12 @@ export function TaskDetailPage() {
 
       <div className={showTwoColumn ? td.twoCol : td.stack}>
         <div className={`${td.stack} order-1`}>
-          <TaskDetailsCard task={task} assigneeDisplay={assigneeDisplay} />
+          <TaskDetailsCard
+            task={task}
+            assigneeDisplay={assigneeDisplay}
+            canToggleChecklist={canEdit || isAdmin}
+            onToggleChecklist={(newDesc) => checklistMut.mutate(newDesc)}
+          />
 
           {canEdit && (
             <UserUpdateCard
@@ -234,9 +264,13 @@ export function TaskDetailPage() {
 function TaskDetailsCard({
   task,
   assigneeDisplay,
+  canToggleChecklist,
+  onToggleChecklist,
 }: {
   task: Task;
   assigneeDisplay: string;
+  canToggleChecklist?: boolean;
+  onToggleChecklist?: (newDesc: string) => void;
 }) {
   const hasDescription = (task.description ?? "").trim() !== "";
   const hasCollaborators = (task.collaborators ?? []).length > 0;
@@ -263,9 +297,11 @@ function TaskDetailsCard({
         </div>
         <DetailField label="Description">
           {hasDescription ? (
-            <p className="whitespace-pre-wrap break-words text-foreground">
-              {task.description}
-            </p>
+            <MarkdownRenderer
+              content={task.description}
+              interactive={canToggleChecklist}
+              onToggleChecklist={onToggleChecklist}
+            />
           ) : (
             <EmptyValue>Chưa có mô tả.</EmptyValue>
           )}

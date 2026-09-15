@@ -8,6 +8,7 @@ import { AutoResizeTextarea } from "./auto-resize-textarea";
 import { TaskDetailDrawer } from "./task-detail-overlay";
 import { at } from "./admin-tasks-ui";
 import { DatePicker } from "@/shared/components/date-picker";
+import { MarkdownEditor } from "@/shared/components/markdown-editor";
 
 const statusOptions: TaskStatus[] = ["Todo", "InProgress", "Done"];
 const priorityOptions: TaskPriority[] = ["Low", "Medium", "High"];
@@ -151,16 +152,14 @@ export function AdminTaskFormDrawer({
               <Label htmlFor="drawer-description" className={at.label}>
                 Mô tả chi tiết
               </Label>
-              <div className={at.feedbackScroll}>
-                <AutoResizeTextarea
-                  id="drawer-description"
-                  className="min-h-[120px] border-0 bg-transparent shadow-none focus:ring-0"
-                  value={form.description}
-                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                  placeholder="Mô tả công việc"
-                  minRows={5}
-                />
-              </div>
+              <MarkdownEditor
+                id="drawer-description"
+                value={form.description}
+                disabled={isPending}
+                onChange={(val) => setForm((f) => ({ ...f, description: val }))}
+                placeholder="Mô tả công việc (hỗ trợ Markdown, checklist `- [ ]`, gạch đầu dòng `- `)..."
+                minRows={6}
+              />
             </div>
           </div>
         </section>
