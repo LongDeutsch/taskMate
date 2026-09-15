@@ -91,29 +91,68 @@ export function AdminTaskFormDrawer({
       title={title}
       subtitle={subtitle}
       footer={footer}
-      panelClassName="w-full max-w-[min(100vw,900px)]"
+      panelClassName="w-full max-w-[min(100vw,1120px)]"
     >
-      <div className="space-y-8">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 lg:h-full">
         {saveError && (
           <div
-            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800 [overflow-wrap:anywhere]"
+            className="shrink-0 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800 [overflow-wrap:anywhere]"
             role="alert"
           >
             {saveError}
           </div>
         )}
         {isSelfNoteForm && (
-          <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-sm text-amber-900">
+          <div className="flex shrink-0 items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-sm text-amber-900">
             <StickyNote className="size-4 shrink-0" />
             Note cá nhân — chỉ bạn thấy trong danh sách note.
           </div>
         )}
 
-        <section className="space-y-4">
-          <h3 className={at.sectionTitle}>Thông tin chính</h3>
-          <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid min-h-0 flex-1 gap-5 lg:grid-cols-[minmax(0,1.85fr)_minmax(240px,1fr)] lg:gap-0">
+          {/* Cột chính: tiêu đề + mô tả */}
+          <div className="flex min-h-0 flex-col gap-3 lg:pr-5">
+            <div className="grid shrink-0 gap-2">
+              <Label htmlFor="drawer-title" className={at.label}>
+                Tiêu đề
+              </Label>
+              <Input
+                id="drawer-title"
+                value={form.title}
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                placeholder="VD: Thiết kế banner homepage"
+                className="h-10 rounded-lg shadow-sm"
+                autoFocus
+              />
+              {formErrors.title && (
+                <p className="text-sm text-destructive">{formErrors.title}</p>
+              )}
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col gap-2">
+              <Label htmlFor="drawer-description" className={at.label}>
+                Mô tả chi tiết
+              </Label>
+              <div className="min-h-[220px] flex-1 lg:min-h-0">
+                <MarkdownEditor
+                  id="drawer-description"
+                  value={form.description}
+                  disabled={isPending}
+                  fillHeight
+                  onChange={(val) => setForm((f) => ({ ...f, description: val }))}
+                  placeholder="Mô tả công việc (hỗ trợ Markdown, checklist `- [ ]`, gạch đầu dòng `- `)..."
+                  minRows={8}
+                  className="h-full"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Cột phụ: metadata */}
+          <aside className="flex flex-col gap-4 border-t border-border pt-4 lg:overflow-y-auto lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+            <h3 className={at.sectionTitle}>Phân công & trạng thái</h3>
+
             {!isSelfNoteForm && (
-              <div className="grid gap-2 lg:col-span-2">
+              <div className="grid gap-2">
                 <Label className={at.label}>Project</Label>
                 <select
                   className={at.select + " w-full"}
@@ -132,41 +171,7 @@ export function AdminTaskFormDrawer({
                 )}
               </div>
             )}
-            <div className="grid gap-2 lg:col-span-2">
-              <Label htmlFor="drawer-title" className={at.label}>
-                Tiêu đề
-              </Label>
-              <Input
-                id="drawer-title"
-                value={form.title}
-                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                placeholder="VD: Thiết kế banner homepage"
-                className="h-10 rounded-lg shadow-sm"
-                autoFocus
-              />
-              {formErrors.title && (
-                <p className="text-sm text-destructive">{formErrors.title}</p>
-              )}
-            </div>
-            <div className="grid gap-2 lg:col-span-2">
-              <Label htmlFor="drawer-description" className={at.label}>
-                Mô tả chi tiết
-              </Label>
-              <MarkdownEditor
-                id="drawer-description"
-                value={form.description}
-                disabled={isPending}
-                onChange={(val) => setForm((f) => ({ ...f, description: val }))}
-                placeholder="Mô tả công việc (hỗ trợ Markdown, checklist `- [ ]`, gạch đầu dòng `- `)..."
-                minRows={6}
-              />
-            </div>
-          </div>
-        </section>
 
-        <section className="space-y-4">
-          <h3 className={at.sectionTitle}>Trạng thái & phân công</h3>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="grid gap-2">
               <Label className={at.label}>Trạng thái</Label>
               <select
@@ -178,11 +183,16 @@ export function AdminTaskFormDrawer({
               >
                 {statusOptions.map((s) => (
                   <option key={s} value={s}>
-                    {s === "Todo" ? "Cần làm (Todo)" : s === "InProgress" ? "Đang làm (In Progress)" : "Hoàn thành (Done)"}
+                    {s === "Todo"
+                      ? "Cần làm (Todo)"
+                      : s === "InProgress"
+                        ? "Đang làm (In Progress)"
+                        : "Hoàn thành (Done)"}
                   </option>
                 ))}
               </select>
             </div>
+
             <div className="grid gap-2">
               <Label className={at.label}>Mức độ ưu tiên</Label>
               <select
@@ -194,12 +204,17 @@ export function AdminTaskFormDrawer({
               >
                 {priorityOptions.map((p) => (
                   <option key={p} value={p}>
-                    {p === "Low" ? "Thấp (Low)" : p === "Medium" ? "Trung bình (Medium)" : "Cao (High)"}
+                    {p === "Low"
+                      ? "Thấp (Low)"
+                      : p === "Medium"
+                        ? "Trung bình (Medium)"
+                        : "Cao (High)"}
                   </option>
                 ))}
               </select>
             </div>
-            <div className="grid gap-2 sm:col-span-2 lg:col-span-1">
+
+            <div className="grid gap-2">
               <Label htmlFor="drawer-deadline" className={at.label}>
                 Hạn chót
               </Label>
@@ -213,7 +228,8 @@ export function AdminTaskFormDrawer({
                 <p className="text-sm text-destructive">{formErrors.deadline}</p>
               )}
             </div>
-            <div className="grid gap-2 sm:col-span-2">
+
+            <div className="grid gap-2">
               <Label className={at.label}>Người thực hiện</Label>
               <select
                 className={at.select + " w-full"}
@@ -243,8 +259,9 @@ export function AdminTaskFormDrawer({
                   ))}
               </select>
             </div>
+
             {!isSelfNoteForm && (
-              <div className="grid gap-2 sm:col-span-2">
+              <div className="grid gap-2">
                 <Label className={at.label}>Người phối hợp</Label>
                 <select
                   className={at.select + " w-full"}
@@ -266,37 +283,37 @@ export function AdminTaskFormDrawer({
                 </select>
               </div>
             )}
-          </div>
-        </section>
 
-        <section className="space-y-4">
-          <h3 className={at.sectionTitle}>Feedback (PM)</h3>
-          <div className={at.feedbackScroll}>
-            <AutoResizeTextarea
-              id="drawer-feedback"
-              className="min-h-[100px] border-0 bg-transparent shadow-none focus:ring-0"
-              value={form.feedback}
-              onChange={(e) => setForm((f) => ({ ...f, feedback: e.target.value }))}
-              placeholder="Ghi chú, nhận xét review..."
-              minRows={4}
-            />
-          </div>
-          {formErrors.feedback && (
-            <p className="text-sm text-destructive">{formErrors.feedback}</p>
-          )}
-        </section>
-
-        {mode === "edit" && editingTask && (
-          <section className="space-y-2">
-            <h3 className={at.sectionTitle}>Phản hồi từ người thực hiện</h3>
-            <p className="text-xs text-muted-foreground">Chỉ đọc — do assignee gửi</p>
-            <div className="max-h-40 overflow-y-auto rounded-lg border border-emerald-200/60 bg-emerald-50/40 dark:border-emerald-900/40 dark:bg-emerald-950/20 px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap text-foreground">
-              {editingTask.userResponse?.trim()
-                ? editingTask.userResponse
-                : "Chưa có phản hồi."}
+            <div className="grid gap-2 border-t border-border pt-4">
+              <Label className={at.label}>Feedback (PM)</Label>
+              <div className={at.feedbackScroll}>
+                <AutoResizeTextarea
+                  id="drawer-feedback"
+                  className="min-h-[88px] border-0 bg-transparent shadow-none focus:ring-0"
+                  value={form.feedback}
+                  onChange={(e) => setForm((f) => ({ ...f, feedback: e.target.value }))}
+                  placeholder="Ghi chú, nhận xét review..."
+                  minRows={3}
+                />
+              </div>
+              {formErrors.feedback && (
+                <p className="text-sm text-destructive">{formErrors.feedback}</p>
+              )}
             </div>
-          </section>
-        )}
+
+            {mode === "edit" && editingTask && (
+              <div className="grid gap-2 border-t border-border pt-4">
+                <Label className={at.label}>Phản hồi người thực hiện</Label>
+                <p className="text-[11px] text-muted-foreground">Chỉ đọc — do assignee gửi</p>
+                <div className="max-h-36 overflow-y-auto rounded-lg border border-emerald-200/60 bg-emerald-50/40 px-3 py-2.5 text-sm leading-relaxed whitespace-pre-wrap text-foreground dark:border-emerald-900/40 dark:bg-emerald-950/20">
+                  {editingTask.userResponse?.trim()
+                    ? editingTask.userResponse
+                    : "Chưa có phản hồi."}
+                </div>
+              </div>
+            )}
+          </aside>
+        </div>
       </div>
     </TaskDetailDrawer>
   );

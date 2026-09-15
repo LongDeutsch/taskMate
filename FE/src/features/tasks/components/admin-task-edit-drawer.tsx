@@ -173,68 +173,53 @@ export function AdminTaskEditDrawer({ open, onClose, task }: AdminTaskEditDrawer
       title="Cập nhật task"
       subtitle="Chỉnh sửa trạng thái, phân công và nội dung task"
       footer={footer}
-      panelClassName="w-full max-w-[min(100vw,900px)]"
+      panelClassName="w-full max-w-[min(100vw,1120px)]"
     >
-      <div className="space-y-8">
-        <section className="space-y-4">
-          <h3 className={td.sectionTitle}>Trạng thái & thời hạn</h3>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="grid gap-2">
-              <Label htmlFor="drawer-status" className="text-foreground font-medium">
-                Trạng thái
+      <div className="flex min-h-0 flex-1 flex-col gap-4 lg:h-full">
+        {error && (
+          <p className="shrink-0 text-sm text-destructive" role="alert">
+            {error}
+          </p>
+        )}
+
+        <div className="grid min-h-0 flex-1 gap-5 lg:grid-cols-[minmax(0,1.85fr)_minmax(240px,1fr)] lg:gap-0">
+          <div className="flex min-h-0 flex-col gap-3 lg:pr-5">
+            <div className="grid shrink-0 gap-2">
+              <Label htmlFor="drawer-title" className="font-medium text-foreground">
+                Tiêu đề
               </Label>
-              <select
-                id="drawer-status"
-                className={td.select}
-                value={form.status}
+              <Input
+                id="drawer-title"
+                value={form.title}
                 disabled={mut.isPending}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, status: e.target.value as TaskStatus }))
-                }
-              >
-                <option value="Todo">Cần làm (Todo)</option>
-                <option value="InProgress">Đang làm (In Progress)</option>
-                <option value="Done">Hoàn thành (Done)</option>
-              </select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="drawer-priority" className="text-foreground font-medium">
-                Mức độ ưu tiên
-              </Label>
-              <select
-                id="drawer-priority"
-                className={td.select}
-                value={form.priority}
-                disabled={mut.isPending}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, priority: e.target.value as TaskPriority }))
-                }
-              >
-                <option value="Low">Thấp (Low)</option>
-                <option value="Medium">Trung bình (Medium)</option>
-                <option value="High">Cao (High)</option>
-              </select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="drawer-deadline" className="text-foreground font-medium">
-                Hạn chót
-              </Label>
-              <DatePicker
-                id="drawer-deadline"
-                value={form.deadline}
-                disabled={mut.isPending}
-                onChange={(val) => setForm((f) => ({ ...f, deadline: val }))}
-                placeholder="Chọn hạn chót..."
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                className="h-10 rounded-lg border-border bg-background text-foreground shadow-sm"
               />
             </div>
+            <div className="flex min-h-0 flex-1 flex-col gap-2">
+              <Label htmlFor="drawer-description" className="font-medium text-foreground">
+                Mô tả chi tiết
+              </Label>
+              <div className="min-h-[220px] flex-1 lg:min-h-0">
+                <MarkdownEditor
+                  id="drawer-description"
+                  value={form.description}
+                  disabled={mut.isPending}
+                  fillHeight
+                  onChange={(val) => setForm((f) => ({ ...f, description: val }))}
+                  placeholder="Mô tả công việc (hỗ trợ Markdown, checklist `- [ ]`, gạch đầu dòng `- `)..."
+                  minRows={8}
+                  className="h-full"
+                />
+              </div>
+            </div>
           </div>
-        </section>
 
-        <section className="space-y-4">
-          <h3 className={td.sectionTitle}>Nội dung công việc</h3>
-          <div className="grid gap-4">
+          <aside className="flex flex-col gap-4 border-t border-border pt-4 lg:overflow-y-auto lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
+            <h3 className={td.sectionTitle}>Phân công & trạng thái</h3>
+
             <div className="grid gap-2">
-              <Label htmlFor="drawer-project" className="text-foreground font-medium">
+              <Label htmlFor="drawer-project" className="font-medium text-foreground">
                 Dự án
               </Label>
               <select
@@ -252,39 +237,60 @@ export function AdminTaskEditDrawer({ open, onClose, task }: AdminTaskEditDrawer
                 ))}
               </select>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="drawer-title" className="text-foreground font-medium">
-                Tiêu đề
-              </Label>
-              <Input
-                id="drawer-title"
-                value={form.title}
-                disabled={mut.isPending}
-                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                className="h-10 rounded-lg border-border bg-background text-foreground shadow-sm"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="drawer-description" className="text-foreground font-medium">
-                Mô tả chi tiết
-              </Label>
-              <MarkdownEditor
-                id="drawer-description"
-                value={form.description}
-                disabled={mut.isPending}
-                onChange={(val) => setForm((f) => ({ ...f, description: val }))}
-                placeholder="Mô tả công việc (hỗ trợ Markdown, checklist `- [ ]`, gạch đầu dòng `- `)..."
-                minRows={6}
-              />
-            </div>
-          </div>
-        </section>
 
-        <section className="space-y-4">
-          <h3 className={td.sectionTitle}>Phân công</h3>
-          <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
-              <Label htmlFor="drawer-assignee" className="text-foreground font-medium">
+              <Label htmlFor="drawer-status" className="font-medium text-foreground">
+                Trạng thái
+              </Label>
+              <select
+                id="drawer-status"
+                className={td.select}
+                value={form.status}
+                disabled={mut.isPending}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, status: e.target.value as TaskStatus }))
+                }
+              >
+                <option value="Todo">Cần làm (Todo)</option>
+                <option value="InProgress">Đang làm (In Progress)</option>
+                <option value="Done">Hoàn thành (Done)</option>
+              </select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="drawer-priority" className="font-medium text-foreground">
+                Mức độ ưu tiên
+              </Label>
+              <select
+                id="drawer-priority"
+                className={td.select}
+                value={form.priority}
+                disabled={mut.isPending}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, priority: e.target.value as TaskPriority }))
+                }
+              >
+                <option value="Low">Thấp (Low)</option>
+                <option value="Medium">Trung bình (Medium)</option>
+                <option value="High">Cao (High)</option>
+              </select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="drawer-deadline" className="font-medium text-foreground">
+                Hạn chót
+              </Label>
+              <DatePicker
+                id="drawer-deadline"
+                value={form.deadline}
+                disabled={mut.isPending}
+                onChange={(val) => setForm((f) => ({ ...f, deadline: val }))}
+                placeholder="Chọn hạn chót..."
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="drawer-assignee" className="font-medium text-foreground">
                 Người thực hiện
               </Label>
               <select
@@ -316,10 +322,11 @@ export function AdminTaskEditDrawer({ open, onClose, task }: AdminTaskEditDrawer
                   ))}
               </select>
             </div>
+
             {!isSelfNoteForm && (
               <div className="grid gap-2">
-                <Label htmlFor="drawer-collaborator" className="text-foreground font-medium">
-                  Collaborators
+                <Label htmlFor="drawer-collaborator" className="font-medium text-foreground">
+                  Người phối hợp
                 </Label>
                 <select
                   id="drawer-collaborator"
@@ -343,10 +350,8 @@ export function AdminTaskEditDrawer({ open, onClose, task }: AdminTaskEditDrawer
                 </select>
               </div>
             )}
-          </div>
-        </section>
-
-        {error && <p className="text-sm text-destructive">{error}</p>}
+          </aside>
+        </div>
       </div>
     </TaskDetailDrawer>
   );

@@ -1,5 +1,6 @@
 // File: src/shared/components/markdown-editor.tsx
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   Bold,
   Italic,
@@ -14,6 +15,8 @@ import {
   Sparkles,
   UserCheck,
   ChevronDown,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { MarkdownRenderer } from "./markdown-renderer";
 import { cn } from "@/shared/lib/utils";
@@ -26,6 +29,8 @@ export type MarkdownEditorProps = {
   id?: string;
   disabled?: boolean;
   className?: string;
+  /** Kéo editor cao theo cột cha (layout 2 cột drawer) */
+  fillHeight?: boolean;
 };
 
 const TEMPLATES = [
@@ -87,9 +92,11 @@ export function MarkdownEditor({
   id,
   disabled = false,
   className,
+  fillHeight = false,
 }: MarkdownEditorProps) {
   const [activeTab, setActiveTab] = useState<"write" | "preview">("write");
   const [showTemplates, setShowTemplates] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const templateMenuRef = useRef<HTMLDivElement | null>(null);
   const isComposingRef = useRef(false);
@@ -106,6 +113,30 @@ export function MarkdownEditor({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showTemplates]);
+
+  useEffect(() => {
+    if (!expanded) {
+      delete document.documentElement.dataset.taskmateEditorExpanded;
+      return;
+    }
+    document.documentElement.dataset.taskmateEditorExpanded = "1";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      setExpanded(false);
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => {
+      window.removeEventListener("keydown", onKey, true);
+      delete document.documentElement.dataset.taskmateEditorExpanded;
+    };
+  }, [expanded]);
+
+  useEffect(() => {
+    if (!expanded) return;
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  }, [expanded]);
 
   // Insert text at current selection and focus.
   // Dùng textarea.value (DOM) thay vì React state — tránh lệch khi IME vừa commit từ.
@@ -307,10 +338,12 @@ export function MarkdownEditor({
   const lineCount = value ? value.split("\n").length : 0;
   const wordCount = value.trim() ? value.trim().split(/\s+/).length : 0;
 
-  return (
+  const editorShell = (
     <div
       className={cn(
         "flex flex-col rounded-xl border border-border bg-card shadow-2xs transition-colors overflow-hidden focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20",
+        fillHeight && !expanded && "h-full min-h-[240px]",
+        expanded && "h-full min-h-0 rounded-none border-0 shadow-none focus-within:ring-0",
         className
       )}
     >
@@ -456,44 +489,56 @@ export function MarkdownEditor({
           </div>
         </div>
 
-        {/* Right Tab Toggle: Write / Preview */}
-        <div className="flex items-center rounded-lg border border-border bg-card/80 p-0.5 shadow-2xs dark:bg-slate-950">
+        {/* Right: Write / Preview + Expand */}
+        <div className="flex items-center gap-1">
+          <div className="flex items-center rounded-lg border border-border bg-card/80 p-0.5 shadow-2xs dark:bg-slate-950">
+            <button
+              type="button"
+              onClick={() => setActiveTab("write")}
+              className={cn(
+                "cursor-pointer flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                activeTab === "write"
+                  ? "bg-primary text-primary-foreground font-semibold shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Edit3 className="size-3" />
+              <span>Soạn thảo</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("preview")}
+              className={cn(
+                "cursor-pointer flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                activeTab === "preview"
+                  ? "bg-primary text-primary-foreground font-semibold shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Eye className="size-3" />
+              <span>Xem trước</span>
+            </button>
+          </div>
           <button
             type="button"
-            onClick={() => setActiveTab("write")}
-            className={cn(
-              "cursor-pointer flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-              activeTab === "write"
-                ? "bg-primary text-primary-foreground font-semibold shadow-2xs"
-                : "text-muted-foreground hover:text-foreground"
-            )}
+            disabled={disabled}
+            onClick={() => setExpanded((v) => !v)}
+            title={expanded ? "Thu nhỏ (Esc)" : "Mở rộng toàn màn hình"}
+            aria-label={expanded ? "Thu nhỏ editor" : "Mở rộng editor"}
+            className="cursor-pointer rounded-lg p-1.5 text-muted-foreground transition hover:bg-accent hover:text-foreground disabled:opacity-40"
           >
-            <Edit3 className="size-3" />
-            <span>Soạn thảo</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("preview")}
-            className={cn(
-              "cursor-pointer flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-              activeTab === "preview"
-                ? "bg-primary text-primary-foreground font-semibold shadow-2xs"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Eye className="size-3" />
-            <span>Xem trước</span>
+            {expanded ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
           </button>
         </div>
       </div>
 
       {/* Editor Body */}
       {activeTab === "write" ? (
-        <div className="relative flex-1">
+        <div className={cn("relative min-h-0", (fillHeight || expanded) && "flex flex-1 flex-col")}>
           <textarea
             ref={textareaRef}
             id={id}
-            rows={minRows}
+            rows={fillHeight || expanded ? undefined : minRows}
             disabled={disabled}
             placeholder={placeholder}
             value={value}
@@ -506,11 +551,21 @@ export function MarkdownEditor({
               lastCompositionEndTimeRef.current = Date.now();
             }}
             onKeyDown={handleKeyDown}
-            className="w-full resize-y bg-transparent px-3.5 py-3 text-sm font-normal leading-relaxed text-foreground placeholder:text-muted-foreground/70 focus:outline-none disabled:opacity-50 min-h-[160px]"
+            className={cn(
+              "w-full bg-transparent px-3.5 py-3 text-sm font-normal leading-relaxed text-foreground placeholder:text-muted-foreground/70 focus:outline-none disabled:opacity-50",
+              fillHeight || expanded
+                ? "min-h-[200px] flex-1 resize-none h-full"
+                : "min-h-[160px] resize-y"
+            )}
           />
         </div>
       ) : (
-        <div className="min-h-[160px] max-h-[400px] overflow-y-auto bg-muted/20 px-4 py-3.5 dark:bg-slate-950/40">
+        <div
+          className={cn(
+            "overflow-y-auto bg-muted/20 px-4 py-3.5 dark:bg-slate-950/40",
+            fillHeight || expanded ? "min-h-0 flex-1" : "min-h-[160px] max-h-[400px]"
+          )}
+        >
           {value.trim() ? (
             <MarkdownRenderer content={value} />
           ) : (
@@ -520,15 +575,73 @@ export function MarkdownEditor({
       )}
 
       {/* Footer info bar */}
-      <div className="flex items-center justify-between border-t border-border/60 bg-muted/20 px-3 py-1 text-[11px] text-muted-foreground">
+      <div className="flex shrink-0 items-center justify-between border-t border-border/60 bg-muted/20 px-3 py-1 text-[11px] text-muted-foreground">
         <span className="hidden sm:inline">
-          Phím tắt: <kbd className="font-mono font-semibold">Enter</kbd> tự nối dòng · <kbd className="font-mono font-semibold">Tab</kbd> lùi dòng · <kbd className="font-mono font-semibold">Ctrl+B</kbd> in đậm
+          Phím tắt: <kbd className="font-mono font-semibold">Enter</kbd> tự nối dòng ·{" "}
+          <kbd className="font-mono font-semibold">Tab</kbd> lùi dòng ·{" "}
+          <kbd className="font-mono font-semibold">Ctrl+B</kbd> in đậm
+          {expanded ? (
+            <>
+              {" "}
+              · <kbd className="font-mono font-semibold">Esc</kbd> thu nhỏ
+            </>
+          ) : null}
         </span>
-        <div className="flex items-center gap-3 ml-auto">
+        <div className="ml-auto flex items-center gap-3">
           <span>{lineCount} dòng</span>
           <span>{wordCount} từ</span>
         </div>
       </div>
     </div>
   );
+
+  if (expanded) {
+    return (
+      <>
+        <div
+          className={cn(
+            "flex min-h-[160px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-6 text-center",
+            fillHeight && "h-full"
+          )}
+        >
+          <p className="text-sm text-muted-foreground">Đang soạn thảo toàn màn hình</p>
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground shadow-sm transition hover:bg-accent"
+          >
+            <Minimize2 className="size-3.5" />
+            Thu nhỏ
+          </button>
+        </div>
+        {createPortal(
+          <div
+            data-markdown-editor-expanded
+            className="fixed inset-0 z-[80] flex flex-col bg-background/95 p-3 backdrop-blur-sm sm:p-5"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Soạn thảo toàn màn hình"
+          >
+            <div className="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-col">
+              <div className="mb-2 flex shrink-0 items-center justify-between gap-2 px-0.5">
+                <p className="text-sm font-medium text-foreground">Soạn thảo mô tả</p>
+                <button
+                  type="button"
+                  onClick={() => setExpanded(false)}
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground shadow-sm transition hover:bg-accent"
+                >
+                  <Minimize2 className="size-3.5" />
+                  Thu nhỏ
+                </button>
+              </div>
+              <div className="min-h-0 flex-1">{editorShell}</div>
+            </div>
+          </div>,
+          document.body
+        )}
+      </>
+    );
+  }
+
+  return editorShell;
 }
