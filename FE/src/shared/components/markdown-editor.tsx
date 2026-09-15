@@ -92,6 +92,8 @@ export function MarkdownEditor({
   const [showTemplates, setShowTemplates] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const templateMenuRef = useRef<HTMLDivElement | null>(null);
+  const isComposingRef = useRef(false);
+  const lastCompositionEndTimeRef = useRef(0);
 
   // Close template menu on click outside
   useEffect(() => {
@@ -105,15 +107,17 @@ export function MarkdownEditor({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showTemplates]);
 
-  // Insert text at current selection and focus
+  // Insert text at current selection and focus.
+  // Dùng textarea.value (DOM) thay vì React state — tránh lệch khi IME vừa commit từ.
   const insertTextAtCursor = useCallback(
     (textToInsert: string, cursorOffset?: number) => {
       const textarea = textareaRef.current;
       if (!textarea) return;
 
+      const current = textarea.value;
       const { selectionStart, selectionEnd } = textarea;
-      const before = value.substring(0, selectionStart);
-      const after = value.substring(selectionEnd);
+      const before = current.substring(0, selectionStart);
+      const after = current.substring(selectionEnd);
       const nextValue = before + textToInsert + after;
 
       onChange(nextValue);
@@ -125,7 +129,7 @@ export function MarkdownEditor({
         textarea.setSelectionRange(nextPos, nextPos);
       });
     },
-    [value, onChange]
+    [onChange]
   );
 
   // Wrap current selection with tokens (e.g., **bold**, *italic*)
@@ -172,9 +176,10 @@ export function MarkdownEditor({
       const textarea = textareaRef.current;
       if (!textarea) return;
 
+      const text = textarea.value;
       const { selectionStart } = textarea;
-      const lineStart = value.lastIndexOf("\n", selectionStart - 1) + 1;
-      const currentLine = value.substring(lineStart, selectionStart);
+      const lineStart = text.lastIndexOf("\n", selectionStart - 1) + 1;
+      const currentLine = text.substring(lineStart, selectionStart);
 
       // If already at line start
       if (currentLine.trim() === "") {
@@ -184,19 +189,21 @@ export function MarkdownEditor({
         insertTextAtCursor(`\n${prefix}`);
       }
     },
-    [value, insertTextAtCursor]
+    [insertTextAtCursor]
   );
 
   // Smart Key Down: Enter & Tab handling
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const textarea = e.currentTarget;
     const { selectionStart, selectionEnd } = textarea;
+    // Nội dung thật trên DOM (IME có thể vừa commit từ chưa kịp sync React state)
+    const text = textarea.value;
 
     // 1. Tab key indents 2 spaces
     if (e.key === "Tab") {
       e.preventDefault();
-      const before = value.substring(0, selectionStart);
-      const after = value.substring(selectionEnd);
+      const before = text.substring(0, selectionStart);
+      const after = text.substring(selectionEnd);
       onChange(before + "  " + after);
       requestAnimationFrame(() => {
         textarea.selectionStart = textarea.selectionEnd = selectionStart + 2;
@@ -206,8 +213,16 @@ export function MarkdownEditor({
 
     // 2. Smart Enter: Auto continue list / exit empty list
     if (e.key === "Enter" && !e.shiftKey) {
-      const lineStart = value.lastIndexOf("\n", selectionStart - 1) + 1;
-      const currentLine = value.substring(lineStart, selectionStart);
+      // Bỏ qua khi đang soạn IME (Telex/VNI) — Enter dùng để chốt từ, không nối dòng.
+      // Một số trình duyệt vẫn fire keydown Enter ngay sau compositionend → chặn ~120ms.
+      const native = e.nativeEvent as KeyboardEvent;
+      const justCommittedIme = Date.now() - lastCompositionEndTimeRef.current < 120;
+      if (native.isComposing || isComposingRef.current || justCommittedIme || native.keyCode === 229) {
+        return;
+      }
+
+      const lineStart = text.lastIndexOf("\n", selectionStart - 1) + 1;
+      const currentLine = text.substring(lineStart, selectionStart);
 
       // Matchers for empty lists (User wants to EXIT list)
       const checklistEmpty = currentLine.match(/^(\s*)[-+*]\s*\[[ xX]\]\s*$/);
@@ -217,9 +232,9 @@ export function MarkdownEditor({
       if (checklistEmpty || bulletEmpty || numberEmpty) {
         e.preventDefault();
         // Remove the empty bullet from current line
-        const lineEnd = value.indexOf("\n", selectionStart);
-        const endPos = lineEnd === -1 ? value.length : lineEnd;
-        const nextValue = value.substring(0, lineStart) + value.substring(endPos);
+        const lineEnd = text.indexOf("\n", selectionStart);
+        const endPos = lineEnd === -1 ? text.length : lineEnd;
+        const nextValue = text.substring(0, lineStart) + text.substring(endPos);
         onChange(nextValue);
         requestAnimationFrame(() => {
           textarea.selectionStart = textarea.selectionEnd = lineStart;
@@ -483,6 +498,13 @@ export function MarkdownEditor({
             placeholder={placeholder}
             value={value}
             onChange={(e) => onChange(e.target.value)}
+            onCompositionStart={() => {
+              isComposingRef.current = true;
+            }}
+            onCompositionEnd={() => {
+              isComposingRef.current = false;
+              lastCompositionEndTimeRef.current = Date.now();
+            }}
             onKeyDown={handleKeyDown}
             className="w-full resize-y bg-transparent px-3.5 py-3 text-sm font-normal leading-relaxed text-foreground placeholder:text-muted-foreground/70 focus:outline-none disabled:opacity-50 min-h-[160px]"
           />
